@@ -5,6 +5,7 @@ import posterTeam from "@/assets/poster-team.jpg";
 import type {
   BuilderQuestion,
   CertificateTemplate,
+  DraftActivity,
   EnrolledLearner,
   FeedbackSurvey,
   ModuleDraft,
@@ -245,7 +246,7 @@ export function draftFor(summary: TrainerModuleSummary): ModuleDraft {
     orderLocked: true,
     certificateTemplateId: "ct-classic",
     feedbackSurveyId: "fs-standard",
-    activities: [
+    activities: ([
       {
         id: `${summary.id}-a1`,
         name: "Standard overview",
@@ -278,7 +279,7 @@ export function draftFor(summary: TrainerModuleSummary): ModuleDraft {
         required: true,
         draft: summary.state === "draft",
       },
-    ].slice(0, Math.max(2, summary.activityCount)),
+    ] as DraftActivity[]).slice(0, Math.max(2, summary.activityCount)),
     settings: {
       pushEnrollment: "all-skill",
       targetAudience: "All delivery teams",
