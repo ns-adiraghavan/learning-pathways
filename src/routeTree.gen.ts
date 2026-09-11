@@ -10,33 +10,115 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CertificatesRouteImport } from './routes/certificates'
+import { Route as LeaderboardRouteImport } from './routes/leaderboard'
+import { Route as MyLearningRouteImport } from './routes/my-learning'
+import { Route as ProgressRouteImport } from './routes/progress'
+import { Route as ModulesModuleIdIndexRouteImport } from './routes/modules/$moduleId/index'
+import { Route as ModulesModuleIdPlayerRouteImport } from './routes/modules/$moduleId/player'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CertificatesRoute = CertificatesRouteImport.update({
+  id: '/certificates',
+  path: '/certificates',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeaderboardRoute = LeaderboardRouteImport.update({
+  id: '/leaderboard',
+  path: '/leaderboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MyLearningRoute = MyLearningRouteImport.update({
+  id: '/my-learning',
+  path: '/my-learning',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProgressRoute = ProgressRouteImport.update({
+  id: '/progress',
+  path: '/progress',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ModulesModuleIdIndexRoute = ModulesModuleIdIndexRouteImport.update({
+  id: '/modules/$moduleId/',
+  path: '/modules/$moduleId/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ModulesModuleIdPlayerRoute = ModulesModuleIdPlayerRouteImport.update({
+  id: '/modules/$moduleId/player',
+  path: '/modules/$moduleId/player',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/certificates': typeof CertificatesRoute
+  '/leaderboard': typeof LeaderboardRoute
+  '/my-learning': typeof MyLearningRoute
+  '/progress': typeof ProgressRoute
+  '/modules/$moduleId/player': typeof ModulesModuleIdPlayerRoute
+  '/modules/$moduleId/': typeof ModulesModuleIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/certificates': typeof CertificatesRoute
+  '/leaderboard': typeof LeaderboardRoute
+  '/my-learning': typeof MyLearningRoute
+  '/progress': typeof ProgressRoute
+  '/modules/$moduleId/player': typeof ModulesModuleIdPlayerRoute
+  '/modules/$moduleId': typeof ModulesModuleIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/certificates': typeof CertificatesRoute
+  '/leaderboard': typeof LeaderboardRoute
+  '/my-learning': typeof MyLearningRoute
+  '/progress': typeof ProgressRoute
+  '/modules/$moduleId/player': typeof ModulesModuleIdPlayerRoute
+  '/modules/$moduleId/': typeof ModulesModuleIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/certificates'
+    | '/leaderboard'
+    | '/my-learning'
+    | '/progress'
+    | '/modules/$moduleId/player'
+    | '/modules/$moduleId/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/certificates'
+    | '/leaderboard'
+    | '/my-learning'
+    | '/progress'
+    | '/modules/$moduleId/player'
+    | '/modules/$moduleId'
+  id:
+    | '__root__'
+    | '/'
+    | '/certificates'
+    | '/leaderboard'
+    | '/my-learning'
+    | '/progress'
+    | '/modules/$moduleId/player'
+    | '/modules/$moduleId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CertificatesRoute: typeof CertificatesRoute
+  LeaderboardRoute: typeof LeaderboardRoute
+  MyLearningRoute: typeof MyLearningRoute
+  ProgressRoute: typeof ProgressRoute
+  ModulesModuleIdPlayerRoute: typeof ModulesModuleIdPlayerRoute
+  ModulesModuleIdIndexRoute: typeof ModulesModuleIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +130,59 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/certificates': {
+      id: '/certificates'
+      path: '/certificates'
+      fullPath: '/certificates'
+      preLoaderRoute: typeof CertificatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/leaderboard': {
+      id: '/leaderboard'
+      path: '/leaderboard'
+      fullPath: '/leaderboard'
+      preLoaderRoute: typeof LeaderboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/my-learning': {
+      id: '/my-learning'
+      path: '/my-learning'
+      fullPath: '/my-learning'
+      preLoaderRoute: typeof MyLearningRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/progress': {
+      id: '/progress'
+      path: '/progress'
+      fullPath: '/progress'
+      preLoaderRoute: typeof ProgressRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/modules/$moduleId/': {
+      id: '/modules/$moduleId/'
+      path: '/modules/$moduleId'
+      fullPath: '/modules/$moduleId/'
+      preLoaderRoute: typeof ModulesModuleIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/modules/$moduleId/player': {
+      id: '/modules/$moduleId/player'
+      path: '/modules/$moduleId/player'
+      fullPath: '/modules/$moduleId/player'
+      preLoaderRoute: typeof ModulesModuleIdPlayerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CertificatesRoute: CertificatesRoute,
+  LeaderboardRoute: LeaderboardRoute,
+  MyLearningRoute: MyLearningRoute,
+  ProgressRoute: ProgressRoute,
+  ModulesModuleIdPlayerRoute: ModulesModuleIdPlayerRoute,
+  ModulesModuleIdIndexRoute: ModulesModuleIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
