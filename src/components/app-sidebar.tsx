@@ -45,7 +45,7 @@ export function AppSidebar() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const { mode } = useViewMode();
 
-  const trainer = mode === "trainer";
+  const trainer = mode === "trainer" || pathname.startsWith("/trainer");
   const items = trainer ? trainerItems : learnerItems;
 
   return (
