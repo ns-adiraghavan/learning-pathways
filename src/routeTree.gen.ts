@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CertificatesRouteImport } from './routes/certificates'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as MyLearningRouteImport } from './routes/my-learning'
 import { Route as ProgressRouteImport } from './routes/progress'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
@@ -41,6 +42,11 @@ const CertificatesRoute = CertificatesRouteImport.update({
 const LeaderboardRoute = LeaderboardRouteImport.update({
   id: '/leaderboard',
   path: '/leaderboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MyLearningRoute = MyLearningRouteImport.update({
@@ -124,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/certificates': typeof CertificatesRoute
   '/leaderboard': typeof LeaderboardRoute
+  '/login': typeof LoginRoute
   '/my-learning': typeof MyLearningRoute
   '/progress': typeof ProgressRoute
   '/admin/assignments': typeof AdminAssignmentsRoute
@@ -144,6 +151,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/certificates': typeof CertificatesRoute
   '/leaderboard': typeof LeaderboardRoute
+  '/login': typeof LoginRoute
   '/my-learning': typeof MyLearningRoute
   '/progress': typeof ProgressRoute
   '/admin/assignments': typeof AdminAssignmentsRoute
@@ -165,6 +173,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/certificates': typeof CertificatesRoute
   '/leaderboard': typeof LeaderboardRoute
+  '/login': typeof LoginRoute
   '/my-learning': typeof MyLearningRoute
   '/progress': typeof ProgressRoute
   '/admin/assignments': typeof AdminAssignmentsRoute
@@ -187,6 +196,7 @@ export interface FileRouteTypes {
     | '/'
     | '/certificates'
     | '/leaderboard'
+    | '/login'
     | '/my-learning'
     | '/progress'
     | '/admin/assignments'
@@ -207,6 +217,7 @@ export interface FileRouteTypes {
     | '/'
     | '/certificates'
     | '/leaderboard'
+    | '/login'
     | '/my-learning'
     | '/progress'
     | '/admin/assignments'
@@ -227,6 +238,7 @@ export interface FileRouteTypes {
     | '/'
     | '/certificates'
     | '/leaderboard'
+    | '/login'
     | '/my-learning'
     | '/progress'
     | '/admin/assignments'
@@ -248,6 +260,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CertificatesRoute: typeof CertificatesRoute
   LeaderboardRoute: typeof LeaderboardRoute
+  LoginRoute: typeof LoginRoute
   MyLearningRoute: typeof MyLearningRoute
   ProgressRoute: typeof ProgressRoute
   AdminAssignmentsRoute: typeof AdminAssignmentsRoute
@@ -286,6 +299,13 @@ declare module '@tanstack/react-router' {
       path: '/leaderboard'
       fullPath: '/leaderboard'
       preLoaderRoute: typeof LeaderboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/my-learning': {
@@ -400,6 +420,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CertificatesRoute: CertificatesRoute,
   LeaderboardRoute: LeaderboardRoute,
+  LoginRoute: LoginRoute,
   MyLearningRoute: MyLearningRoute,
   ProgressRoute: ProgressRoute,
   AdminAssignmentsRoute: AdminAssignmentsRoute,
