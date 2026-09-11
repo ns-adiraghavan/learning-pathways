@@ -313,3 +313,89 @@ export interface QuizResultRow {
   attempts: number;
   outlier: boolean;
 }
+
+/* ============================================================
+ * ADMIN domain — four jobs only:
+ * users & progress, assignments, reports, light customization.
+ * ============================================================ */
+
+export type AdminRole = "Learner" | "Trainer" | "Administrator";
+
+export interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
+  team: string;
+  department: string;
+  location: string;
+  role: AdminRole;
+  assignedCount: number;
+  completeCount: number;
+  lastActive: string;
+  provisioned: "auto" | "manual";
+}
+
+export interface UserProgressItem {
+  moduleId: string;
+  title: string;
+  status: EnrolledStatus;
+  progressPct: number;
+  dueDate: string;
+}
+
+export type AssigneeKind = "user" | "team";
+
+export interface ModuleAssignment {
+  id: string;
+  kind: AssigneeKind;
+  name: string;
+  detail: string;
+  headcount: number;
+  dueDate: string;
+  status: EnrolledStatus;
+  progressPct: number;
+}
+
+export interface AssignableModule {
+  id: string;
+  title: string;
+  programTitle: string;
+  assignedCount: number;
+}
+
+export type ReportId = "completion-ratio" | "time-spent" | "leaderboard-points" | "audit-log";
+
+export interface ReportSummary {
+  id: ReportId;
+  name: string;
+  description: string;
+  lastRun: string;
+}
+
+export interface ReportDetail {
+  id: ReportId;
+  name: string;
+  description: string;
+  columns: { key: string; label: string; numeric?: boolean }[];
+  rows: Record<string, string | number>[];
+}
+
+export interface ReportFilters {
+  period: "30d" | "90d" | "year" | "all";
+  department: string;
+  location: string;
+}
+
+export interface PlatformBanner {
+  id: string;
+  title: string;
+  audience: string;
+  active: boolean;
+}
+
+export interface PlatformSettings {
+  terminology: { moduleLabel: string; programLabel: string; skillLabel: string; learnerLabel: string };
+  banners: PlatformBanner[];
+  notifications: { id: string; label: string; enabled: boolean }[];
+  defaultCertificateTemplateId: string | null;
+}
