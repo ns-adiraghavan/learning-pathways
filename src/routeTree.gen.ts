@@ -14,6 +14,8 @@ import { Route as CertificatesRouteImport } from './routes/certificates'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as MyLearningRouteImport } from './routes/my-learning'
 import { Route as ProgressRouteImport } from './routes/progress'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as TrainerQuizzesRouteImport } from './routes/trainer/quizzes'
 import { Route as ModulesModuleIdIndexRouteImport } from './routes/modules/$moduleId/index'
 import { Route as ModulesModuleIdPlayerRouteImport } from './routes/modules/$moduleId/player'
@@ -45,6 +47,16 @@ const MyLearningRoute = MyLearningRouteImport.update({
 const ProgressRoute = ProgressRouteImport.update({
   id: '/progress',
   path: '/progress',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/admin/users',
+  path: '/admin/users',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TrainerQuizzesRoute = TrainerQuizzesRouteImport.update({
@@ -90,7 +102,9 @@ export interface FileRoutesByFullPath {
   '/leaderboard': typeof LeaderboardRoute
   '/my-learning': typeof MyLearningRoute
   '/progress': typeof ProgressRoute
+  '/admin/users': typeof AdminUsersRoute
   '/trainer/quizzes': typeof TrainerQuizzesRoute
+  '/admin/': typeof AdminIndexRoute
   '/modules/$moduleId/player': typeof ModulesModuleIdPlayerRoute
   '/trainer/modules/$moduleId': typeof TrainerModulesModuleIdRoute
   '/trainer/programs/$programId': typeof TrainerProgramsProgramIdRoute
@@ -104,7 +118,9 @@ export interface FileRoutesByTo {
   '/leaderboard': typeof LeaderboardRoute
   '/my-learning': typeof MyLearningRoute
   '/progress': typeof ProgressRoute
+  '/admin/users': typeof AdminUsersRoute
   '/trainer/quizzes': typeof TrainerQuizzesRoute
+  '/admin': typeof AdminIndexRoute
   '/modules/$moduleId/player': typeof ModulesModuleIdPlayerRoute
   '/trainer/modules/$moduleId': typeof TrainerModulesModuleIdRoute
   '/trainer/programs/$programId': typeof TrainerProgramsProgramIdRoute
@@ -119,7 +135,9 @@ export interface FileRoutesById {
   '/leaderboard': typeof LeaderboardRoute
   '/my-learning': typeof MyLearningRoute
   '/progress': typeof ProgressRoute
+  '/admin/users': typeof AdminUsersRoute
   '/trainer/quizzes': typeof TrainerQuizzesRoute
+  '/admin/': typeof AdminIndexRoute
   '/modules/$moduleId/player': typeof ModulesModuleIdPlayerRoute
   '/trainer/modules/$moduleId': typeof TrainerModulesModuleIdRoute
   '/trainer/programs/$programId': typeof TrainerProgramsProgramIdRoute
@@ -135,7 +153,9 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/my-learning'
     | '/progress'
+    | '/admin/users'
     | '/trainer/quizzes'
+    | '/admin/'
     | '/modules/$moduleId/player'
     | '/trainer/modules/$moduleId'
     | '/trainer/programs/$programId'
@@ -149,7 +169,9 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/my-learning'
     | '/progress'
+    | '/admin/users'
     | '/trainer/quizzes'
+    | '/admin'
     | '/modules/$moduleId/player'
     | '/trainer/modules/$moduleId'
     | '/trainer/programs/$programId'
@@ -163,7 +185,9 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/my-learning'
     | '/progress'
+    | '/admin/users'
     | '/trainer/quizzes'
+    | '/admin/'
     | '/modules/$moduleId/player'
     | '/trainer/modules/$moduleId'
     | '/trainer/programs/$programId'
@@ -178,7 +202,9 @@ export interface RootRouteChildren {
   LeaderboardRoute: typeof LeaderboardRoute
   MyLearningRoute: typeof MyLearningRoute
   ProgressRoute: typeof ProgressRoute
+  AdminUsersRoute: typeof AdminUsersRoute
   TrainerQuizzesRoute: typeof TrainerQuizzesRoute
+  AdminIndexRoute: typeof AdminIndexRoute
   ModulesModuleIdPlayerRoute: typeof ModulesModuleIdPlayerRoute
   TrainerModulesModuleIdRoute: typeof TrainerModulesModuleIdRoute
   TrainerProgramsProgramIdRoute: typeof TrainerProgramsProgramIdRoute
@@ -222,6 +248,20 @@ declare module '@tanstack/react-router' {
       path: '/progress'
       fullPath: '/progress'
       preLoaderRoute: typeof ProgressRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/admin/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/trainer/quizzes': {
@@ -282,7 +322,9 @@ const rootRouteChildren: RootRouteChildren = {
   LeaderboardRoute: LeaderboardRoute,
   MyLearningRoute: MyLearningRoute,
   ProgressRoute: ProgressRoute,
+  AdminUsersRoute: AdminUsersRoute,
   TrainerQuizzesRoute: TrainerQuizzesRoute,
+  AdminIndexRoute: AdminIndexRoute,
   ModulesModuleIdPlayerRoute: ModulesModuleIdPlayerRoute,
   TrainerModulesModuleIdRoute: TrainerModulesModuleIdRoute,
   TrainerProgramsProgramIdRoute: TrainerProgramsProgramIdRoute,
