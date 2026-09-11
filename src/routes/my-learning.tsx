@@ -7,7 +7,7 @@ import { formatDate } from "@/lib/format";
 import { CategoryBadge, StatusDot } from "@/components/lessons/badges";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { DoodlePanel } from "@/components/doodle-field";
-import { CountUp } from "@/components/lessons/count-up";
+import { useCountUp } from "@/components/lessons/count-up";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { PageFade, ShimmerBlock, Stagger, StaggerItem } from "@/components/motion/motion";
@@ -43,10 +43,11 @@ function Tile({
   tint: string;
   suffix?: string;
 }) {
+  const shown = useCountUp(value, 700);
   return (
     <div className="soft-tile p-4" style={{ ["--tile-tint" as string]: tint }}>
       <p className="tnum text-[28px] leading-none font-[590]" style={{ color: tint }}>
-        <CountUp value={value} />
+        {shown}
         {suffix}
       </p>
       <p className="text-[11px] tracking-[0.1em] mt-2 uppercase text-muted-foreground">
