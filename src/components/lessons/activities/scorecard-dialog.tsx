@@ -50,17 +50,18 @@ export function ScorecardDialog({
           >
             {result.passed ? "PASSED" : "FAILED"}
           </span>
-          <ProgressRing
-            value={shown}
-            size={116}
-            stroke={7}
-            showLabel={false}
-            color={
-              result.passed ? "var(--color-status-complete)" : "var(--color-status-overdue)"
-            }
-            className="mb-4"
-          />
-          <p className="tnum -mt-[86px] mb-[52px] text-2xl font-[590]">{shown}%</p>
+          <div className="relative mb-4 inline-flex items-center justify-center">
+            <ProgressRing
+              value={shown}
+              size={116}
+              stroke={7}
+              showLabel={false}
+              color={
+                result.passed ? "var(--color-status-complete)" : "var(--color-status-overdue)"
+              }
+            />
+            <span className="tnum absolute text-2xl font-[590]">{shown}%</span>
+          </div>
           <p className="text-sm text-muted-foreground">
             Pass mark {result.passMarkPct}% · {result.totalQuestions} questions
           </p>
