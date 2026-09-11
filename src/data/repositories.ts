@@ -13,6 +13,18 @@ import {
   notifications as mockNotifications,
   pendingActions as mockPendingActions,
 } from "./mocks";
+import {
+  builderQuestions as mockBuilderQuestions,
+  certificateTemplates as mockCertificateTemplates,
+  draftFor,
+  feedbackSurveys as mockFeedbackSurveys,
+  learnersFor,
+  programs as mockPrograms,
+  quizResultsFor,
+  quizTemplates as mockQuizTemplates,
+  skills as mockSkills,
+  trainerModules as mockTrainerModules,
+} from "./trainer-mocks";
 import type {
   Certificate,
   DifficultyBreakup,
@@ -26,6 +38,17 @@ import type {
   QuizActivity,
   QuizResult,
   User,
+  BuilderQuestion,
+  CertificateTemplate,
+  EnrolledLearner,
+  FeedbackSurvey,
+  ModuleAnalytics,
+  ModuleDraft,
+  Program,
+  QuizResultRow,
+  QuizTemplate,
+  Skill,
+  TrainerModuleSummary,
 } from "./types";
 
 function delay<T>(value: T): Promise<T> {
@@ -202,4 +225,124 @@ export async function searchModules(query: string): Promise<LearningModule[]> {
       (m) => m.title.toLowerCase().includes(q) || m.description.toLowerCase().includes(q),
     ),
   );
+}
+
+/* ============================================================
+ * TRAINER repositories — Program → Skill → Module.
+ * ============================================================ */
+
+// CONNECT: replace with real API call to GET /api/trainer/programs
+export async function getPrograms(): Promise<Program[]> {
+  if (EMPTY_STATE) return delay([]);
+  return delay(mockPrograms);
+}
+
+// CONNECT: replace with real API call to GET /api/trainer/programs/:id
+export async function getProgram(
+  id: string,
+): Promise<{ program: Program; skills: Skill[] } | null> {
+  if (EMPTY_STATE) return delay(null);
+  const program = mockPrograms.find((p) => p.id === id);
+  if (!program) return delay(null);
+  return delay({ program, skills: mockSkills.filter((s) => s.programId === id) });
+}
+
+// CONNECT: replace with real API call to GET /api/trainer/skills/:id
+export async function getSkill(
+  id: string,
+): Promise<{ skill: Skill; modules: TrainerModuleSummary[] } | null> {
+  if (EMPTY_STATE) return delay(null);
+  const skill = mockSkills.find((s) => s.id === id);
+  if (!skill) return delay(null);
+  return delay({ skill, modules: mockTrainerModules.filter((m) => m.skillId === id) });
+}
+
+/** In-session draft overrides so the editor feels live before a real API exists. */
+const draftStore = new Map<string, ModuleDraft>();
+
+// CONNECT: replace with real API call to GET /api/trainer/modules/:id/draft
+export async function getModuleDraft(id: string): Promise<ModuleDraft | null> {
+  if (EMPTY_STATE) return delay(null);
+  const stored = draftStore.get(id);
+  if (stored) return delay(stored);
+  const summary = mockTrainerModules.find((m) => m.id === id);
+  return delay(summary ? draftFor(summary) : null);
+}
+
+// CONNECT: replace with real API call to PUT /api/trainer/modules/:id/draft
+export async function saveModuleDraft(draft: ModuleDraft): Promise<ModuleDraft> {
+  draftStore.set(draft.id, draft);
+  return delay(draft);
+}
+
+// CONNECT: replace with real API call to GET /api/trainer/modules/:id/learners
+export async function getEnrolledLearners(moduleId: string): Promise<EnrolledLearner[]> {
+  if (EMPTY_STATE) return delay([]);
+  return delay(learnersFor(moduleId));
+}
+
+// CONNECT: replace with real API call to GET /api/trainer/modules/:id/analytics
+export async function getModuleAnalytics(moduleId: string): Promise<ModuleAnalytics> {
+  if (EMPTY_STATE) {
+    return delay({
+      enrolled: 0,
+      completionPct: 0,
+      passRatePct: 0,
+      avgTimeMins: 0,
+      notStarted: 0,
+      inProgress: 0,
+      complete: 0,
+    });
+  }
+  const learners = learnersFor(moduleId);
+  const complete = learners.filter((l) => l.status === "complete").length;
+  const inProgress = learners.filter((l) => l.status === "in-progress").length;
+  return delay({
+    enrolled: learners.length,
+    completionPct: Math.round((complete / learners.length) * 100),
+    passRatePct: 82,
+    avgTimeMins: 34,
+    notStarted: learners.length - complete - inProgress,
+    inProgress,
+    complete,
+  });
+}
+
+// CONNECT: replace with real API call to POST /api/trainer/modules/:id/learners/bulk
+export async function bulkLearnerAction(
+  moduleId: string,
+  learnerIds: string[],
+  action: "remind" | "unenroll" | "change-due-date",
+): Promise<{ affected: number; action: string }> {
+  return delay({ affected: learnerIds.length, action });
+}
+
+// CONNECT: replace with real API call to GET /api/trainer/quiz-templates
+export async function getQuizTemplates(): Promise<QuizTemplate[]> {
+  if (EMPTY_STATE) return delay([]);
+  return delay(mockQuizTemplates);
+}
+
+// CONNECT: replace with real API call to GET /api/trainer/certificate-templates
+export async function getCertificateTemplates(): Promise<CertificateTemplate[]> {
+  if (EMPTY_STATE) return delay([]);
+  return delay(mockCertificateTemplates);
+}
+
+// CONNECT: replace with real API call to GET /api/trainer/feedback-surveys
+export async function getFeedbackSurveys(): Promise<FeedbackSurvey[]> {
+  if (EMPTY_STATE) return delay([]);
+  return delay(mockFeedbackSurveys);
+}
+
+// CONNECT: replace with real API call to GET /api/trainer/quiz-templates/:id/questions
+export async function getTemplateQuestions(templateId: string): Promise<BuilderQuestion[]> {
+  if (EMPTY_STATE) return delay([]);
+  return delay(mockBuilderQuestions.map((q) => ({ ...q, id: `${templateId}-${q.id}` })));
+}
+
+// CONNECT: replace with real API call to GET /api/trainer/quizzes/:id/results
+export async function getQuizResults(quizId: string): Promise<QuizResultRow[]> {
+  if (EMPTY_STATE) return delay([]);
+  return delay(quizResultsFor(quizId));
 }

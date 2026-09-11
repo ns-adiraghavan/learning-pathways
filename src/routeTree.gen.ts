@@ -14,8 +14,13 @@ import { Route as CertificatesRouteImport } from './routes/certificates'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as MyLearningRouteImport } from './routes/my-learning'
 import { Route as ProgressRouteImport } from './routes/progress'
+import { Route as TrainerQuizzesRouteImport } from './routes/trainer/quizzes'
 import { Route as ModulesModuleIdIndexRouteImport } from './routes/modules/$moduleId/index'
 import { Route as ModulesModuleIdPlayerRouteImport } from './routes/modules/$moduleId/player'
+import { Route as TrainerModulesModuleIdRouteImport } from './routes/trainer/modules.$moduleId'
+import { Route as TrainerProgramsIndexRouteImport } from './routes/trainer/programs.index'
+import { Route as TrainerProgramsProgramIdRouteImport } from './routes/trainer/programs.$programId'
+import { Route as TrainerSkillsSkillIdRouteImport } from './routes/trainer/skills.$skillId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -42,6 +47,11 @@ const ProgressRoute = ProgressRouteImport.update({
   path: '/progress',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TrainerQuizzesRoute = TrainerQuizzesRouteImport.update({
+  id: '/trainer/quizzes',
+  path: '/trainer/quizzes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ModulesModuleIdIndexRoute = ModulesModuleIdIndexRouteImport.update({
   id: '/modules/$moduleId/',
   path: '/modules/$moduleId/',
@@ -52,6 +62,27 @@ const ModulesModuleIdPlayerRoute = ModulesModuleIdPlayerRouteImport.update({
   path: '/modules/$moduleId/player',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TrainerModulesModuleIdRoute = TrainerModulesModuleIdRouteImport.update({
+  id: '/trainer/modules/$moduleId',
+  path: '/trainer/modules/$moduleId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrainerProgramsIndexRoute = TrainerProgramsIndexRouteImport.update({
+  id: '/trainer/programs/',
+  path: '/trainer/programs/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrainerProgramsProgramIdRoute =
+  TrainerProgramsProgramIdRouteImport.update({
+    id: '/trainer/programs/$programId',
+    path: '/trainer/programs/$programId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const TrainerSkillsSkillIdRoute = TrainerSkillsSkillIdRouteImport.update({
+  id: '/trainer/skills/$skillId',
+  path: '/trainer/skills/$skillId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -59,8 +90,13 @@ export interface FileRoutesByFullPath {
   '/leaderboard': typeof LeaderboardRoute
   '/my-learning': typeof MyLearningRoute
   '/progress': typeof ProgressRoute
+  '/trainer/quizzes': typeof TrainerQuizzesRoute
   '/modules/$moduleId/player': typeof ModulesModuleIdPlayerRoute
+  '/trainer/modules/$moduleId': typeof TrainerModulesModuleIdRoute
+  '/trainer/programs/$programId': typeof TrainerProgramsProgramIdRoute
+  '/trainer/skills/$skillId': typeof TrainerSkillsSkillIdRoute
   '/modules/$moduleId/': typeof ModulesModuleIdIndexRoute
+  '/trainer/programs/': typeof TrainerProgramsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -68,8 +104,13 @@ export interface FileRoutesByTo {
   '/leaderboard': typeof LeaderboardRoute
   '/my-learning': typeof MyLearningRoute
   '/progress': typeof ProgressRoute
+  '/trainer/quizzes': typeof TrainerQuizzesRoute
   '/modules/$moduleId/player': typeof ModulesModuleIdPlayerRoute
+  '/trainer/modules/$moduleId': typeof TrainerModulesModuleIdRoute
+  '/trainer/programs/$programId': typeof TrainerProgramsProgramIdRoute
+  '/trainer/skills/$skillId': typeof TrainerSkillsSkillIdRoute
   '/modules/$moduleId': typeof ModulesModuleIdIndexRoute
+  '/trainer/programs': typeof TrainerProgramsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -78,8 +119,13 @@ export interface FileRoutesById {
   '/leaderboard': typeof LeaderboardRoute
   '/my-learning': typeof MyLearningRoute
   '/progress': typeof ProgressRoute
+  '/trainer/quizzes': typeof TrainerQuizzesRoute
   '/modules/$moduleId/player': typeof ModulesModuleIdPlayerRoute
+  '/trainer/modules/$moduleId': typeof TrainerModulesModuleIdRoute
+  '/trainer/programs/$programId': typeof TrainerProgramsProgramIdRoute
+  '/trainer/skills/$skillId': typeof TrainerSkillsSkillIdRoute
   '/modules/$moduleId/': typeof ModulesModuleIdIndexRoute
+  '/trainer/programs/': typeof TrainerProgramsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -89,8 +135,13 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/my-learning'
     | '/progress'
+    | '/trainer/quizzes'
     | '/modules/$moduleId/player'
+    | '/trainer/modules/$moduleId'
+    | '/trainer/programs/$programId'
+    | '/trainer/skills/$skillId'
     | '/modules/$moduleId/'
+    | '/trainer/programs/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -98,8 +149,13 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/my-learning'
     | '/progress'
+    | '/trainer/quizzes'
     | '/modules/$moduleId/player'
+    | '/trainer/modules/$moduleId'
+    | '/trainer/programs/$programId'
+    | '/trainer/skills/$skillId'
     | '/modules/$moduleId'
+    | '/trainer/programs'
   id:
     | '__root__'
     | '/'
@@ -107,8 +163,13 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/my-learning'
     | '/progress'
+    | '/trainer/quizzes'
     | '/modules/$moduleId/player'
+    | '/trainer/modules/$moduleId'
+    | '/trainer/programs/$programId'
+    | '/trainer/skills/$skillId'
     | '/modules/$moduleId/'
+    | '/trainer/programs/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -117,8 +178,13 @@ export interface RootRouteChildren {
   LeaderboardRoute: typeof LeaderboardRoute
   MyLearningRoute: typeof MyLearningRoute
   ProgressRoute: typeof ProgressRoute
+  TrainerQuizzesRoute: typeof TrainerQuizzesRoute
   ModulesModuleIdPlayerRoute: typeof ModulesModuleIdPlayerRoute
+  TrainerModulesModuleIdRoute: typeof TrainerModulesModuleIdRoute
+  TrainerProgramsProgramIdRoute: typeof TrainerProgramsProgramIdRoute
+  TrainerSkillsSkillIdRoute: typeof TrainerSkillsSkillIdRoute
   ModulesModuleIdIndexRoute: typeof ModulesModuleIdIndexRoute
+  TrainerProgramsIndexRoute: typeof TrainerProgramsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -158,6 +224,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProgressRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/trainer/quizzes': {
+      id: '/trainer/quizzes'
+      path: '/trainer/quizzes'
+      fullPath: '/trainer/quizzes'
+      preLoaderRoute: typeof TrainerQuizzesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/modules/$moduleId/': {
       id: '/modules/$moduleId/'
       path: '/modules/$moduleId'
@@ -172,6 +245,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ModulesModuleIdPlayerRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/trainer/modules/$moduleId': {
+      id: '/trainer/modules/$moduleId'
+      path: '/trainer/modules/$moduleId'
+      fullPath: '/trainer/modules/$moduleId'
+      preLoaderRoute: typeof TrainerModulesModuleIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trainer/programs/': {
+      id: '/trainer/programs/'
+      path: '/trainer/programs'
+      fullPath: '/trainer/programs/'
+      preLoaderRoute: typeof TrainerProgramsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trainer/programs/$programId': {
+      id: '/trainer/programs/$programId'
+      path: '/trainer/programs/$programId'
+      fullPath: '/trainer/programs/$programId'
+      preLoaderRoute: typeof TrainerProgramsProgramIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trainer/skills/$skillId': {
+      id: '/trainer/skills/$skillId'
+      path: '/trainer/skills/$skillId'
+      fullPath: '/trainer/skills/$skillId'
+      preLoaderRoute: typeof TrainerSkillsSkillIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -181,8 +282,13 @@ const rootRouteChildren: RootRouteChildren = {
   LeaderboardRoute: LeaderboardRoute,
   MyLearningRoute: MyLearningRoute,
   ProgressRoute: ProgressRoute,
+  TrainerQuizzesRoute: TrainerQuizzesRoute,
   ModulesModuleIdPlayerRoute: ModulesModuleIdPlayerRoute,
+  TrainerModulesModuleIdRoute: TrainerModulesModuleIdRoute,
+  TrainerProgramsProgramIdRoute: TrainerProgramsProgramIdRoute,
+  TrainerSkillsSkillIdRoute: TrainerSkillsSkillIdRoute,
   ModulesModuleIdIndexRoute: ModulesModuleIdIndexRoute,
+  TrainerProgramsIndexRoute: TrainerProgramsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

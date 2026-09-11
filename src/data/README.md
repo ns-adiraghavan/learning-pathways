@@ -38,3 +38,38 @@ body below with a `fetch` call — every call site already awaits a Promise.
 - `orderLocked` on a module tells the player whether steps may be skipped.
 - While mocked, `completeActivity` keeps progress in an in-memory map so the
   player updates live within a session. Delete that map when the API lands.
+
+## Trainer functions
+
+Trainer demo records live in `trainer-mocks.ts`; types are in the TRAINER section
+of `types.ts`. Content is organised **Program → Skill → Module**. Every function
+below honours `EMPTY_STATE`.
+
+| Function | Returns (see `types.ts`) | Endpoint marker |
+| --- | --- | --- |
+| `getPrograms()` | `Program[]` | `GET /api/trainer/programs` |
+| `getProgram(id)` | `{ program: Program; skills: Skill[] } \| null` | `GET /api/trainer/programs/:id` |
+| `getSkill(id)` | `{ skill: Skill; modules: TrainerModuleSummary[] } \| null` | `GET /api/trainer/skills/:id` |
+| `getModuleDraft(id)` | `ModuleDraft \| null` | `GET /api/trainer/modules/:id/draft` |
+| `saveModuleDraft(draft)` | `ModuleDraft` | `PUT /api/trainer/modules/:id/draft` |
+| `getEnrolledLearners(moduleId)` | `EnrolledLearner[]` | `GET /api/trainer/modules/:id/learners` |
+| `getModuleAnalytics(moduleId)` | `ModuleAnalytics` | `GET /api/trainer/modules/:id/analytics` |
+| `bulkLearnerAction(moduleId, learnerIds, action)` | `{ affected, action }` | `POST /api/trainer/modules/:id/learners/bulk` |
+| `getQuizTemplates()` | `QuizTemplate[]` | `GET /api/trainer/quiz-templates` |
+| `getCertificateTemplates()` | `CertificateTemplate[]` | `GET /api/trainer/certificate-templates` |
+| `getFeedbackSurveys()` | `FeedbackSurvey[]` | `GET /api/trainer/feedback-surveys` |
+| `getTemplateQuestions(templateId)` | `BuilderQuestion[]` | `GET /api/trainer/quiz-templates/:id/questions` |
+| `getQuizResults(quizId)` | `QuizResultRow[]` | `GET /api/trainer/quizzes/:id/results` |
+
+### Notes for the backend team
+
+- `ModuleDraft.activities` is the authored order; the learner player consumes the
+  same order. `draft: true` on an activity means it is hidden from learners.
+- `ModuleSettings.dueMode` is either `fixed` (`dueDate`) or `relative`
+  (`dueWithinDays` after the learner joins) — this drives mandatory vs onboarding
+  due logic.
+- `bulkLearnerAction` covers `remind | unenroll | change-due-date`.
+- Certificate templates and quiz templates are **pre-built assets**; the trainer
+  only picks one by id (`certificateTemplateId`, `QuizTemplate.id`).
+- While mocked, `saveModuleDraft` keeps drafts in an in-memory map. Delete that
+  map when the API lands.
