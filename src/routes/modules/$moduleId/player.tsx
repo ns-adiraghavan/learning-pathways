@@ -84,8 +84,7 @@ function PlayerPage() {
 
   const activities = module.activities;
   const index = Math.min(Math.max(0, step), activities.length - 1);
-  const activity = activities[index];
-  if (!activity) return null;
+  const activity = activities[index]!;
   const doneIds = progress?.completedActivityIds ?? [];
   const pct = progress?.progressPct ?? module.progressPct;
 

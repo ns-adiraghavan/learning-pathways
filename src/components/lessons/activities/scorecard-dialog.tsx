@@ -34,7 +34,7 @@ export function ScorecardDialog({
 
   return (
     <Dialog open={open}>
-      <DialogContent showCloseButton={false} className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md">
         <DialogTitle className="sr-only">Quiz scorecard</DialogTitle>
         <div className="flex flex-col items-center text-center">
           <span
