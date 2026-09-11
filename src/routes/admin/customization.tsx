@@ -196,7 +196,9 @@ function CustomizationPage() {
           </p>
           <div className="mt-4 max-w-sm">
             <Select
-              value={settings.defaultCertificateTemplateId ?? undefined}
+              {...(settings.defaultCertificateTemplateId
+                ? { value: settings.defaultCertificateTemplateId }
+                : {})}
               onValueChange={(v) => setSettings({ ...settings, defaultCertificateTemplateId: v })}
             >
               <SelectTrigger aria-label="Default certificate template">

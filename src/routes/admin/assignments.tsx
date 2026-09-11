@@ -113,7 +113,7 @@ function AssignmentsPage() {
           {modulesPending ? (
             <Skeleton className="h-9 rounded-md" />
           ) : (
-            <Select value={moduleId ?? undefined} onValueChange={setModuleId}>
+            <Select {...(moduleId ? { value: moduleId } : {})} onValueChange={setModuleId}>
               <SelectTrigger id="module" className="w-full">
                 <SelectValue placeholder="Choose a module" />
               </SelectTrigger>
