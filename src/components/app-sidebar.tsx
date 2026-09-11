@@ -73,8 +73,8 @@ export function AppSidebar() {
       style={{ ["--view-accent" as string]: accent }}
     >
       <SidebarHeader className="h-14 justify-center border-b border-sidebar-border px-3">
-        <Link to="/home" className="overflow-hidden" aria-label="Lessons by Netscribes">
-          <BrandLockup markOnly={collapsed} />
+        <Link to="/home" className="overflow-hidden" aria-label="NS Lessons by Netscribes">
+          <BrandLockup markOnly={collapsed} size="sm" />
         </Link>
       </SidebarHeader>
 

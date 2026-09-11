@@ -18,7 +18,7 @@ const TEXT = {
 } as const;
 const DIV_H = { sm: "h-4", md: "h-5", lg: "h-6", xl: "h-8" } as const;
 
-/** The Netscribes mark + the "lessons" wordmark, read as one unit. */
+/** The Netscribes mark + the "NS Lessons" wordmark, read as one unit. */
 export function BrandLockup({ markOnly, size = "md", className }: BrandLockupProps) {
   return (
     <span className={cn("flex min-w-0 items-center gap-2.5", className)}>
@@ -42,7 +42,7 @@ export function BrandLockup({ markOnly, size = "md", className }: BrandLockupPro
   );
 }
 
-/** Standalone "lessons" wordmark — display type, blue body, teal tail. */
+/** Standalone "NS Lessons" wordmark — display type, teal NS + blue Lessons. */
 export function Wordmark({
   size = "md",
   className,
@@ -53,13 +53,13 @@ export function Wordmark({
   return (
     <span
       className={cn(
-        "font-display leading-none font-semibold tracking-[-0.03em] lowercase",
+        "font-display leading-none whitespace-nowrap font-semibold tracking-[-0.03em]",
         TEXT[size],
         className,
       )}
     >
-      <span className="text-brand-blue">lesso</span>
-      <span className="text-primary">ns</span>
+      <span className="text-primary">NS</span>{" "}
+      <span className="text-brand-blue">Lessons</span>
     </span>
   );
 }
