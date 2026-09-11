@@ -103,6 +103,14 @@
   --difficulty-medium: #f59e0b;
   --difficulty-hard: #eb5757;
 
+  --cat-mandatory: #6366f1;
+  --cat-onboarding: #8b5cf6;
+  --cat-team: #0d9488;
+  --cat-bank: #f59e0b;
+
+  --page-gradient-top: #f8f9fa;
+  --page-gradient-bottom: #f2f4f5;
+
   --chart-1: #0d9488;
   --chart-2: #6366f1;
   --chart-3: #8b5cf6;
