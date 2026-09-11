@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { CheckCircle2, Lock, SearchX, X } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 import { completeActivity, getModule, getModuleProgress } from "@/data/repositories";
 import { activityMeta } from "@/lib/format";
@@ -50,6 +51,7 @@ function PlayerPage() {
   });
 
   const [justCompleted, setJustCompleted] = useState(false);
+  const reduce = useReducedMotion();
 
   useEffect(() => {
     if (!justCompleted) return;
@@ -160,7 +162,15 @@ function PlayerPage() {
         })}
       </ol>
 
-      <section key={activity.id} className="animate-step-in mt-6">
+      <AnimatePresence mode="wait" initial={false}>
+      <motion.section
+        key={activity.id}
+        className="mt-6"
+        initial={reduce ? false : { opacity: 0, x: 18 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={reduce ? { opacity: 0 } : { opacity: 0, x: -18 }}
+        transition={{ duration: 0.22, ease: [0.22, 0.61, 0.36, 1] }}
+      >
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <h2 className="text-card-title">{activity.name}</h2>
           {activity.required && <RequiredBadge />}
@@ -191,7 +201,8 @@ function PlayerPage() {
         {activity.type === "quiz" && (
           <QuizActivity activity={activity} onComplete={handleComplete} />
         )}
-      </section>
+      </motion.section>
+      </AnimatePresence>
 
       {allDone && (
         <div className="surface animate-soft-in mt-6 flex flex-wrap items-center justify-between gap-3 p-4">

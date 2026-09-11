@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 
 import type { QuizResult } from "@/data/types";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ export function ScorecardDialog({
   onDone: () => void;
 }) {
   const [shown, setShown] = useState(0);
+  const reduce = useReducedMotion();
 
   useEffect(() => {
     if (!open || !result) return;
@@ -74,9 +76,12 @@ export function ScorecardDialog({
             <span className="text-right">Wrong</span>
             <span className="text-right">Skipped</span>
           </div>
-          {result.breakup.map((b) => (
-            <div
+          {result.breakup.map((b, i) => (
+            <motion.div
               key={b.difficulty}
+              initial={reduce ? false : { opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.12 + i * 0.05, duration: 0.22, ease: [0.22, 0.61, 0.36, 1] }}
               className="tnum grid grid-cols-5 items-center border-b border-border px-3 py-2.5 text-sm last:border-0"
             >
               <span className="col-span-2 flex items-center gap-2">
@@ -86,7 +91,7 @@ export function ScorecardDialog({
               <span className="text-right">{b.right}</span>
               <span className="text-right">{b.wrong}</span>
               <span className="text-right">{b.unanswered}</span>
-            </div>
+            </motion.div>
           ))}
         </div>
 

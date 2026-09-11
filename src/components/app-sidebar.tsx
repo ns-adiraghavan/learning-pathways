@@ -13,8 +13,9 @@ import {
   Users,
 } from "lucide-react";
 
-import logoLight from "@/assets/ns-logo.png.asset.json";
-import logoDark from "@/assets/ns-logo-white.png.asset.json";
+import { motion } from "framer-motion";
+
+import { BrandLockup } from "@/components/brand-lockup";
 import { useViewMode } from "@/hooks/use-view-mode";
 import {
   Sidebar,
@@ -65,12 +66,8 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="h-14 justify-center border-b border-sidebar-border px-3">
-        <Link to="/" className="flex items-center gap-2 overflow-hidden">
-          <img src={logoLight.url} alt="Netscribes" className="h-5 w-auto dark:hidden" />
-          <img src={logoDark.url} alt="Netscribes" className="hidden h-5 w-auto dark:block" />
-          {!collapsed && (
-            <span className="truncate text-[15px] font-[590] tracking-tight">Lessons</span>
-          )}
+        <Link to="/" className="overflow-hidden" aria-label="Lessons by Netscribes">
+          <BrandLockup markOnly={collapsed} />
         </Link>
       </SidebarHeader>
 
@@ -85,7 +82,14 @@ export function AppSidebar() {
                     ? pathname === item.url
                     : pathname.startsWith(item.url);
                 return (
-                  <SidebarMenuItem key={item.title}>
+                  <SidebarMenuItem key={item.title} className="relative">
+                    {active && (
+                      <motion.span
+                        layoutId={`nav-indicator-${groupLabel}`}
+                        transition={{ type: "spring", stiffness: 420, damping: 38 }}
+                        className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full bg-primary"
+                      />
+                    )}
                     <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
                       <Link to={item.url} className="flex items-center gap-2">
                         <item.icon className="size-4" strokeWidth={1.75} />

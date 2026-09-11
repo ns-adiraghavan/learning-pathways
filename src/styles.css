@@ -51,6 +51,11 @@
   --color-difficulty-medium: var(--difficulty-medium);
   --color-difficulty-hard: var(--difficulty-hard);
 
+  --color-cat-mandatory: var(--cat-mandatory);
+  --color-cat-onboarding: var(--cat-onboarding);
+  --color-cat-team: var(--cat-team);
+  --color-cat-bank: var(--cat-bank);
+
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -98,6 +103,14 @@
   --difficulty-medium: #f59e0b;
   --difficulty-hard: #eb5757;
 
+  --cat-mandatory: #6366f1;
+  --cat-onboarding: #8b5cf6;
+  --cat-team: #0d9488;
+  --cat-bank: #f59e0b;
+
+  --page-gradient-top: #f8f9fa;
+  --page-gradient-bottom: #f2f4f5;
+
   --chart-1: #0d9488;
   --chart-2: #6366f1;
   --chart-3: #8b5cf6;
@@ -144,6 +157,14 @@
   --difficulty-medium: #f59e0b;
   --difficulty-hard: #eb5757;
 
+  --cat-mandatory: #818cf8;
+  --cat-onboarding: #a78bfa;
+  --cat-team: #2dd4bf;
+  --cat-bank: #fbbf24;
+
+  --page-gradient-top: #0b0c0d;
+  --page-gradient-bottom: #08090a;
+
   --sidebar: #0f1011;
   --sidebar-foreground: #ffffff;
   --sidebar-primary: #2dd4bf;
@@ -165,6 +186,12 @@
 
   body {
     background-color: var(--color-background);
+    background-image: linear-gradient(
+      to bottom,
+      var(--page-gradient-top),
+      var(--page-gradient-bottom)
+    );
+    background-attachment: fixed;
     color: var(--color-foreground);
     font-size: 15px;
     line-height: 1.6;
@@ -211,13 +238,86 @@
   background-color: var(--color-card);
   border: 1px solid var(--color-border);
   border-radius: 12px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.dark .surface,
+.dark [class~="surface"] {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 @utility card-hover {
-  transition: border-color 180ms ease-out;
+  transition:
+    border-color 200ms ease-out,
+    transform 200ms ease-out,
+    box-shadow 200ms ease-out;
   &:hover {
     border-color: color-mix(in oklab, var(--color-primary) 45%, var(--color-border));
+    transform: translateY(-2px);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.7),
+      0 6px 20px -12px color-mix(in oklab, var(--color-foreground) 40%, transparent);
   }
+}
+
+/* Category tint helpers */
+@utility cat-accent {
+  background: linear-gradient(
+    90deg,
+    var(--cat-tint),
+    color-mix(in oklab, var(--cat-tint) 35%, transparent)
+  );
+}
+
+@utility cat-wash {
+  background-image:
+    radial-gradient(
+      120% 100% at 0% 0%,
+      color-mix(in oklab, var(--cat-tint) 24%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      100% 120% at 100% 100%,
+      color-mix(in oklab, var(--cat-tint) 14%, transparent),
+      transparent 70%
+    );
+}
+
+@keyframes shimmer {
+  from {
+    background-position: -160% 0;
+  }
+  to {
+    background-position: 260% 0;
+  }
+}
+
+@utility shimmer {
+  position: relative;
+  overflow: hidden;
+  background-image: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklab, var(--color-foreground) 6%, transparent),
+    transparent
+  );
+  background-size: 60% 100%;
+  background-repeat: no-repeat;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes dot-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-status-overdue) 55%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-status-overdue) 0%, transparent);
+  }
+}
+
+@utility animate-dot-pulse {
+  animation: dot-pulse 2s ease-out infinite;
 }
 
 @keyframes step-in {
