@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { Bell, LogOut, Moon, Search, Sun, UserCog } from "lucide-react";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -19,10 +20,13 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useTheme } from "@/hooks/use-theme";
+import { useViewMode } from "@/hooks/use-view-mode";
 import { getCurrentUser, getNotifications } from "@/data/repositories";
 
 export function TopBar() {
   const { theme, toggle } = useTheme();
+  const { mode, setViewMode } = useViewMode();
+  const navigate = useNavigate();
   const { data: user } = useQuery({ queryKey: ["current-user"], queryFn: getCurrentUser });
   const { data: notifications = [] } = useQuery({
     queryKey: ["notifications"],
@@ -44,7 +48,7 @@ export function TopBar() {
         <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           type="search"
-          placeholder="Search modules"
+          placeholder={mode === "trainer" ? "Search programs, modules" : "Search modules"}
           aria-label="Search modules"
           className="h-9 rounded-md pl-8"
         />
@@ -111,9 +115,15 @@ export function TopBar() {
             <DropdownMenuSeparator />
             <DropdownMenuItem>Profile</DropdownMenuItem>
             <DropdownMenuItem>Completed Modules</DropdownMenuItem>
-            <DropdownMenuItem disabled>
+            <DropdownMenuItem
+              onSelect={() => {
+                const next = mode === "trainer" ? "learner" : "trainer";
+                setViewMode(next);
+                navigate({ to: next === "trainer" ? "/trainer/programs" : "/" });
+              }}
+            >
               <UserCog className="size-4" />
-              Switch to Trainer/Admin View
+              {mode === "trainer" ? "Switch to Learner View" : "Switch to Trainer View"}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>

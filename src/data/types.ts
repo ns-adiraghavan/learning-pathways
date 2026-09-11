@@ -154,3 +154,162 @@ export interface Notification {
   createdAt: string;
   read: boolean;
 }
+
+/* ============================================================
+ * TRAINER domain
+ * Content is organised Program → Skill → Module.
+ * ============================================================ */
+
+export type ActivityType = Activity["type"];
+
+export type PublishState = "draft" | "published";
+
+export interface Program {
+  id: string;
+  title: string;
+  description: string;
+  owner: string;
+  skillCount: number;
+  moduleCount: number;
+  learnerCount: number;
+  state: PublishState;
+}
+
+export interface Skill {
+  id: string;
+  programId: string;
+  programTitle: string;
+  title: string;
+  description: string;
+  moduleCount: number;
+  learnerCount: number;
+}
+
+/** A module as the trainer sees it inside a skill. */
+export interface TrainerModuleSummary {
+  id: string;
+  skillId: string;
+  title: string;
+  year: number;
+  state: PublishState;
+  activityCount: number;
+  enrolled: number;
+  completionPct: number;
+  updatedOn: string;
+}
+
+export interface DraftActivity {
+  id: string;
+  name: string;
+  type: ActivityType;
+  meta: string;
+  required: boolean;
+  draft: boolean;
+}
+
+export type PushEnrollment = "all-skill" | "audience" | "manual";
+export type SelfEnrollment = "block" | "any" | "criteria";
+export type DueMode = "fixed" | "relative";
+
+export interface ModuleSettings {
+  pushEnrollment: PushEnrollment;
+  targetAudience: string;
+  selfEnrollment: SelfEnrollment;
+  criteria: string;
+  dueMode: DueMode;
+  dueDate: string;
+  dueWithinDays: number;
+  esignature: boolean;
+  tags: string[];
+  keywords: string[];
+  leaderboardPoints: number;
+}
+
+export interface ModuleDraft {
+  id: string;
+  skillId: string;
+  skillTitle: string;
+  programTitle: string;
+  title: string;
+  description: string;
+  posterImage: string;
+  state: PublishState;
+  orderLocked: boolean;
+  certificateTemplateId: string | null;
+  feedbackSurveyId: string | null;
+  activities: DraftActivity[];
+  settings: ModuleSettings;
+}
+
+export type EnrolledStatus = "not-started" | "in-progress" | "complete";
+
+export interface EnrolledLearner {
+  id: string;
+  name: string;
+  email: string;
+  team: string;
+  status: EnrolledStatus;
+  progressPct: number;
+  dueDate: string;
+  lastActivity: string;
+}
+
+export interface ModuleAnalytics {
+  enrolled: number;
+  completionPct: number;
+  passRatePct: number;
+  avgTimeMins: number;
+  notStarted: number;
+  inProgress: number;
+  complete: number;
+}
+
+export interface QuizTemplate {
+  id: string;
+  name: string;
+  description: string;
+  questionCount: number;
+  timeLimitMins: number;
+  mix: Record<Difficulty, number>;
+}
+
+export interface CertificateTemplate {
+  id: string;
+  name: string;
+  description: string;
+  orientation: "landscape" | "portrait";
+  accent: string;
+}
+
+export interface FeedbackSurvey {
+  id: string;
+  name: string;
+  questionCount: number;
+}
+
+export interface BuilderQuestion {
+  id: string;
+  prompt: string;
+  difficulty: Difficulty;
+  options: string[];
+  correctIndex: number;
+  explanation: string;
+}
+
+export interface QuizSettings {
+  shuffle: boolean;
+  passingPct: number;
+  maxReattempts: number;
+  timeLimitMins: number;
+}
+
+export interface QuizResultRow {
+  learnerId: string;
+  name: string;
+  team: string;
+  scorePct: number;
+  passed: boolean;
+  timeTakenMins: number;
+  attempts: number;
+  outlier: boolean;
+}
