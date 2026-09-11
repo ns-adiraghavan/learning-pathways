@@ -157,6 +157,14 @@
   --difficulty-medium: #f59e0b;
   --difficulty-hard: #eb5757;
 
+  --cat-mandatory: #818cf8;
+  --cat-onboarding: #a78bfa;
+  --cat-team: #2dd4bf;
+  --cat-bank: #fbbf24;
+
+  --page-gradient-top: #0b0c0d;
+  --page-gradient-bottom: #08090a;
+
   --sidebar: #0f1011;
   --sidebar-foreground: #ffffff;
   --sidebar-primary: #2dd4bf;
