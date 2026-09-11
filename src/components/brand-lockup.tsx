@@ -1,6 +1,7 @@
-import logoLight from "@/assets/ns-logo.png.asset.json";
-import logoDark from "@/assets/ns-logo-white.png.asset.json";
 import { cn } from "@/lib/utils";
+
+const logoLight = "/netscribes-logo.png";
+const logoDark = "/netscribes-logo-white.png";
 
 interface BrandLockupProps {
   /** Hide the divider + wordmark (collapsed sidebar). */
@@ -23,12 +24,12 @@ export function BrandLockup({ markOnly, size = "md", className }: BrandLockupPro
   return (
     <span className={cn("flex min-w-0 items-center gap-2.5", className)}>
       <img
-        src={logoLight.url}
+        src={logoLight}
         alt="Netscribes"
         className={cn(LOGO_H[size], "w-auto shrink-0 dark:hidden")}
       />
       <img
-        src={logoDark.url}
+        src={logoDark}
         alt="Netscribes"
         className={cn("hidden w-auto shrink-0 dark:block", LOGO_H[size])}
       />
