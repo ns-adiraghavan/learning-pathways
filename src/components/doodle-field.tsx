@@ -43,7 +43,7 @@ export function DoodleField() {
           }}
           animate={
             reduce
-              ? undefined
+              ? { y: 0, x: 0, scale: 1 }
               : { y: [0, b.drift, 0], x: [0, b.drift / -2, 0], scale: [1, 1.05, 1] }
           }
           transition={{
