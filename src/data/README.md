@@ -73,3 +73,38 @@ below honours `EMPTY_STATE`.
   only picks one by id (`certificateTemplateId`, `QuizTemplate.id`).
 - While mocked, `saveModuleDraft` keeps drafts in an in-memory map. Delete that
   map when the API lands.
+
+## Admin functions
+
+Admin demo records live in `admin-mocks.ts`; types are in the ADMIN section of
+`types.ts`. The admin surface is deliberately small — users & progress,
+assignments, reports, light customization. Every read honours `EMPTY_STATE`.
+
+| Function | Returns (see `types.ts`) | Endpoint marker |
+| --- | --- | --- |
+| `getUsers(query?)` | `AdminUser[]` | `GET /api/admin/users?q=` |
+| `getUser(id)` | `AdminUser \| null` | `GET /api/admin/users/:id` |
+| `getUserProgress(id)` | `UserProgressItem[]` | `GET /api/admin/users/:id/progress` |
+| `addUser(input)` | `AdminUser` | `POST /api/admin/users` |
+| `getAssignableModules()` | `AssignableModule[]` | `GET /api/admin/modules` |
+| `getModuleAssignments(moduleId)` | `ModuleAssignment[]` | `GET /api/admin/modules/:id/assignments` |
+| `updateAssignment(moduleId, change)` | `ModuleAssignment[]` | `PUT /api/admin/modules/:id/assignments` |
+| `getReports()` | `ReportSummary[]` | `GET /api/admin/reports` |
+| `getReport(id, filters?)` | `ReportDetail \| null` | `GET /api/admin/reports/:id?period=&department=&location=` |
+| `getPlatformSettings()` | `PlatformSettings` | `GET /api/admin/settings` |
+| `savePlatformSettings(settings)` | `PlatformSettings` | `PUT /api/admin/settings` |
+
+### Notes for the backend team
+
+- Users are normally **auto-provisioned** (`provisioned: "auto"`); `addUser` is a
+  manual convenience for exceptions.
+- `updateAssignment` takes one change at a time: `add`, `remove`
+  (`assignmentIds`) or `due-date` (`assignmentIds` + `dueDate`). An assignment
+  row is either a person (`kind: "user"`) or a whole team (`kind: "team"`,
+  `headcount` people).
+- `ReportDetail.columns` drives the results table; `numeric: true` columns are
+  right-aligned with tabular figures. Report ids are fixed:
+  `completion-ratio | time-spent | leaderboard-points | audit-log`.
+- Export and Schedule are UI actions only while mocked.
+- While mocked, assignment edits, added users and saved settings live in
+  in-memory maps. Delete them when the API lands.

@@ -16,9 +16,11 @@ import { Route as MyLearningRouteImport } from './routes/my-learning'
 import { Route as ProgressRouteImport } from './routes/progress'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminAssignmentsRouteImport } from './routes/admin/assignments'
+import { Route as AdminCustomizationRouteImport } from './routes/admin/customization'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as TrainerQuizzesRouteImport } from './routes/trainer/quizzes'
 import { Route as AdminReportsIndexRouteImport } from './routes/admin/reports.index'
+import { Route as AdminReportsReportIdRouteImport } from './routes/admin/reports.$reportId'
 import { Route as ModulesModuleIdIndexRouteImport } from './routes/modules/$moduleId/index'
 import { Route as ModulesModuleIdPlayerRouteImport } from './routes/modules/$moduleId/player'
 import { Route as TrainerModulesModuleIdRouteImport } from './routes/trainer/modules.$moduleId'
@@ -61,6 +63,11 @@ const AdminAssignmentsRoute = AdminAssignmentsRouteImport.update({
   path: '/admin/assignments',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminCustomizationRoute = AdminCustomizationRouteImport.update({
+  id: '/admin/customization',
+  path: '/admin/customization',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/admin/users',
   path: '/admin/users',
@@ -74,6 +81,11 @@ const TrainerQuizzesRoute = TrainerQuizzesRouteImport.update({
 const AdminReportsIndexRoute = AdminReportsIndexRouteImport.update({
   id: '/admin/reports/',
   path: '/admin/reports/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminReportsReportIdRoute = AdminReportsReportIdRouteImport.update({
+  id: '/admin/reports/$reportId',
+  path: '/admin/reports/$reportId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ModulesModuleIdIndexRoute = ModulesModuleIdIndexRouteImport.update({
@@ -115,9 +127,11 @@ export interface FileRoutesByFullPath {
   '/my-learning': typeof MyLearningRoute
   '/progress': typeof ProgressRoute
   '/admin/assignments': typeof AdminAssignmentsRoute
+  '/admin/customization': typeof AdminCustomizationRoute
   '/admin/users': typeof AdminUsersRoute
   '/trainer/quizzes': typeof TrainerQuizzesRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/reports/$reportId': typeof AdminReportsReportIdRoute
   '/modules/$moduleId/player': typeof ModulesModuleIdPlayerRoute
   '/trainer/modules/$moduleId': typeof TrainerModulesModuleIdRoute
   '/trainer/programs/$programId': typeof TrainerProgramsProgramIdRoute
@@ -133,9 +147,11 @@ export interface FileRoutesByTo {
   '/my-learning': typeof MyLearningRoute
   '/progress': typeof ProgressRoute
   '/admin/assignments': typeof AdminAssignmentsRoute
+  '/admin/customization': typeof AdminCustomizationRoute
   '/admin/users': typeof AdminUsersRoute
   '/trainer/quizzes': typeof TrainerQuizzesRoute
   '/admin': typeof AdminIndexRoute
+  '/admin/reports/$reportId': typeof AdminReportsReportIdRoute
   '/modules/$moduleId/player': typeof ModulesModuleIdPlayerRoute
   '/trainer/modules/$moduleId': typeof TrainerModulesModuleIdRoute
   '/trainer/programs/$programId': typeof TrainerProgramsProgramIdRoute
@@ -152,9 +168,11 @@ export interface FileRoutesById {
   '/my-learning': typeof MyLearningRoute
   '/progress': typeof ProgressRoute
   '/admin/assignments': typeof AdminAssignmentsRoute
+  '/admin/customization': typeof AdminCustomizationRoute
   '/admin/users': typeof AdminUsersRoute
   '/trainer/quizzes': typeof TrainerQuizzesRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/reports/$reportId': typeof AdminReportsReportIdRoute
   '/modules/$moduleId/player': typeof ModulesModuleIdPlayerRoute
   '/trainer/modules/$moduleId': typeof TrainerModulesModuleIdRoute
   '/trainer/programs/$programId': typeof TrainerProgramsProgramIdRoute
@@ -172,9 +190,11 @@ export interface FileRouteTypes {
     | '/my-learning'
     | '/progress'
     | '/admin/assignments'
+    | '/admin/customization'
     | '/admin/users'
     | '/trainer/quizzes'
     | '/admin/'
+    | '/admin/reports/$reportId'
     | '/modules/$moduleId/player'
     | '/trainer/modules/$moduleId'
     | '/trainer/programs/$programId'
@@ -190,9 +210,11 @@ export interface FileRouteTypes {
     | '/my-learning'
     | '/progress'
     | '/admin/assignments'
+    | '/admin/customization'
     | '/admin/users'
     | '/trainer/quizzes'
     | '/admin'
+    | '/admin/reports/$reportId'
     | '/modules/$moduleId/player'
     | '/trainer/modules/$moduleId'
     | '/trainer/programs/$programId'
@@ -208,9 +230,11 @@ export interface FileRouteTypes {
     | '/my-learning'
     | '/progress'
     | '/admin/assignments'
+    | '/admin/customization'
     | '/admin/users'
     | '/trainer/quizzes'
     | '/admin/'
+    | '/admin/reports/$reportId'
     | '/modules/$moduleId/player'
     | '/trainer/modules/$moduleId'
     | '/trainer/programs/$programId'
@@ -227,9 +251,11 @@ export interface RootRouteChildren {
   MyLearningRoute: typeof MyLearningRoute
   ProgressRoute: typeof ProgressRoute
   AdminAssignmentsRoute: typeof AdminAssignmentsRoute
+  AdminCustomizationRoute: typeof AdminCustomizationRoute
   AdminUsersRoute: typeof AdminUsersRoute
   TrainerQuizzesRoute: typeof TrainerQuizzesRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminReportsReportIdRoute: typeof AdminReportsReportIdRoute
   ModulesModuleIdPlayerRoute: typeof ModulesModuleIdPlayerRoute
   TrainerModulesModuleIdRoute: typeof TrainerModulesModuleIdRoute
   TrainerProgramsProgramIdRoute: typeof TrainerProgramsProgramIdRoute
@@ -290,6 +316,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAssignmentsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/customization': {
+      id: '/admin/customization'
+      path: '/admin/customization'
+      fullPath: '/admin/customization'
+      preLoaderRoute: typeof AdminCustomizationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/users': {
       id: '/admin/users'
       path: '/admin/users'
@@ -309,6 +342,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/reports'
       fullPath: '/admin/reports/'
       preLoaderRoute: typeof AdminReportsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/reports/$reportId': {
+      id: '/admin/reports/$reportId'
+      path: '/admin/reports/$reportId'
+      fullPath: '/admin/reports/$reportId'
+      preLoaderRoute: typeof AdminReportsReportIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/modules/$moduleId/': {
@@ -363,9 +403,11 @@ const rootRouteChildren: RootRouteChildren = {
   MyLearningRoute: MyLearningRoute,
   ProgressRoute: ProgressRoute,
   AdminAssignmentsRoute: AdminAssignmentsRoute,
+  AdminCustomizationRoute: AdminCustomizationRoute,
   AdminUsersRoute: AdminUsersRoute,
   TrainerQuizzesRoute: TrainerQuizzesRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminReportsReportIdRoute: AdminReportsReportIdRoute,
   ModulesModuleIdPlayerRoute: ModulesModuleIdPlayerRoute,
   TrainerModulesModuleIdRoute: TrainerModulesModuleIdRoute,
   TrainerProgramsProgramIdRoute: TrainerProgramsProgramIdRoute,
