@@ -25,6 +25,15 @@ import {
   skills as mockSkills,
   trainerModules as mockTrainerModules,
 } from "./trainer-mocks";
+import {
+  assignableModules as mockAssignableModules,
+  assignmentsFor,
+  platformSettings as mockPlatformSettings,
+  progressFor as userProgressFor,
+  reportDetail,
+  reports as mockReports,
+  users as mockUsers,
+} from "./admin-mocks";
 import type {
   Certificate,
   DifficultyBreakup,
@@ -49,6 +58,16 @@ import type {
   QuizTemplate,
   Skill,
   TrainerModuleSummary,
+  AdminRole,
+  AdminUser,
+  AssignableModule,
+  ModuleAssignment,
+  PlatformSettings,
+  ReportDetail,
+  ReportFilters,
+  ReportId,
+  ReportSummary,
+  UserProgressItem,
 } from "./types";
 
 function delay<T>(value: T): Promise<T> {
@@ -345,4 +364,137 @@ export async function getTemplateQuestions(templateId: string): Promise<BuilderQ
 export async function getQuizResults(quizId: string): Promise<QuizResultRow[]> {
   if (EMPTY_STATE) return delay([]);
   return delay(quizResultsFor(quizId));
+}
+
+/* ============================================================
+ * ADMIN repositories — users & progress, assignments, reports,
+ * light customization. Deliberately small surface.
+ * ============================================================ */
+
+// CONNECT: replace with real API call to GET /api/admin/users?q=
+export async function getUsers(query = ""): Promise<AdminUser[]> {
+  if (EMPTY_STATE) return delay([]);
+  const q = query.trim().toLowerCase();
+  const all = [...mockUsers, ...addedUsers];
+  if (!q) return delay(all);
+  return delay(
+    all.filter(
+      (u) =>
+        u.name.toLowerCase().includes(q) ||
+        u.email.toLowerCase().includes(q) ||
+        u.team.toLowerCase().includes(q),
+    ),
+  );
+}
+
+// CONNECT: replace with real API call to GET /api/admin/users/:id
+export async function getUser(id: string): Promise<AdminUser | null> {
+  if (EMPTY_STATE) return delay(null);
+  return delay([...mockUsers, ...addedUsers].find((u) => u.id === id) ?? null);
+}
+
+// CONNECT: replace with real API call to GET /api/admin/users/:id/progress
+export async function getUserProgress(id: string): Promise<UserProgressItem[]> {
+  if (EMPTY_STATE) return delay([]);
+  return delay(userProgressFor(id));
+}
+
+/** Users added by hand in this session. Normally people are auto-provisioned. */
+const addedUsers: AdminUser[] = [];
+
+// CONNECT: replace with real API call to POST /api/admin/users
+export async function addUser(input: {
+  name: string;
+  email: string;
+  team: string;
+  role: AdminRole;
+}): Promise<AdminUser> {
+  const user: AdminUser = {
+    id: `u-new-${addedUsers.length + 1}`,
+    name: input.name,
+    email: input.email,
+    team: input.team,
+    department: "Research",
+    location: "Noida",
+    role: input.role,
+    assignedCount: 0,
+    completeCount: 0,
+    lastActive: "Never",
+    provisioned: "manual",
+  };
+  addedUsers.push(user);
+  return delay(user);
+}
+
+// CONNECT: replace with real API call to GET /api/admin/modules
+export async function getAssignableModules(): Promise<AssignableModule[]> {
+  if (EMPTY_STATE) return delay([]);
+  return delay(mockAssignableModules);
+}
+
+// CONNECT: replace with real API call to GET /api/admin/modules/:id/assignments
+export async function getModuleAssignments(moduleId: string): Promise<ModuleAssignment[]> {
+  if (EMPTY_STATE) return delay([]);
+  const stored = assignmentStore.get(moduleId);
+  if (stored) return delay(stored);
+  return delay(assignmentsFor(moduleId));
+}
+
+/** In-session assignment edits, so the admin screen feels live before an API exists. */
+const assignmentStore = new Map<string, ModuleAssignment[]>();
+
+// CONNECT: replace with real API call to PUT /api/admin/modules/:id/assignments
+export async function updateAssignment(
+  moduleId: string,
+  change:
+    | { op: "add"; assignment: ModuleAssignment }
+    | { op: "remove"; assignmentIds: string[] }
+    | { op: "due-date"; assignmentIds: string[]; dueDate: string },
+): Promise<ModuleAssignment[]> {
+  const current = assignmentStore.get(moduleId) ?? assignmentsFor(moduleId);
+  let next = current;
+  if (change.op === "add") next = [change.assignment, ...current];
+  if (change.op === "remove")
+    next = current.filter((a) => !change.assignmentIds.includes(a.id));
+  if (change.op === "due-date")
+    next = current.map((a) =>
+      change.assignmentIds.includes(a.id) ? { ...a, dueDate: change.dueDate } : a,
+    );
+  assignmentStore.set(moduleId, next);
+  return delay(next);
+}
+
+// CONNECT: replace with real API call to GET /api/admin/reports
+export async function getReports(): Promise<ReportSummary[]> {
+  if (EMPTY_STATE) return delay([]);
+  return delay(mockReports);
+}
+
+// CONNECT: replace with real API call to GET /api/admin/reports/:id?period=&department=&location=
+export async function getReport(
+  id: ReportId,
+  filters?: ReportFilters,
+): Promise<ReportDetail | null> {
+  if (EMPTY_STATE) return delay(null);
+  const detail = reportDetail(id);
+  if (!detail) return delay(null);
+  if (!filters || (filters.department === "all" && filters.location === "all")) {
+    return delay(detail);
+  }
+  // Mocked filtering: narrow the row set so filters visibly do something.
+  const rows = detail.rows.filter((_, i) => (filters.department === "all" ? true : i % 2 === 0));
+  return delay({ ...detail, rows });
+}
+
+// CONNECT: replace with real API call to GET /api/admin/settings
+export async function getPlatformSettings(): Promise<PlatformSettings> {
+  return delay(settingsStore ?? mockPlatformSettings);
+}
+
+let settingsStore: PlatformSettings | null = null;
+
+// CONNECT: replace with real API call to PUT /api/admin/settings
+export async function savePlatformSettings(settings: PlatformSettings): Promise<PlatformSettings> {
+  settingsStore = settings;
+  return delay(settings);
 }
