@@ -1,12 +1,16 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   Award,
+  BarChart3,
   BookOpen,
+  ClipboardList,
   FileQuestion,
   Home,
   Layers,
+  Settings2,
   Trophy,
   TrendingUp,
+  Users,
 } from "lucide-react";
 
 import logoLight from "@/assets/ns-logo.png.asset.json";
@@ -39,14 +43,24 @@ const trainerItems = [
   { title: "Certificates", url: "/certificates", icon: Award },
 ] as const;
 
+const adminItems = [
+  { title: "Overview", url: "/admin", icon: Home },
+  { title: "Users & Progress", url: "/admin/users", icon: Users },
+  { title: "Assignments", url: "/admin/assignments", icon: ClipboardList },
+  { title: "Reports", url: "/admin/reports", icon: BarChart3 },
+  { title: "Customization", url: "/admin/customization", icon: Settings2 },
+] as const;
+
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const { mode } = useViewMode();
 
-  const trainer = mode === "trainer" || pathname.startsWith("/trainer");
-  const items = trainer ? trainerItems : learnerItems;
+  const admin = mode === "admin" || pathname.startsWith("/admin");
+  const trainer = !admin && (mode === "trainer" || pathname.startsWith("/trainer"));
+  const items = admin ? adminItems : trainer ? trainerItems : learnerItems;
+  const groupLabel = admin ? "Administration" : trainer ? "Authoring" : "Learning";
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
@@ -62,14 +76,14 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          {!collapsed && (
-            <SidebarGroupLabel>{trainer ? "Authoring" : "Learning"}</SidebarGroupLabel>
-          )}
+          {!collapsed && <SidebarGroupLabel>{groupLabel}</SidebarGroupLabel>}
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => {
                 const active =
-                  item.url === "/" ? pathname === "/" : pathname.startsWith(item.url);
+                  item.url === "/" || item.url === "/admin"
+                    ? pathname === item.url
+                    : pathname.startsWith(item.url);
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
