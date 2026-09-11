@@ -10,7 +10,7 @@ import { EmptyState } from "@/components/lessons/empty-state";
 import { DoodlePanel } from "@/components/doodle-field";
 import { PageFade, ShimmerBlock, Stagger, StaggerItem } from "@/components/motion/motion";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/home")({
   head: () => ({
     meta: [
       { title: "Home — Lessons at Netscribes" },
