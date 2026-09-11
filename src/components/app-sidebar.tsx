@@ -33,7 +33,6 @@ import {
 const learnerItems = [
   { title: "Home", url: "/", icon: Home },
   { title: "My Learning", url: "/my-learning", icon: BookOpen },
-  { title: "Progress", url: "/progress", icon: TrendingUp },
   { title: "Leaderboard", url: "/leaderboard", icon: Trophy },
   { title: "Certificates", url: "/certificates", icon: Award },
 ] as const;
@@ -62,9 +61,18 @@ export function AppSidebar() {
   const trainer = !admin && (mode === "trainer" || pathname.startsWith("/trainer"));
   const items = admin ? adminItems : trainer ? trainerItems : learnerItems;
   const groupLabel = admin ? "Administration" : trainer ? "Authoring" : "Learning";
+  const accent = admin
+    ? "var(--brand-blue)"
+    : trainer
+      ? "var(--cat-onboarding)"
+      : "var(--color-primary)";
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
+    <Sidebar
+      collapsible="icon"
+      className="border-r border-sidebar-border"
+      style={{ ["--view-accent" as string]: accent }}
+    >
       <SidebarHeader className="h-14 justify-center border-b border-sidebar-border px-3">
         <Link to="/" className="overflow-hidden" aria-label="Lessons by Netscribes">
           <BrandLockup markOnly={collapsed} />
