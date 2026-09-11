@@ -15,8 +15,10 @@ import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as MyLearningRouteImport } from './routes/my-learning'
 import { Route as ProgressRouteImport } from './routes/progress'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminAssignmentsRouteImport } from './routes/admin/assignments'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as TrainerQuizzesRouteImport } from './routes/trainer/quizzes'
+import { Route as AdminReportsIndexRouteImport } from './routes/admin/reports.index'
 import { Route as ModulesModuleIdIndexRouteImport } from './routes/modules/$moduleId/index'
 import { Route as ModulesModuleIdPlayerRouteImport } from './routes/modules/$moduleId/player'
 import { Route as TrainerModulesModuleIdRouteImport } from './routes/trainer/modules.$moduleId'
@@ -54,6 +56,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/admin/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminAssignmentsRoute = AdminAssignmentsRouteImport.update({
+  id: '/admin/assignments',
+  path: '/admin/assignments',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/admin/users',
   path: '/admin/users',
@@ -62,6 +69,11 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
 const TrainerQuizzesRoute = TrainerQuizzesRouteImport.update({
   id: '/trainer/quizzes',
   path: '/trainer/quizzes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminReportsIndexRoute = AdminReportsIndexRouteImport.update({
+  id: '/admin/reports/',
+  path: '/admin/reports/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ModulesModuleIdIndexRoute = ModulesModuleIdIndexRouteImport.update({
@@ -102,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/leaderboard': typeof LeaderboardRoute
   '/my-learning': typeof MyLearningRoute
   '/progress': typeof ProgressRoute
+  '/admin/assignments': typeof AdminAssignmentsRoute
   '/admin/users': typeof AdminUsersRoute
   '/trainer/quizzes': typeof TrainerQuizzesRoute
   '/admin/': typeof AdminIndexRoute
@@ -109,6 +122,7 @@ export interface FileRoutesByFullPath {
   '/trainer/modules/$moduleId': typeof TrainerModulesModuleIdRoute
   '/trainer/programs/$programId': typeof TrainerProgramsProgramIdRoute
   '/trainer/skills/$skillId': typeof TrainerSkillsSkillIdRoute
+  '/admin/reports/': typeof AdminReportsIndexRoute
   '/modules/$moduleId/': typeof ModulesModuleIdIndexRoute
   '/trainer/programs/': typeof TrainerProgramsIndexRoute
 }
@@ -118,6 +132,7 @@ export interface FileRoutesByTo {
   '/leaderboard': typeof LeaderboardRoute
   '/my-learning': typeof MyLearningRoute
   '/progress': typeof ProgressRoute
+  '/admin/assignments': typeof AdminAssignmentsRoute
   '/admin/users': typeof AdminUsersRoute
   '/trainer/quizzes': typeof TrainerQuizzesRoute
   '/admin': typeof AdminIndexRoute
@@ -125,6 +140,7 @@ export interface FileRoutesByTo {
   '/trainer/modules/$moduleId': typeof TrainerModulesModuleIdRoute
   '/trainer/programs/$programId': typeof TrainerProgramsProgramIdRoute
   '/trainer/skills/$skillId': typeof TrainerSkillsSkillIdRoute
+  '/admin/reports': typeof AdminReportsIndexRoute
   '/modules/$moduleId': typeof ModulesModuleIdIndexRoute
   '/trainer/programs': typeof TrainerProgramsIndexRoute
 }
@@ -135,6 +151,7 @@ export interface FileRoutesById {
   '/leaderboard': typeof LeaderboardRoute
   '/my-learning': typeof MyLearningRoute
   '/progress': typeof ProgressRoute
+  '/admin/assignments': typeof AdminAssignmentsRoute
   '/admin/users': typeof AdminUsersRoute
   '/trainer/quizzes': typeof TrainerQuizzesRoute
   '/admin/': typeof AdminIndexRoute
@@ -142,6 +159,7 @@ export interface FileRoutesById {
   '/trainer/modules/$moduleId': typeof TrainerModulesModuleIdRoute
   '/trainer/programs/$programId': typeof TrainerProgramsProgramIdRoute
   '/trainer/skills/$skillId': typeof TrainerSkillsSkillIdRoute
+  '/admin/reports/': typeof AdminReportsIndexRoute
   '/modules/$moduleId/': typeof ModulesModuleIdIndexRoute
   '/trainer/programs/': typeof TrainerProgramsIndexRoute
 }
@@ -153,6 +171,7 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/my-learning'
     | '/progress'
+    | '/admin/assignments'
     | '/admin/users'
     | '/trainer/quizzes'
     | '/admin/'
@@ -160,6 +179,7 @@ export interface FileRouteTypes {
     | '/trainer/modules/$moduleId'
     | '/trainer/programs/$programId'
     | '/trainer/skills/$skillId'
+    | '/admin/reports/'
     | '/modules/$moduleId/'
     | '/trainer/programs/'
   fileRoutesByTo: FileRoutesByTo
@@ -169,6 +189,7 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/my-learning'
     | '/progress'
+    | '/admin/assignments'
     | '/admin/users'
     | '/trainer/quizzes'
     | '/admin'
@@ -176,6 +197,7 @@ export interface FileRouteTypes {
     | '/trainer/modules/$moduleId'
     | '/trainer/programs/$programId'
     | '/trainer/skills/$skillId'
+    | '/admin/reports'
     | '/modules/$moduleId'
     | '/trainer/programs'
   id:
@@ -185,6 +207,7 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/my-learning'
     | '/progress'
+    | '/admin/assignments'
     | '/admin/users'
     | '/trainer/quizzes'
     | '/admin/'
@@ -192,6 +215,7 @@ export interface FileRouteTypes {
     | '/trainer/modules/$moduleId'
     | '/trainer/programs/$programId'
     | '/trainer/skills/$skillId'
+    | '/admin/reports/'
     | '/modules/$moduleId/'
     | '/trainer/programs/'
   fileRoutesById: FileRoutesById
@@ -202,6 +226,7 @@ export interface RootRouteChildren {
   LeaderboardRoute: typeof LeaderboardRoute
   MyLearningRoute: typeof MyLearningRoute
   ProgressRoute: typeof ProgressRoute
+  AdminAssignmentsRoute: typeof AdminAssignmentsRoute
   AdminUsersRoute: typeof AdminUsersRoute
   TrainerQuizzesRoute: typeof TrainerQuizzesRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -209,6 +234,7 @@ export interface RootRouteChildren {
   TrainerModulesModuleIdRoute: typeof TrainerModulesModuleIdRoute
   TrainerProgramsProgramIdRoute: typeof TrainerProgramsProgramIdRoute
   TrainerSkillsSkillIdRoute: typeof TrainerSkillsSkillIdRoute
+  AdminReportsIndexRoute: typeof AdminReportsIndexRoute
   ModulesModuleIdIndexRoute: typeof ModulesModuleIdIndexRoute
   TrainerProgramsIndexRoute: typeof TrainerProgramsIndexRoute
 }
@@ -257,6 +283,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/assignments': {
+      id: '/admin/assignments'
+      path: '/admin/assignments'
+      fullPath: '/admin/assignments'
+      preLoaderRoute: typeof AdminAssignmentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/users': {
       id: '/admin/users'
       path: '/admin/users'
@@ -269,6 +302,13 @@ declare module '@tanstack/react-router' {
       path: '/trainer/quizzes'
       fullPath: '/trainer/quizzes'
       preLoaderRoute: typeof TrainerQuizzesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/reports/': {
+      id: '/admin/reports/'
+      path: '/admin/reports'
+      fullPath: '/admin/reports/'
+      preLoaderRoute: typeof AdminReportsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/modules/$moduleId/': {
@@ -322,6 +362,7 @@ const rootRouteChildren: RootRouteChildren = {
   LeaderboardRoute: LeaderboardRoute,
   MyLearningRoute: MyLearningRoute,
   ProgressRoute: ProgressRoute,
+  AdminAssignmentsRoute: AdminAssignmentsRoute,
   AdminUsersRoute: AdminUsersRoute,
   TrainerQuizzesRoute: TrainerQuizzesRoute,
   AdminIndexRoute: AdminIndexRoute,
@@ -329,6 +370,7 @@ const rootRouteChildren: RootRouteChildren = {
   TrainerModulesModuleIdRoute: TrainerModulesModuleIdRoute,
   TrainerProgramsProgramIdRoute: TrainerProgramsProgramIdRoute,
   TrainerSkillsSkillIdRoute: TrainerSkillsSkillIdRoute,
+  AdminReportsIndexRoute: AdminReportsIndexRoute,
   ModulesModuleIdIndexRoute: ModulesModuleIdIndexRoute,
   TrainerProgramsIndexRoute: TrainerProgramsIndexRoute,
 }
