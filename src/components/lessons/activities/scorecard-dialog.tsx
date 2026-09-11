@@ -91,7 +91,7 @@ export function ScorecardDialog({
               <span className="text-right">{b.right}</span>
               <span className="text-right">{b.wrong}</span>
               <span className="text-right">{b.unanswered}</span>
-            </div>
+            </motion.div>
           ))}
         </div>
 
