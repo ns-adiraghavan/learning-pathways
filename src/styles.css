@@ -51,6 +51,11 @@
   --color-difficulty-medium: var(--difficulty-medium);
   --color-difficulty-hard: var(--difficulty-hard);
 
+  --color-cat-mandatory: var(--cat-mandatory);
+  --color-cat-onboarding: var(--cat-onboarding);
+  --color-cat-team: var(--cat-team);
+  --color-cat-bank: var(--cat-bank);
+
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
