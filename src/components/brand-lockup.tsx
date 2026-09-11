@@ -53,7 +53,7 @@ export function Wordmark({
   return (
     <span
       className={cn(
-        "font-display leading-none font-semibold tracking-[-0.03em]",
+        "font-display leading-none whitespace-nowrap font-semibold tracking-[-0.03em]",
         TEXT[size],
         className,
       )}
