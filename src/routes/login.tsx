@@ -12,15 +12,15 @@ import { Label } from "@/components/ui/label";
 export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
-      { title: "Sign in — Lessons at Netscribes" },
+      { title: "Sign in — NS Lessons" },
       {
         name: "description",
-        content: "Sign in to Lessons, the Netscribes learning platform, with your employee ID or Netscribes ID.",
+        content: "Sign in to NS Lessons, the Netscribes learning platform, with your employee ID or Netscribes ID.",
       },
-      { property: "og:title", content: "Sign in — Lessons at Netscribes" },
+      { property: "og:title", content: "Sign in — NS Lessons" },
       {
         property: "og:description",
-        content: "Sign in to Lessons, the Netscribes learning platform, with your employee ID or Netscribes ID.",
+        content: "Sign in to NS Lessons, the Netscribes learning platform, with your employee ID or Netscribes ID.",
       },
     ],
   }),
@@ -137,7 +137,7 @@ function LoginPage() {
         </form>
 
         <p className="mt-5 text-center text-xs text-muted-foreground">
-          Demo sign-in — any credentials will take you into Lessons.
+          Demo sign-in — any credentials will take you into NS Lessons.
         </p>
       </motion.div>
     </div>

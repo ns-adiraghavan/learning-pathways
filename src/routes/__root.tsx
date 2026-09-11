@@ -80,13 +80,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lessons — Netscribes Learning" },
+      { title: "NS Lessons — Netscribes Learning" },
       {
         name: "description",
         content: "Netscribes' internal learning platform for assigned modules, quizzes and certificates.",
       },
       { name: "author", content: "Netscribes" },
-      { property: "og:title", content: "Lessons — Netscribes Learning" },
+      { property: "og:title", content: "NS Lessons — Netscribes Learning" },
       {
         property: "og:description",
         content: "Netscribes' internal learning platform for assigned modules, quizzes and certificates.",
