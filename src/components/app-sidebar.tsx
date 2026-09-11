@@ -65,12 +65,8 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="h-14 justify-center border-b border-sidebar-border px-3">
-        <Link to="/" className="flex items-center gap-2 overflow-hidden">
-          <img src={logoLight.url} alt="Netscribes" className="h-5 w-auto dark:hidden" />
-          <img src={logoDark.url} alt="Netscribes" className="hidden h-5 w-auto dark:block" />
-          {!collapsed && (
-            <span className="truncate text-[15px] font-[590] tracking-tight">Lessons</span>
-          )}
+        <Link to="/" className="overflow-hidden" aria-label="Lessons by Netscribes">
+          <BrandLockup markOnly={collapsed} />
         </Link>
       </SidebarHeader>
 
