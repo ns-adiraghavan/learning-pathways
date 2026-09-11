@@ -12,6 +12,10 @@
 @theme inline {
   --font-sans:
     "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Outfit", "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --color-brand-blue: var(--brand-blue);
+  --color-brand-blue-soft: var(--brand-blue-soft);
 
   --radius-sm: 4px;
   --radius-md: 6px;
@@ -108,6 +112,9 @@
   --cat-team: #0d9488;
   --cat-bank: #f59e0b;
 
+  --brand-blue: #1b6bb0;
+  --brand-blue-soft: #e8f1fa;
+
   --page-gradient-top: #f8f9fa;
   --page-gradient-bottom: #f2f4f5;
 
@@ -161,6 +168,9 @@
   --cat-onboarding: #a78bfa;
   --cat-team: #2dd4bf;
   --cat-bank: #fbbf24;
+
+  --brand-blue: #5aa9e6;
+  --brand-blue-soft: rgba(90, 169, 230, 0.12);
 
   --page-gradient-top: #0b0c0d;
   --page-gradient-bottom: #08090a;
