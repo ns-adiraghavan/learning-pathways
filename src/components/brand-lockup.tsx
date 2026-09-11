@@ -5,43 +5,61 @@ import { cn } from "@/lib/utils";
 interface BrandLockupProps {
   /** Hide the divider + wordmark (collapsed sidebar). */
   markOnly?: boolean;
-  size?: "sm" | "md";
+  size?: "sm" | "md" | "lg" | "xl";
   className?: string;
 }
 
-export function BrandLockup({ markOnly, size = "md", className }: BrandLockupProps) {
-  const logoH = size === "sm" ? "h-4" : "h-5";
-  const textSize = size === "sm" ? "text-[13px]" : "text-[15px]";
-  const divH = size === "sm" ? "h-3.5" : "h-4";
+const LOGO_H = { sm: "h-4", md: "h-5", lg: "h-6", xl: "h-7" } as const;
+const TEXT = {
+  sm: "text-[17px]",
+  md: "text-[20px]",
+  lg: "text-[26px]",
+  xl: "text-[38px]",
+} as const;
+const DIV_H = { sm: "h-4", md: "h-5", lg: "h-6", xl: "h-8" } as const;
 
+/** The Netscribes mark + the "lessons" wordmark, read as one unit. */
+export function BrandLockup({ markOnly, size = "md", className }: BrandLockupProps) {
   return (
     <span className={cn("flex min-w-0 items-center gap-2.5", className)}>
       <img
         src={logoLight.url}
         alt="Netscribes"
-        className={cn(logoH, "w-auto shrink-0 translate-y-[0.5px] dark:hidden")}
+        className={cn(LOGO_H[size], "w-auto shrink-0 dark:hidden")}
       />
       <img
         src={logoDark.url}
         alt="Netscribes"
-        className={cn("hidden w-auto shrink-0 translate-y-[0.5px] dark:block", logoH)}
+        className={cn("hidden w-auto shrink-0 dark:block", LOGO_H[size])}
       />
       {!markOnly && (
         <>
-          <span
-            aria-hidden
-            className={cn("w-px shrink-0 bg-border", divH)}
-          />
-          <span
-            className={cn(
-              "truncate leading-none font-[510] tracking-tight text-foreground",
-              textSize,
-            )}
-          >
-            Lesson<span className="text-primary">s</span>
-          </span>
+          <span aria-hidden className={cn("w-px shrink-0 bg-border", DIV_H[size])} />
+          <Wordmark size={size} />
         </>
       )}
+    </span>
+  );
+}
+
+/** Standalone "lessons" wordmark — display type, blue body, teal tail. */
+export function Wordmark({
+  size = "md",
+  className,
+}: {
+  size?: "sm" | "md" | "lg" | "xl";
+  className?: string;
+}) {
+  return (
+    <span
+      className={cn(
+        "font-display leading-none font-semibold tracking-[-0.03em] lowercase",
+        TEXT[size],
+        className,
+      )}
+    >
+      <span className="text-brand-blue">lesso</span>
+      <span className="text-primary">ns</span>
     </span>
   );
 }

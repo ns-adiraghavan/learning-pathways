@@ -155,7 +155,7 @@ export function TopBar() {
               </DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => navigate({ to: "/login" })}>
               <LogOut className="size-4" />
               Logout
             </DropdownMenuItem>

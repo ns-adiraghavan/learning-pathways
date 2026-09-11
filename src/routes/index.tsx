@@ -56,7 +56,7 @@ function HomePage() {
 
   return (
     <PageFade className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
-      <header className="mb-8">
+      <header className="surface blue-wash mb-8 p-5">
         <h1 className="text-title">
           {user ? `Hello, ${user.name.split(" ")[0]}` : "Hello"}
         </h1>
@@ -101,11 +101,11 @@ function HomePage() {
                     key={a.id}
                     className="surface card-hover flex items-start gap-3 p-3.5"
                   >
-                    <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md bg-muted">
+                    <div className="chip-blue mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md">
                       {a.kind === "survey" ? (
-                        <ClipboardList className="size-4 text-muted-foreground" strokeWidth={1.75} />
+                        <ClipboardList className="size-4" strokeWidth={1.75} />
                       ) : (
-                        <FileSignature className="size-4 text-muted-foreground" strokeWidth={1.75} />
+                        <FileSignature className="size-4" strokeWidth={1.75} />
                       )}
                     </div>
                     <div className="min-w-0">
