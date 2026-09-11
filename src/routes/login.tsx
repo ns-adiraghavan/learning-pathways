@@ -38,7 +38,7 @@ function LoginPage() {
   function signIn(e?: FormEvent) {
     e?.preventDefault();
     setBusy(true);
-    window.setTimeout(() => navigate({ to: "/" }), 650);
+    window.setTimeout(() => navigate({ to: "/home" }), 650);
   }
 
   return (

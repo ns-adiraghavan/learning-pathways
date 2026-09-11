@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CertificatesRouteImport } from './routes/certificates'
+import { Route as HomeRouteImport } from './routes/home'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MyLearningRouteImport } from './routes/my-learning'
@@ -37,6 +38,11 @@ const IndexRoute = IndexRouteImport.update({
 const CertificatesRoute = CertificatesRouteImport.update({
   id: '/certificates',
   path: '/certificates',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HomeRoute = HomeRouteImport.update({
+  id: '/home',
+  path: '/home',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LeaderboardRoute = LeaderboardRouteImport.update({
@@ -129,6 +135,7 @@ const TrainerSkillsSkillIdRoute = TrainerSkillsSkillIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/certificates': typeof CertificatesRoute
+  '/home': typeof HomeRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/my-learning': typeof MyLearningRoute
@@ -150,6 +157,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/certificates': typeof CertificatesRoute
+  '/home': typeof HomeRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/my-learning': typeof MyLearningRoute
@@ -172,6 +180,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/certificates': typeof CertificatesRoute
+  '/home': typeof HomeRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/my-learning': typeof MyLearningRoute
@@ -195,6 +204,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/certificates'
+    | '/home'
     | '/leaderboard'
     | '/login'
     | '/my-learning'
@@ -216,6 +226,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/certificates'
+    | '/home'
     | '/leaderboard'
     | '/login'
     | '/my-learning'
@@ -237,6 +248,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/certificates'
+    | '/home'
     | '/leaderboard'
     | '/login'
     | '/my-learning'
@@ -259,6 +271,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CertificatesRoute: typeof CertificatesRoute
+  HomeRoute: typeof HomeRoute
   LeaderboardRoute: typeof LeaderboardRoute
   LoginRoute: typeof LoginRoute
   MyLearningRoute: typeof MyLearningRoute
@@ -292,6 +305,13 @@ declare module '@tanstack/react-router' {
       path: '/certificates'
       fullPath: '/certificates'
       preLoaderRoute: typeof CertificatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/home': {
+      id: '/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof HomeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/leaderboard': {
@@ -419,6 +439,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CertificatesRoute: CertificatesRoute,
+  HomeRoute: HomeRoute,
   LeaderboardRoute: LeaderboardRoute,
   LoginRoute: LoginRoute,
   MyLearningRoute: MyLearningRoute,

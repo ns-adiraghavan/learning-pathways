@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/sidebar";
 
 const learnerItems = [
-  { title: "Home", url: "/", icon: Home },
+  { title: "Home", url: "/home", icon: Home },
   { title: "My Learning", url: "/my-learning", icon: BookOpen },
   { title: "Leaderboard", url: "/leaderboard", icon: Trophy },
   { title: "Certificates", url: "/certificates", icon: Award },
@@ -73,7 +73,7 @@ export function AppSidebar() {
       style={{ ["--view-accent" as string]: accent }}
     >
       <SidebarHeader className="h-14 justify-center border-b border-sidebar-border px-3">
-        <Link to="/" className="overflow-hidden" aria-label="Lessons by Netscribes">
+        <Link to="/home" className="overflow-hidden" aria-label="Lessons by Netscribes">
           <BrandLockup markOnly={collapsed} />
         </Link>
       </SidebarHeader>
@@ -89,7 +89,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {items.map((item) => {
                 const active =
-                  item.url === "/" || item.url === "/admin"
+                  item.url === "/home" || item.url === "/admin"
                     ? pathname === item.url
                     : pathname.startsWith(item.url);
                 return (
