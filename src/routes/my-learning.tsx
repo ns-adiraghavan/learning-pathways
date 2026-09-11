@@ -8,7 +8,7 @@ import { CategoryBadge, StatusDot } from "@/components/lessons/badges";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Skeleton } from "@/components/ui/skeleton";
+import { PageFade, ShimmerBlock, Stagger, StaggerItem } from "@/components/motion/motion";
 
 export const Route = createFileRoute("/my-learning")({
   head: () => ({
@@ -37,7 +37,7 @@ function MyLearningPage() {
   const list = (modules ?? []).filter((m) => m.status !== "complete");
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6">
+    <PageFade className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6">
       <header className="mb-6">
         <h1 className="text-title">My Learning</h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -48,7 +48,7 @@ function MyLearningPage() {
       {isPending ? (
         <div className="space-y-3">
           {[0, 1, 2].map((i) => (
-            <Skeleton key={i} className="h-24 rounded-xl" />
+            <ShimmerBlock key={i} className="h-24 rounded-xl" />
           ))}
         </div>
       ) : list.length === 0 ? (
@@ -58,9 +58,9 @@ function MyLearningPage() {
           description="When a module is assigned to you it shows up here with its progress and due date."
         />
       ) : (
-        <ul className="space-y-3">
+        <Stagger as="ul" className="space-y-3">
           {list.map((m) => (
-            <li key={m.id} className="surface card-hover p-4">
+            <StaggerItem as="li" key={m.id} className="surface card-hover p-4">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                 <img
                   src={m.posterImage}
@@ -96,10 +96,10 @@ function MyLearningPage() {
                   </Link>
                 </Button>
               </div>
-            </li>
+            </StaggerItem>
           ))}
-        </ul>
+        </Stagger>
       )}
-    </div>
+    </PageFade>
   );
 }

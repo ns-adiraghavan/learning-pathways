@@ -7,7 +7,7 @@ import type { LearningModule, ModuleCategory } from "@/data/types";
 import { CATEGORY_LABEL, formatDate } from "@/lib/format";
 import { ModuleCard } from "@/components/lessons/module-card";
 import { EmptyState } from "@/components/lessons/empty-state";
-import { Skeleton } from "@/components/ui/skeleton";
+import { PageFade, ShimmerBlock, Stagger, StaggerItem } from "@/components/motion/motion";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -55,7 +55,7 @@ function HomePage() {
     .slice(0, 3);
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+    <PageFade className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
       <header className="mb-8">
         <h1 className="text-title">
           {user ? `Hello, ${user.name.split(" ")[0]}` : "Hello"}
@@ -68,7 +68,7 @@ function HomePage() {
       {isPending ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[0, 1, 2].map((i) => (
-            <Skeleton key={i} className="h-56 rounded-xl" />
+            <ShimmerBlock key={i} className="h-56 rounded-xl" />
           ))}
         </div>
       ) : all.length === 0 ? (
@@ -82,20 +82,22 @@ function HomePage() {
           {continueRow.length > 0 && (
             <section>
               <SectionHead title="Continue / Due soon" count={continueRow.length} />
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <Stagger className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {continueRow.map((m) => (
-                  <ModuleCard key={m.id} module={m} />
+                  <StaggerItem key={m.id}>
+                    <ModuleCard module={m} />
+                  </StaggerItem>
                 ))}
-              </div>
+              </Stagger>
             </section>
           )}
 
           {actions.length > 0 && (
             <section>
               <SectionHead title="Pending actions" count={actions.length} />
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <Stagger className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {actions.map((a) => (
-                  <div
+                  <StaggerItem
                     key={a.id}
                     className="surface card-hover flex items-start gap-3 p-3.5"
                   >
@@ -112,9 +114,9 @@ function HomePage() {
                         {a.kind === "survey" ? "Survey" : "eSignature"} · due {formatDate(a.dueDate)}
                       </p>
                     </div>
-                  </div>
+                  </StaggerItem>
                 ))}
-              </div>
+              </Stagger>
             </section>
           )}
 
@@ -124,11 +126,13 @@ function HomePage() {
             return (
               <section key={category}>
                 <SectionHead title={CATEGORY_LABEL[category]} count={list.length} />
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <Stagger className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {list.map((m) => (
-                    <ModuleCard key={m.id} module={m} />
+                    <StaggerItem key={m.id}>
+                      <ModuleCard module={m} />
+                    </StaggerItem>
                   ))}
-                </div>
+                </Stagger>
               </section>
             );
           })}
@@ -141,7 +145,7 @@ function HomePage() {
           </p>
         </div>
       )}
-    </div>
+    </PageFade>
   );
 }
 
