@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 
-export type ViewMode = "learner" | "trainer";
+export type ViewMode = "learner" | "trainer" | "admin";
 
 const KEY = "lessons-view-mode";
 const EVENT = "lessons-view-mode-change";
 
 function read(): ViewMode {
   if (typeof window === "undefined") return "learner";
-  return window.localStorage.getItem(KEY) === "trainer" ? "trainer" : "learner";
+  const stored = window.localStorage.getItem(KEY);
+  return stored === "trainer" || stored === "admin" ? stored : "learner";
 }
 
 export function useViewMode() {
