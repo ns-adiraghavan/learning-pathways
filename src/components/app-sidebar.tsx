@@ -13,8 +13,9 @@ import {
   Users,
 } from "lucide-react";
 
-import logoLight from "@/assets/ns-logo.png.asset.json";
-import logoDark from "@/assets/ns-logo-white.png.asset.json";
+import { motion } from "framer-motion";
+
+import { BrandLockup } from "@/components/brand-lockup";
 import { useViewMode } from "@/hooks/use-view-mode";
 import {
   Sidebar,
