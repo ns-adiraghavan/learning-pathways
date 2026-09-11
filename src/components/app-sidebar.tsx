@@ -82,7 +82,14 @@ export function AppSidebar() {
                     ? pathname === item.url
                     : pathname.startsWith(item.url);
                 return (
-                  <SidebarMenuItem key={item.title}>
+                  <SidebarMenuItem key={item.title} className="relative">
+                    {active && (
+                      <motion.span
+                        layoutId={`nav-indicator-${groupLabel}`}
+                        transition={{ type: "spring", stiffness: 420, damping: 38 }}
+                        className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full bg-primary"
+                      />
+                    )}
                     <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
                       <Link to={item.url} className="flex items-center gap-2">
                         <item.icon className="size-4" strokeWidth={1.75} />
