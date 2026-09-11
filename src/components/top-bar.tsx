@@ -115,16 +115,39 @@ export function TopBar() {
             <DropdownMenuSeparator />
             <DropdownMenuItem>Profile</DropdownMenuItem>
             <DropdownMenuItem>Completed Modules</DropdownMenuItem>
-            <DropdownMenuItem
-              onSelect={() => {
-                const next = mode === "trainer" ? "learner" : "trainer";
-                setViewMode(next);
-                navigate({ to: next === "trainer" ? "/trainer/programs" : "/" });
-              }}
-            >
-              <UserCog className="size-4" />
-              {mode === "trainer" ? "Switch to Learner View" : "Switch to Trainer View"}
-            </DropdownMenuItem>
+            {mode !== "learner" && (
+              <DropdownMenuItem
+                onSelect={() => {
+                  setViewMode("learner");
+                  navigate({ to: "/" });
+                }}
+              >
+                <UserCog className="size-4" />
+                Switch to Learner View
+              </DropdownMenuItem>
+            )}
+            {mode !== "trainer" && (
+              <DropdownMenuItem
+                onSelect={() => {
+                  setViewMode("trainer");
+                  navigate({ to: "/trainer/programs" });
+                }}
+              >
+                <UserCog className="size-4" />
+                Switch to Trainer View
+              </DropdownMenuItem>
+            )}
+            {mode !== "admin" && (
+              <DropdownMenuItem
+                onSelect={() => {
+                  setViewMode("admin");
+                  navigate({ to: "/admin" });
+                }}
+              >
+                <Shield className="size-4" />
+                Switch to Administrator View
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem>
               <LogOut className="size-4" />
