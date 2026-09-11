@@ -7,6 +7,7 @@ import type { LearningModule, ModuleCategory } from "@/data/types";
 import { CATEGORY_LABEL, formatDate } from "@/lib/format";
 import { ModuleCard } from "@/components/lessons/module-card";
 import { EmptyState } from "@/components/lessons/empty-state";
+import { DoodlePanel } from "@/components/doodle-field";
 import { PageFade, ShimmerBlock, Stagger, StaggerItem } from "@/components/motion/motion";
 
 export const Route = createFileRoute("/")({
@@ -56,13 +57,16 @@ function HomePage() {
 
   return (
     <PageFade className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
-      <header className="surface blue-wash mb-8 p-5">
-        <h1 className="text-title">
-          {user ? `Hello, ${user.name.split(" ")[0]}` : "Hello"}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Here's where your learning stands today.
-        </p>
+      <header className="surface blue-wash relative mb-8 overflow-hidden p-5">
+        <DoodlePanel />
+        <div className="relative">
+          <h1 className="text-title">
+            {user ? `Hello, ${user.name.split(" ")[0]}` : "Hello"}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Here's where your learning stands today.
+          </p>
+        </div>
       </header>
 
       {isPending ? (

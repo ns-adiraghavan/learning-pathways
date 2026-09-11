@@ -9,7 +9,6 @@ import {
   Layers,
   Settings2,
   Trophy,
-  TrendingUp,
   Users,
 } from "lucide-react";
 
@@ -33,7 +32,6 @@ import {
 const learnerItems = [
   { title: "Home", url: "/", icon: Home },
   { title: "My Learning", url: "/my-learning", icon: BookOpen },
-  { title: "Progress", url: "/progress", icon: TrendingUp },
   { title: "Leaderboard", url: "/leaderboard", icon: Trophy },
   { title: "Certificates", url: "/certificates", icon: Award },
 ] as const;
@@ -62,9 +60,18 @@ export function AppSidebar() {
   const trainer = !admin && (mode === "trainer" || pathname.startsWith("/trainer"));
   const items = admin ? adminItems : trainer ? trainerItems : learnerItems;
   const groupLabel = admin ? "Administration" : trainer ? "Authoring" : "Learning";
+  const accent = admin
+    ? "var(--brand-blue)"
+    : trainer
+      ? "var(--cat-onboarding)"
+      : "var(--color-primary)";
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
+    <Sidebar
+      collapsible="icon"
+      className="border-r border-sidebar-border"
+      style={{ ["--view-accent" as string]: accent }}
+    >
       <SidebarHeader className="h-14 justify-center border-b border-sidebar-border px-3">
         <Link to="/" className="overflow-hidden" aria-label="Lessons by Netscribes">
           <BrandLockup markOnly={collapsed} />
@@ -73,7 +80,11 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          {!collapsed && <SidebarGroupLabel>{groupLabel}</SidebarGroupLabel>}
+          {!collapsed && (
+            <SidebarGroupLabel className="text-[11px] tracking-[0.12em] uppercase">
+              {groupLabel}
+            </SidebarGroupLabel>
+          )}
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => {
@@ -87,13 +98,40 @@ export function AppSidebar() {
                       <motion.span
                         layoutId={`nav-indicator-${groupLabel}`}
                         transition={{ type: "spring", stiffness: 420, damping: 38 }}
-                        className="absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full bg-primary"
+                        className="absolute inset-y-0.5 left-0 rounded-lg"
+                        style={{
+                          right: 0,
+                          background:
+                            "color-mix(in oklab, var(--view-accent) 12%, transparent)",
+                        }}
                       />
                     )}
-                    <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
-                      <Link to={item.url} className="flex items-center gap-2">
-                        <item.icon className="size-4" strokeWidth={1.75} />
-                        <span>{item.title}</span>
+                    <SidebarMenuButton
+                      asChild
+                      tooltip={item.title}
+                      className="relative z-10 data-[active=true]:bg-transparent"
+                    >
+                      <Link to={item.url} className="flex items-center gap-2.5">
+                        <span
+                          aria-hidden
+                          className="h-4 w-[2px] shrink-0 rounded-full transition-colors"
+                          style={{
+                            background: active
+                              ? "var(--view-accent)"
+                              : "color-mix(in oklab, var(--color-foreground) 14%, transparent)",
+                          }}
+                        />
+                        <item.icon
+                          className="size-4"
+                          strokeWidth={1.75}
+                          style={active ? { color: "var(--view-accent)" } : undefined}
+                        />
+                        <span
+                          className={active ? "font-[590]" : "text-muted-foreground"}
+                          style={active ? { color: "var(--view-accent)" } : undefined}
+                        >
+                          {item.title}
+                        </span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
