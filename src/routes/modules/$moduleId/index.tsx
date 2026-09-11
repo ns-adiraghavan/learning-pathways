@@ -118,7 +118,11 @@ function ModuleDetailPage() {
         <div className="mb-3 flex items-center justify-between gap-3">
           <h2 className="text-card-title">Activities</h2>
           <Button asChild size="sm">
-            <Link to="/modules/$moduleId/player" params={{ moduleId: module.id }}>
+            <Link
+              to="/modules/$moduleId/player"
+              params={{ moduleId: module.id }}
+              search={{ step: 0 }}
+            >
               {pct > 0 ? "Resume module" : "Start module"}
             </Link>
           </Button>

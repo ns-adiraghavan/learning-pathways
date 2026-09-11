@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/modules/$moduleId/player")({
   validateSearch: (search: Record<string, unknown>) => ({
-    step: Number(search.step ?? 0) || 0,
+    step: Number(search['step'] ?? 0) || 0,
   }),
   head: () => ({
     meta: [
@@ -85,6 +85,7 @@ function PlayerPage() {
   const activities = module.activities;
   const index = Math.min(Math.max(0, step), activities.length - 1);
   const activity = activities[index];
+  if (!activity) return null;
   const doneIds = progress?.completedActivityIds ?? [];
   const pct = progress?.progressPct ?? module.progressPct;
 

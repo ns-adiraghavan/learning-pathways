@@ -16,12 +16,12 @@ import type {
 const SAMPLE_VIDEO =
   "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4";
 
-const posters: Record<string, string> = {
+const posters = {
   onboarding: posterOnboarding,
   mandatory: posterMandatory,
   team: posterTeam,
   bank: posterBank,
-};
+} as const;
 
 function q(
   id: string,

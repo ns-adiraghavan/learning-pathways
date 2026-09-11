@@ -91,7 +91,7 @@ function MyLearningPage() {
                   </p>
                 </div>
                 <Button asChild size="sm" className="shrink-0">
-                  <Link to="/modules/$moduleId/player" params={{ moduleId: m.id }}>
+                  <Link to="/modules/$moduleId/player" params={{ moduleId: m.id }} search={{ step: 0 }}>
                     Resume
                   </Link>
                 </Button>
