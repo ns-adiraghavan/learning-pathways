@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Bell, LogOut, Moon, Search, Sun, UserCog } from "lucide-react";
+import { Bell, LogOut, Moon, Search, Shield, Sun, UserCog } from "lucide-react";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Input } from "@/components/ui/input";
@@ -48,7 +48,13 @@ export function TopBar() {
         <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           type="search"
-          placeholder={mode === "trainer" ? "Search programs, modules" : "Search modules"}
+          placeholder={
+            mode === "admin"
+              ? "Search users, modules"
+              : mode === "trainer"
+                ? "Search programs, modules"
+                : "Search modules"
+          }
           aria-label="Search modules"
           className="h-9 rounded-md pl-8"
         />
