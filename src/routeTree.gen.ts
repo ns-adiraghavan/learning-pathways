@@ -14,6 +14,8 @@ import { Route as CertificatesRouteImport } from './routes/certificates'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as MyLearningRouteImport } from './routes/my-learning'
 import { Route as ProgressRouteImport } from './routes/progress'
+import { Route as ModulesModuleIdIndexRouteImport } from './routes/modules/$moduleId/index'
+import { Route as ModulesModuleIdPlayerRouteImport } from './routes/modules/$moduleId/player'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -40,6 +42,16 @@ const ProgressRoute = ProgressRouteImport.update({
   path: '/progress',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ModulesModuleIdIndexRoute = ModulesModuleIdIndexRouteImport.update({
+  id: '/modules/$moduleId/',
+  path: '/modules/$moduleId/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ModulesModuleIdPlayerRoute = ModulesModuleIdPlayerRouteImport.update({
+  id: '/modules/$moduleId/player',
+  path: '/modules/$moduleId/player',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,6 +59,8 @@ export interface FileRoutesByFullPath {
   '/leaderboard': typeof LeaderboardRoute
   '/my-learning': typeof MyLearningRoute
   '/progress': typeof ProgressRoute
+  '/modules/$moduleId/player': typeof ModulesModuleIdPlayerRoute
+  '/modules/$moduleId/': typeof ModulesModuleIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +68,8 @@ export interface FileRoutesByTo {
   '/leaderboard': typeof LeaderboardRoute
   '/my-learning': typeof MyLearningRoute
   '/progress': typeof ProgressRoute
+  '/modules/$moduleId/player': typeof ModulesModuleIdPlayerRoute
+  '/modules/$moduleId': typeof ModulesModuleIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,13 +78,28 @@ export interface FileRoutesById {
   '/leaderboard': typeof LeaderboardRoute
   '/my-learning': typeof MyLearningRoute
   '/progress': typeof ProgressRoute
+  '/modules/$moduleId/player': typeof ModulesModuleIdPlayerRoute
+  '/modules/$moduleId/': typeof ModulesModuleIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/certificates' | '/leaderboard' | '/my-learning' | '/progress'
+    | '/'
+    | '/certificates'
+    | '/leaderboard'
+    | '/my-learning'
+    | '/progress'
+    | '/modules/$moduleId/player'
+    | '/modules/$moduleId/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/certificates' | '/leaderboard' | '/my-learning' | '/progress'
+  to:
+    | '/'
+    | '/certificates'
+    | '/leaderboard'
+    | '/my-learning'
+    | '/progress'
+    | '/modules/$moduleId/player'
+    | '/modules/$moduleId'
   id:
     | '__root__'
     | '/'
@@ -76,6 +107,8 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/my-learning'
     | '/progress'
+    | '/modules/$moduleId/player'
+    | '/modules/$moduleId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -84,6 +117,8 @@ export interface RootRouteChildren {
   LeaderboardRoute: typeof LeaderboardRoute
   MyLearningRoute: typeof MyLearningRoute
   ProgressRoute: typeof ProgressRoute
+  ModulesModuleIdPlayerRoute: typeof ModulesModuleIdPlayerRoute
+  ModulesModuleIdIndexRoute: typeof ModulesModuleIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -123,6 +158,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProgressRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/modules/$moduleId/': {
+      id: '/modules/$moduleId/'
+      path: '/modules/$moduleId'
+      fullPath: '/modules/$moduleId/'
+      preLoaderRoute: typeof ModulesModuleIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/modules/$moduleId/player': {
+      id: '/modules/$moduleId/player'
+      path: '/modules/$moduleId/player'
+      fullPath: '/modules/$moduleId/player'
+      preLoaderRoute: typeof ModulesModuleIdPlayerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -132,6 +181,8 @@ const rootRouteChildren: RootRouteChildren = {
   LeaderboardRoute: LeaderboardRoute,
   MyLearningRoute: MyLearningRoute,
   ProgressRoute: ProgressRoute,
+  ModulesModuleIdPlayerRoute: ModulesModuleIdPlayerRoute,
+  ModulesModuleIdIndexRoute: ModulesModuleIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
