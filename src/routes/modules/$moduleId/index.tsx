@@ -61,7 +61,7 @@ function ModuleDetailPage() {
           description="This module isn't assigned to you, or it has been unpublished."
           action={
             <Button asChild variant="outline" size="sm">
-              <Link to="/">Back to home</Link>
+              <Link to="/home">Back to home</Link>
             </Button>
           }
         />

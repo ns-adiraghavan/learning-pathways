@@ -76,7 +76,7 @@ function PlayerPage() {
           description="This module has no activities yet. Check back once your trainer publishes them."
           action={
             <Button asChild variant="outline" size="sm">
-              <Link to="/">Back to home</Link>
+              <Link to="/home">Back to home</Link>
             </Button>
           }
         />

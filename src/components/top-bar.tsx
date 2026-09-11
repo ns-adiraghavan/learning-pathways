@@ -125,7 +125,7 @@ export function TopBar() {
               <DropdownMenuItem
                 onSelect={() => {
                   setViewMode("learner");
-                  navigate({ to: "/" });
+                  navigate({ to: "/home" });
                 }}
               >
                 <UserCog className="size-4" />
