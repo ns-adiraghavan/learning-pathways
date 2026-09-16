@@ -127,7 +127,11 @@ function HomePage() {
                 {actions.map((a) => (
                   <StaggerItem
                     key={a.id}
-                    className="surface card-hover flex items-start gap-3 p-3.5"
+                    className="surface tinted-surface card-hover flex items-start gap-3 p-3.5"
+                    style={{
+                      ["--tile-tint" as string]:
+                        a.kind === "survey" ? "var(--chart-2)" : "var(--chart-4)",
+                    }}
                   >
                     <div className="chip-blue mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md">
                       {a.kind === "survey" ? (

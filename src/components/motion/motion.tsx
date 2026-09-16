@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { motion, useReducedMotion, type Variants } from "framer-motion";
 
 import { cn } from "@/lib/utils";
@@ -69,7 +69,7 @@ export function StaggerItem({
   children: ReactNode;
   className?: string;
   as?: "div" | "li";
-  style?: React.CSSProperties;
+  style?: CSSProperties;
 }) {
   const Comp = as === "li" ? motion.li : motion.div;
   return (
