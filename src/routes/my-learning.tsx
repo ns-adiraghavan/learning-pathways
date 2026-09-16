@@ -4,7 +4,7 @@ import { BookOpen } from "lucide-react";
 
 import { getAssignedModules, getProgressSummary } from "@/data/repositories";
 import { formatDate } from "@/lib/format";
-import { CategoryBadge, CATEGORY_TINT, StatusDot } from "@/components/lessons/badges";
+import { CategoryBadge, StatusDot } from "@/components/lessons/badges";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { DoodlePanel } from "@/components/doodle-field";
 import { StatTile } from "@/components/lessons/count-up";

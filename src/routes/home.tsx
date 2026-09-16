@@ -153,7 +153,11 @@ function HomePage() {
             if (list.length === 0) return null;
             return (
               <section key={category}>
-                <SectionHead title={CATEGORY_LABEL[category]} count={list.length} />
+                <SectionHead
+                  title={CATEGORY_LABEL[category]}
+                  count={list.length}
+                  tint={`var(--cat-${category})`}
+                />
                 <Stagger className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {list.map((m) => (
                     <StaggerItem key={m.id}>
@@ -177,9 +181,16 @@ function HomePage() {
   );
 }
 
-function SectionHead({ title, count }: { title: string; count: number }) {
+function SectionHead({ title, count, tint }: { title: string; count: number; tint?: string }) {
   return (
     <div className="mb-3 flex items-baseline gap-2">
+      {tint && (
+        <span
+          aria-hidden
+          className="h-3.5 w-[3px] self-center rounded-full"
+          style={{ backgroundColor: tint }}
+        />
+      )}
       <h2 className="text-card-title">{title}</h2>
       <span className="tnum text-xs text-muted-foreground">{count}</span>
     </div>

@@ -9,6 +9,8 @@ import { StateBadge } from "@/components/trainer/state-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
+const PROGRAM_TINTS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-4)"] as const;
+
 export const Route = createFileRoute("/trainer/programs/")({
   head: () => ({
     meta: [
@@ -78,8 +80,13 @@ function ProgramsPage() {
         />
       ) : (
         <div className="grid gap-3">
-          {programs.map((p) => (
-            <article key={p.id} className="surface surface-hover p-4 sm:p-5">
+          {programs.map((p, index) => (
+            <article
+              key={p.id}
+              className="surface tinted-surface surface-hover relative overflow-hidden p-4 pl-5 sm:p-5 sm:pl-6"
+              style={{ ["--tile-tint" as string]: PROGRAM_TINTS[index % PROGRAM_TINTS.length] }}
+            >
+              <span aria-hidden className="absolute inset-y-0 left-0 w-[3px] bg-(--tile-tint)" />
               <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">

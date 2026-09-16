@@ -7,7 +7,6 @@ import { getModule, getModuleProgress } from "@/data/repositories";
 import type { Activity } from "@/data/types";
 import { activityMeta, formatDate } from "@/lib/format";
 import { CategoryBadge, RequiredBadge, StatusDot } from "@/components/lessons/badges";
-import { CATEGORY_TINT } from "@/components/lessons/badges";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";

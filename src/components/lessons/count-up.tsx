@@ -44,7 +44,7 @@ export function StatTile({
   return (
     <div
       className={cn(
-        "px-4 py-3",
+        "h-full px-4 py-3",
         tone === "neutral" && "surface",
         tone === "soft" && "soft-tile",
         tone === "solid" && "solid-tile",

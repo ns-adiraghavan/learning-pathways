@@ -7,6 +7,13 @@ import { EmptyState } from "@/components/lessons/empty-state";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
+const REPORT_TINTS = [
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+] as const;
+
 export const Route = createFileRoute("/admin/reports/")({
   head: () => ({
     meta: [
@@ -54,8 +61,13 @@ function ReportsPage() {
         />
       ) : (
         <div className="grid gap-3">
-          {reports.map((r) => (
-            <article key={r.id} className="surface surface-hover p-4 sm:p-5">
+          {reports.map((r, index) => (
+            <article
+              key={r.id}
+              className="surface tinted-surface surface-hover relative overflow-hidden p-4 pl-5 sm:p-5 sm:pl-6"
+              style={{ ["--tile-tint" as string]: REPORT_TINTS[index % REPORT_TINTS.length] }}
+            >
+              <span aria-hidden className="absolute inset-y-0 left-0 w-[3px] bg-(--tile-tint)" />
               <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
                 <div className="min-w-0">
                   <h2 className="truncate text-card-title">{r.name}</h2>

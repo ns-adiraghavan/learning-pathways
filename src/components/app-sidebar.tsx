@@ -113,12 +113,19 @@ export function AppSidebar() {
                           }}
                         />
                         <item.icon
-                          className="size-4"
                           strokeWidth={1.75}
-                          className={active ? "size-4 text-sidebar-primary-foreground" : "size-4 text-muted-foreground"}
+                          className={
+                            active
+                              ? "size-4 text-sidebar-primary-foreground"
+                              : "size-4 text-muted-foreground"
+                          }
                         />
                         <span
-                          className={active ? "font-[590] text-sidebar-primary-foreground" : "text-muted-foreground"}
+                          className={
+                            active
+                              ? "font-[590] text-sidebar-primary-foreground"
+                              : "text-muted-foreground"
+                          }
                         >
                           {item.title}
                         </span>
