@@ -8,6 +8,7 @@ import {
   Home,
   Layers,
   Settings2,
+  ShieldCheck,
   Trophy,
   Users,
 } from "lucide-react";
@@ -46,6 +47,7 @@ const adminItems = [
   { title: "Overview", url: "/admin", icon: Home },
   { title: "Users & Progress", url: "/admin/users", icon: Users },
   { title: "Assignments", url: "/admin/assignments", icon: ClipboardList },
+  { title: "Mandatory Quizzes", url: "/admin/mandatory-quizzes", icon: ShieldCheck },
   { title: "Reports", url: "/admin/reports", icon: BarChart3 },
   { title: "Customization", url: "/admin/customization", icon: Settings2 },
 ] as const;

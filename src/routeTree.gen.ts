@@ -21,6 +21,7 @@ import { Route as AdminAssignmentsRouteImport } from './routes/admin/assignments
 import { Route as AdminCustomizationRouteImport } from './routes/admin/customization'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as TrainerQuizzesRouteImport } from './routes/trainer/quizzes'
+import { Route as AdminMandatoryQuizzesIndexRouteImport } from './routes/admin/mandatory-quizzes.index'
 import { Route as AdminReportsIndexRouteImport } from './routes/admin/reports.index'
 import { Route as AdminReportsReportIdRouteImport } from './routes/admin/reports.$reportId'
 import { Route as ModulesModuleIdIndexRouteImport } from './routes/modules/$moduleId/index'
@@ -90,6 +91,12 @@ const TrainerQuizzesRoute = TrainerQuizzesRouteImport.update({
   path: '/trainer/quizzes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminMandatoryQuizzesIndexRoute =
+  AdminMandatoryQuizzesIndexRouteImport.update({
+    id: '/admin/mandatory-quizzes/',
+    path: '/admin/mandatory-quizzes/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AdminReportsIndexRoute = AdminReportsIndexRouteImport.update({
   id: '/admin/reports/',
   path: '/admin/reports/',
@@ -150,6 +157,7 @@ export interface FileRoutesByFullPath {
   '/trainer/modules/$moduleId': typeof TrainerModulesModuleIdRoute
   '/trainer/programs/$programId': typeof TrainerProgramsProgramIdRoute
   '/trainer/skills/$skillId': typeof TrainerSkillsSkillIdRoute
+  '/admin/mandatory-quizzes/': typeof AdminMandatoryQuizzesIndexRoute
   '/admin/reports/': typeof AdminReportsIndexRoute
   '/modules/$moduleId/': typeof ModulesModuleIdIndexRoute
   '/trainer/programs/': typeof TrainerProgramsIndexRoute
@@ -172,6 +180,7 @@ export interface FileRoutesByTo {
   '/trainer/modules/$moduleId': typeof TrainerModulesModuleIdRoute
   '/trainer/programs/$programId': typeof TrainerProgramsProgramIdRoute
   '/trainer/skills/$skillId': typeof TrainerSkillsSkillIdRoute
+  '/admin/mandatory-quizzes': typeof AdminMandatoryQuizzesIndexRoute
   '/admin/reports': typeof AdminReportsIndexRoute
   '/modules/$moduleId': typeof ModulesModuleIdIndexRoute
   '/trainer/programs': typeof TrainerProgramsIndexRoute
@@ -195,6 +204,7 @@ export interface FileRoutesById {
   '/trainer/modules/$moduleId': typeof TrainerModulesModuleIdRoute
   '/trainer/programs/$programId': typeof TrainerProgramsProgramIdRoute
   '/trainer/skills/$skillId': typeof TrainerSkillsSkillIdRoute
+  '/admin/mandatory-quizzes/': typeof AdminMandatoryQuizzesIndexRoute
   '/admin/reports/': typeof AdminReportsIndexRoute
   '/modules/$moduleId/': typeof ModulesModuleIdIndexRoute
   '/trainer/programs/': typeof TrainerProgramsIndexRoute
@@ -219,6 +229,7 @@ export interface FileRouteTypes {
     | '/trainer/modules/$moduleId'
     | '/trainer/programs/$programId'
     | '/trainer/skills/$skillId'
+    | '/admin/mandatory-quizzes/'
     | '/admin/reports/'
     | '/modules/$moduleId/'
     | '/trainer/programs/'
@@ -241,6 +252,7 @@ export interface FileRouteTypes {
     | '/trainer/modules/$moduleId'
     | '/trainer/programs/$programId'
     | '/trainer/skills/$skillId'
+    | '/admin/mandatory-quizzes'
     | '/admin/reports'
     | '/modules/$moduleId'
     | '/trainer/programs'
@@ -263,6 +275,7 @@ export interface FileRouteTypes {
     | '/trainer/modules/$moduleId'
     | '/trainer/programs/$programId'
     | '/trainer/skills/$skillId'
+    | '/admin/mandatory-quizzes/'
     | '/admin/reports/'
     | '/modules/$moduleId/'
     | '/trainer/programs/'
@@ -286,6 +299,7 @@ export interface RootRouteChildren {
   TrainerModulesModuleIdRoute: typeof TrainerModulesModuleIdRoute
   TrainerProgramsProgramIdRoute: typeof TrainerProgramsProgramIdRoute
   TrainerSkillsSkillIdRoute: typeof TrainerSkillsSkillIdRoute
+  AdminMandatoryQuizzesIndexRoute: typeof AdminMandatoryQuizzesIndexRoute
   AdminReportsIndexRoute: typeof AdminReportsIndexRoute
   ModulesModuleIdIndexRoute: typeof ModulesModuleIdIndexRoute
   TrainerProgramsIndexRoute: typeof TrainerProgramsIndexRoute
@@ -377,6 +391,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TrainerQuizzesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/mandatory-quizzes/': {
+      id: '/admin/mandatory-quizzes/'
+      path: '/admin/mandatory-quizzes'
+      fullPath: '/admin/mandatory-quizzes/'
+      preLoaderRoute: typeof AdminMandatoryQuizzesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/reports/': {
       id: '/admin/reports/'
       path: '/admin/reports'
@@ -454,6 +475,7 @@ const rootRouteChildren: RootRouteChildren = {
   TrainerModulesModuleIdRoute: TrainerModulesModuleIdRoute,
   TrainerProgramsProgramIdRoute: TrainerProgramsProgramIdRoute,
   TrainerSkillsSkillIdRoute: TrainerSkillsSkillIdRoute,
+  AdminMandatoryQuizzesIndexRoute: AdminMandatoryQuizzesIndexRoute,
   AdminReportsIndexRoute: AdminReportsIndexRoute,
   ModulesModuleIdIndexRoute: ModulesModuleIdIndexRoute,
   TrainerProgramsIndexRoute: TrainerProgramsIndexRoute,
