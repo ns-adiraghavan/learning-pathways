@@ -11,8 +11,14 @@ import {
   Video,
 } from "lucide-react";
 
+import { toast } from "sonner";
+
 import type { ActivityType, DraftActivity, ModuleDraft } from "@/data/types";
-import { getCertificateTemplates, getFeedbackSurveys } from "@/data/repositories";
+import {
+  getCertificateTemplates,
+  getFeedbackSurveys,
+  setQuizMandatory,
+} from "@/data/repositories";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -89,6 +95,7 @@ export function ContentFlowTab({
         meta: NEW_ACTIVITY_META[type],
         required: true,
         draft: true,
+        mandatory: false,
       },
     ]);
 
@@ -201,6 +208,29 @@ export function ContentFlowTab({
                       </span>
                     </span>
                     <span className="flex shrink-0 items-center gap-3">
+                      {a.type === "quiz" && (
+                        <label
+                          className="hidden items-center gap-1.5 text-xs text-muted-foreground lg:flex"
+                          title="Compliance-tracked across the org"
+                        >
+                          Mandatory (compliance-tracked)
+                          <Switch
+                            checked={a.mandatory}
+                            onCheckedChange={(v) => {
+                              setActivities(
+                                draft.activities.map((x) =>
+                                  x.id === a.id ? { ...x, mandatory: v } : x,
+                                ),
+                              );
+                              void setQuizMandatory(a.id, v).then(() =>
+                                toast.success(
+                                  v ? "Quiz marked mandatory" : "Quiz no longer mandatory",
+                                ),
+                              );
+                            }}
+                          />
+                        </label>
+                      )}
                       <label className="hidden items-center gap-1.5 text-xs text-muted-foreground sm:flex">
                         Required
                         <Switch

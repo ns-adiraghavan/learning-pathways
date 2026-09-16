@@ -254,6 +254,7 @@ export function draftFor(summary: TrainerModuleSummary): ModuleDraft {
         meta: "12 min",
         required: true,
         draft: false,
+        mandatory: false,
       },
       {
         id: `${summary.id}-a2`,
@@ -262,6 +263,7 @@ export function draftFor(summary: TrainerModuleSummary): ModuleDraft {
         meta: "18 pages",
         required: true,
         draft: false,
+        mandatory: false,
       },
       {
         id: `${summary.id}-a3`,
@@ -270,6 +272,7 @@ export function draftFor(summary: TrainerModuleSummary): ModuleDraft {
         meta: "External link",
         required: false,
         draft: false,
+        mandatory: false,
       },
       {
         id: `${summary.id}-a4`,
@@ -278,6 +281,7 @@ export function draftFor(summary: TrainerModuleSummary): ModuleDraft {
         meta: "10 questions · 15 min",
         required: true,
         draft: summary.state === "draft",
+        mandatory: true,
       },
     ] as DraftActivity[]).slice(0, Math.max(2, summary.activityCount)),
     settings: {

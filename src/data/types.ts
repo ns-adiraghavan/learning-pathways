@@ -64,7 +64,10 @@ export interface QuizActivity {
   type: "quiz";
   templateId: string;
   questions: QuizQuestion[];
+  /** Needed to finish the module. */
   required: boolean;
+  /** Compliance-tracked across the org (distinct from `required`). */
+  mandatory: boolean;
   timeLimitMins: number;
   shuffle: boolean;
 }
@@ -205,6 +208,8 @@ export interface DraftActivity {
   meta: string;
   required: boolean;
   draft: boolean;
+  /** Quiz only: compliance-tracked across the org. */
+  mandatory: boolean;
 }
 
 export type PushEnrollment = "all-skill" | "audience" | "manual";
@@ -398,4 +403,37 @@ export interface PlatformSettings {
   banners: PlatformBanner[];
   notifications: { id: string; label: string; enabled: boolean }[];
   defaultCertificateTemplateId: string | null;
+}
+
+/* ============================================================
+ * MANDATORY QUIZ COMPLIANCE
+ * `mandatory` on a quiz means compliance-tracked across the org,
+ * which is distinct from `required` (needed to finish the module).
+ * ============================================================ */
+
+export interface MandatoryQuiz {
+  id: string;
+  quizId: string;
+  moduleId: string;
+  moduleTitle: string;
+  programTitle: string;
+  skillTitle: string;
+  quizName: string;
+  enrolled: number;
+  completed: number;
+  notCompleted: number;
+  completionPct: number;
+  dueDate: string;
+}
+
+export interface QuizCompletionRow {
+  learnerId: string;
+  name: string;
+  email: string;
+  team: string;
+  status: "completed" | "not-completed";
+  completedOn: string | null;
+  scorePct: number | null;
+  attempts: number;
+  lastRemindedOn: string | null;
 }
