@@ -122,7 +122,19 @@ function PlayerPage() {
       </div>
 
       <div className="mt-3 flex items-center gap-3">
-        <Progress value={pct} className="h-1.5 flex-1" />
+        <Progress
+          value={pct}
+          className="h-1.5 flex-1"
+          indicatorClassName={
+            module.category === "mandatory"
+              ? "bg-cat-mandatory"
+              : module.category === "onboarding"
+                ? "bg-cat-onboarding"
+                : module.category === "team"
+                  ? "bg-cat-team"
+                  : "bg-cat-bank"
+          }
+        />
         <span className="tnum text-xs text-muted-foreground">{pct}%</span>
         {justCompleted && (
           <CheckCircle2 className="animate-check-pop size-4 text-status-complete" strokeWidth={2} />

@@ -4,7 +4,7 @@ import { BookOpen } from "lucide-react";
 
 import { getAssignedModules, getProgressSummary } from "@/data/repositories";
 import { formatDate } from "@/lib/format";
-import { CategoryBadge, StatusDot } from "@/components/lessons/badges";
+import { CategoryBadge, CATEGORY_TINT, StatusDot } from "@/components/lessons/badges";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { DoodlePanel } from "@/components/doodle-field";
 import { StatTile } from "@/components/lessons/count-up";
@@ -102,7 +102,13 @@ function MyLearningPage() {
       ) : (
         <Stagger as="ul" className="space-y-3">
           {list.map((m) => (
-            <StaggerItem as="li" key={m.id} className="surface card-hover p-4">
+            <StaggerItem
+              as="li"
+              key={m.id}
+              className="surface card-hover relative overflow-hidden p-4 pl-5"
+              style={{ ["--cat-tint" as string]: CATEGORY_TINT[m.category] }}
+            >
+              <span aria-hidden className="cat-accent absolute inset-y-0 left-0 w-[3px]" />
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                 <img
                   src={m.posterImage}

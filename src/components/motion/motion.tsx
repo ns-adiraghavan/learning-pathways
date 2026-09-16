@@ -64,14 +64,16 @@ export function StaggerItem({
   children,
   className,
   as = "div",
+  style,
 }: {
   children: ReactNode;
   className?: string;
   as?: "div" | "li";
+  style?: React.CSSProperties;
 }) {
   const Comp = as === "li" ? motion.li : motion.div;
   return (
-    <Comp className={className} variants={itemVariants}>
+    <Comp className={className} style={style} variants={itemVariants}>
       {children}
     </Comp>
   );
