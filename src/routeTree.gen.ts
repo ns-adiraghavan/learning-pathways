@@ -22,6 +22,7 @@ import { Route as AdminCustomizationRouteImport } from './routes/admin/customiza
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as TrainerQuizzesRouteImport } from './routes/trainer/quizzes'
 import { Route as AdminMandatoryQuizzesIndexRouteImport } from './routes/admin/mandatory-quizzes.index'
+import { Route as AdminMandatoryQuizzesQuizIdRouteImport } from './routes/admin/mandatory-quizzes.$quizId'
 import { Route as AdminReportsIndexRouteImport } from './routes/admin/reports.index'
 import { Route as AdminReportsReportIdRouteImport } from './routes/admin/reports.$reportId'
 import { Route as ModulesModuleIdIndexRouteImport } from './routes/modules/$moduleId/index'
@@ -97,6 +98,12 @@ const AdminMandatoryQuizzesIndexRoute =
     path: '/admin/mandatory-quizzes/',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AdminMandatoryQuizzesQuizIdRoute =
+  AdminMandatoryQuizzesQuizIdRouteImport.update({
+    id: '/admin/mandatory-quizzes/$quizId',
+    path: '/admin/mandatory-quizzes/$quizId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AdminReportsIndexRoute = AdminReportsIndexRouteImport.update({
   id: '/admin/reports/',
   path: '/admin/reports/',
@@ -152,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AdminUsersRoute
   '/trainer/quizzes': typeof TrainerQuizzesRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/mandatory-quizzes/$quizId': typeof AdminMandatoryQuizzesQuizIdRoute
   '/admin/reports/$reportId': typeof AdminReportsReportIdRoute
   '/modules/$moduleId/player': typeof ModulesModuleIdPlayerRoute
   '/trainer/modules/$moduleId': typeof TrainerModulesModuleIdRoute
@@ -175,6 +183,7 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AdminUsersRoute
   '/trainer/quizzes': typeof TrainerQuizzesRoute
   '/admin': typeof AdminIndexRoute
+  '/admin/mandatory-quizzes/$quizId': typeof AdminMandatoryQuizzesQuizIdRoute
   '/admin/reports/$reportId': typeof AdminReportsReportIdRoute
   '/modules/$moduleId/player': typeof ModulesModuleIdPlayerRoute
   '/trainer/modules/$moduleId': typeof TrainerModulesModuleIdRoute
@@ -199,6 +208,7 @@ export interface FileRoutesById {
   '/admin/users': typeof AdminUsersRoute
   '/trainer/quizzes': typeof TrainerQuizzesRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/mandatory-quizzes/$quizId': typeof AdminMandatoryQuizzesQuizIdRoute
   '/admin/reports/$reportId': typeof AdminReportsReportIdRoute
   '/modules/$moduleId/player': typeof ModulesModuleIdPlayerRoute
   '/trainer/modules/$moduleId': typeof TrainerModulesModuleIdRoute
@@ -224,6 +234,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/trainer/quizzes'
     | '/admin/'
+    | '/admin/mandatory-quizzes/$quizId'
     | '/admin/reports/$reportId'
     | '/modules/$moduleId/player'
     | '/trainer/modules/$moduleId'
@@ -247,6 +258,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/trainer/quizzes'
     | '/admin'
+    | '/admin/mandatory-quizzes/$quizId'
     | '/admin/reports/$reportId'
     | '/modules/$moduleId/player'
     | '/trainer/modules/$moduleId'
@@ -270,6 +282,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/trainer/quizzes'
     | '/admin/'
+    | '/admin/mandatory-quizzes/$quizId'
     | '/admin/reports/$reportId'
     | '/modules/$moduleId/player'
     | '/trainer/modules/$moduleId'
@@ -294,6 +307,7 @@ export interface RootRouteChildren {
   AdminUsersRoute: typeof AdminUsersRoute
   TrainerQuizzesRoute: typeof TrainerQuizzesRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminMandatoryQuizzesQuizIdRoute: typeof AdminMandatoryQuizzesQuizIdRoute
   AdminReportsReportIdRoute: typeof AdminReportsReportIdRoute
   ModulesModuleIdPlayerRoute: typeof ModulesModuleIdPlayerRoute
   TrainerModulesModuleIdRoute: typeof TrainerModulesModuleIdRoute
@@ -398,6 +412,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminMandatoryQuizzesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/mandatory-quizzes/$quizId': {
+      id: '/admin/mandatory-quizzes/$quizId'
+      path: '/admin/mandatory-quizzes/$quizId'
+      fullPath: '/admin/mandatory-quizzes/$quizId'
+      preLoaderRoute: typeof AdminMandatoryQuizzesQuizIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/reports/': {
       id: '/admin/reports/'
       path: '/admin/reports'
@@ -470,6 +491,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminUsersRoute: AdminUsersRoute,
   TrainerQuizzesRoute: TrainerQuizzesRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminMandatoryQuizzesQuizIdRoute: AdminMandatoryQuizzesQuizIdRoute,
   AdminReportsReportIdRoute: AdminReportsReportIdRoute,
   ModulesModuleIdPlayerRoute: ModulesModuleIdPlayerRoute,
   TrainerModulesModuleIdRoute: TrainerModulesModuleIdRoute,

@@ -1,5 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { BarChart3, ClipboardList, Settings2, Users } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { BarChart3, ClipboardList, Settings2, ShieldCheck, Users } from "lucide-react";
+
+import { getMandatoryQuizzes } from "@/data/repositories";
+import { useCountUp } from "@/components/lessons/count-up";
+import { Progress } from "@/components/ui/progress";
 
 export const Route = createFileRoute("/admin/")({
   head: () => ({
@@ -41,12 +46,53 @@ const cards = [
     icon: BarChart3,
   },
   {
+    title: "Mandatory Quizzes",
+    description: "See who has and hasn't completed each compliance-tracked quiz.",
+    to: "/admin/mandatory-quizzes",
+    icon: ShieldCheck,
+  },
+  {
     title: "Customization",
     description: "Labels, banners, notification types and the default certificate.",
     to: "/admin/customization",
     icon: Settings2,
   },
 ] as const;
+
+function MandatoryComplianceKpi() {
+  const { data: quizzes = [] } = useQuery({
+    queryKey: ["mandatory-quizzes"],
+    queryFn: getMandatoryQuizzes,
+  });
+
+  const enrolled = quizzes.reduce((sum, q) => sum + q.enrolled, 0);
+  const completed = quizzes.reduce((sum, q) => sum + q.completed, 0);
+  const pct = enrolled ? Math.round((completed / enrolled) * 100) : 0;
+  const shown = useCountUp(pct);
+
+  return (
+    <Link
+      to="/admin/mandatory-quizzes"
+      className="surface surface-hover mb-5 block p-5"
+      aria-label="Mandatory completion"
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-label text-muted-foreground">Mandatory completion</p>
+          <p className="tnum mt-1 text-3xl font-[510]">
+            {shown}
+            <span className="text-base text-muted-foreground">%</span>
+          </p>
+          <p className="tnum mt-1 text-sm text-muted-foreground">
+            {completed} of {enrolled} across {quizzes.length} mandatory quizzes
+          </p>
+        </div>
+        <ShieldCheck className="size-5 shrink-0 text-muted-foreground" strokeWidth={1.75} />
+      </div>
+      <Progress value={pct} className="mt-3 h-1.5" />
+    </Link>
+  );
+}
 
 function AdminHome() {
   return (
@@ -57,6 +103,8 @@ function AdminHome() {
           Four jobs, nothing else. Users are normally auto-provisioned from HR.
         </p>
       </header>
+
+      <MandatoryComplianceKpi />
 
       <div className="grid gap-3 sm:grid-cols-2">
         {cards.map((c) => (
