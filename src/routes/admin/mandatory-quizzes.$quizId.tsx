@@ -11,6 +11,13 @@ import { ProgressRing } from "@/components/lessons/progress-ring";
 import { useCountUp } from "@/components/lessons/count-up";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -54,6 +61,7 @@ function QuizCompliancePage() {
   const { quizId } = Route.useParams();
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<Filter>("all");
+  const [team, setTeam] = useState("all");
   const [selected, setSelected] = useState<string[]>([]);
 
   const { data: quizzes = [] } = useQuery({
@@ -71,9 +79,19 @@ function QuizCompliancePage() {
   const notCompleted = rows.filter((r) => r.status === "not-completed");
   const pct = rows.length ? Math.round((completed.length / rows.length) * 100) : 0;
 
+  const teams = useMemo(
+    () => Array.from(new Set(rows.map((row) => row.team))).sort((a, b) => a.localeCompare(b)),
+    [rows],
+  );
+
   const visible = useMemo(
-    () => (filter === "all" ? rows : rows.filter((r) => r.status === filter)),
-    [rows, filter],
+    () =>
+      rows.filter(
+        (row) =>
+          (filter === "all" || row.status === filter) &&
+          (team === "all" || row.team === team),
+      ),
+    [rows, filter, team],
   );
 
   const shownCompleted = useCountUp(completed.length);
@@ -149,22 +167,37 @@ function QuizCompliancePage() {
       </header>
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex rounded-md border border-border p-0.5">
-          {FILTERS.map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              onClick={() => setFilter(f.id)}
-              className={cn(
-                "rounded px-3 py-1.5 text-sm transition-colors",
-                filter === f.id
-                  ? "bg-accent font-[510] text-foreground"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {f.label}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="inline-flex rounded-md border border-border p-0.5">
+            {FILTERS.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => setFilter(f.id)}
+                className={cn(
+                  "rounded px-3 py-1.5 text-sm transition-colors",
+                  filter === f.id
+                    ? "bg-accent font-[510] text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+          <Select value={team} onValueChange={setTeam}>
+            <SelectTrigger className="h-9 w-44" aria-label="Filter by team">
+              <SelectValue placeholder="All teams" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All teams</SelectItem>
+              {teams.map((teamName) => (
+                <SelectItem key={teamName} value={teamName}>
+                  {teamName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
