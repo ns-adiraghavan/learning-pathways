@@ -132,6 +132,7 @@
   --sidebar-accent-foreground: #101113;
   --sidebar-border: #e5e7eb;
   --sidebar-ring: #0d9488;
+  --tile-solid-foreground: #ffffff;
 }
 
 .dark {
@@ -183,6 +184,7 @@
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: #23252a;
   --sidebar-ring: #2dd4bf;
+  --tile-solid-foreground: #ffffff;
 }
 
 @layer base {
@@ -412,6 +414,44 @@
     color-mix(in oklab, var(--tile-tint) 16%, var(--color-card)),
     color-mix(in oklab, var(--tile-tint) 6%, var(--color-card))
   );
+}
+
+@utility solid-tile {
+  border-radius: 16px;
+  border: 1px solid color-mix(in oklab, var(--tile-tint) 80%, var(--color-border));
+  background-color: var(--tile-tint);
+  color: var(--tile-solid-foreground);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--tile-solid-foreground) 22%, transparent);
+}
+
+@utility tinted-surface {
+  background-image: linear-gradient(
+    135deg,
+    color-mix(in oklab, var(--tile-tint) 8%, var(--color-card)),
+    var(--color-card) 72%
+  );
+}
+
+@utility icon-chip {
+  color: var(--tile-tint);
+  background-color: color-mix(in oklab, var(--tile-tint) 12%, transparent);
+  border: 1px solid color-mix(in oklab, var(--tile-tint) 20%, transparent);
+}
+
+.soft-tile .stat-tile-label,
+.surface .stat-tile-label,
+.soft-tile .stat-tile-suffix,
+.surface .stat-tile-suffix {
+  color: var(--color-muted-foreground);
+}
+
+.soft-tile .stat-tile-value {
+  color: var(--tile-tint);
+}
+
+.solid-tile .stat-tile-label,
+.solid-tile .stat-tile-suffix {
+  color: color-mix(in oklab, var(--tile-solid-foreground) 78%, transparent);
 }
 
 /* Sidebar / view accent helpers */

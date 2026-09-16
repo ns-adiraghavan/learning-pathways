@@ -4,9 +4,12 @@ import { Layers, Plus } from "lucide-react";
 
 import { getPrograms } from "@/data/repositories";
 import { EmptyState } from "@/components/lessons/empty-state";
+import { StatTile } from "@/components/lessons/count-up";
 import { StateBadge } from "@/components/trainer/state-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+
+const PROGRAM_TINTS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-4)"] as const;
 
 export const Route = createFileRoute("/trainer/programs/")({
   head: () => ({
@@ -29,6 +32,14 @@ export const Route = createFileRoute("/trainer/programs/")({
 function ProgramsPage() {
   const { data, isPending } = useQuery({ queryKey: ["programs"], queryFn: getPrograms });
   const programs = data ?? [];
+  const totals = programs.reduce(
+    (sum, program) => ({
+      skills: sum.skills + program.skillCount,
+      modules: sum.modules + program.moduleCount,
+      learners: sum.learners + program.learnerCount,
+    }),
+    { skills: 0, modules: 0, learners: 0 },
+  );
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">
@@ -45,6 +56,15 @@ function ProgramsPage() {
         </Button>
       </header>
 
+      {!isPending && programs.length > 0 && (
+        <section className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Program summary">
+          <StatTile label="Programs" value={programs.length} tint="var(--chart-1)" tone="solid" />
+          <StatTile label="Skills" value={totals.skills} tint="var(--chart-2)" tone="solid" />
+          <StatTile label="Modules" value={totals.modules} tint="var(--chart-3)" tone="soft" />
+          <StatTile label="Learners" value={totals.learners} tint="var(--chart-4)" tone="soft" />
+        </section>
+      )}
+
       {isPending ? (
         <div className="grid gap-3">
           {[0, 1, 2].map((i) => (
@@ -60,8 +80,13 @@ function ProgramsPage() {
         />
       ) : (
         <div className="grid gap-3">
-          {programs.map((p) => (
-            <article key={p.id} className="surface surface-hover p-4 sm:p-5">
+          {programs.map((p, index) => (
+            <article
+              key={p.id}
+              className="surface tinted-surface surface-hover relative overflow-hidden p-4 pl-5 sm:p-5 sm:pl-6"
+              style={{ ["--tile-tint" as string]: PROGRAM_TINTS[index % PROGRAM_TINTS.length] }}
+            >
+              <span aria-hidden className="absolute inset-y-0 left-0 w-[3px] bg-(--tile-tint)" />
               <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">

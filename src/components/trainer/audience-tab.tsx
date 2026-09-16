@@ -76,9 +76,9 @@ export function AudienceTab({ moduleId }: { moduleId: string }) {
         <Skeleton className="h-20 rounded-xl" />
       ) : (
         <div className="grid gap-3 sm:grid-cols-3">
-          <StatTile label="Completion" value={analytics?.completionPct ?? 0} suffix="%" />
-          <StatTile label="Pass rate" value={analytics?.passRatePct ?? 0} suffix="%" />
-          <StatTile label="Avg time" value={analytics?.avgTimeMins ?? 0} suffix=" min" />
+          <StatTile label="Completion" value={analytics?.completionPct ?? 0} suffix="%" tint="var(--chart-1)" tone="solid" />
+          <StatTile label="Pass rate" value={analytics?.passRatePct ?? 0} suffix="%" tint="var(--chart-2)" tone="soft" />
+          <StatTile label="Avg time" value={analytics?.avgTimeMins ?? 0} suffix=" min" tint="var(--chart-4)" tone="soft" />
         </div>
       )}
 

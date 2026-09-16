@@ -62,18 +62,8 @@ export function AppSidebar() {
   const trainer = !admin && (mode === "trainer" || pathname.startsWith("/trainer"));
   const items = admin ? adminItems : trainer ? trainerItems : learnerItems;
   const groupLabel = admin ? "Administration" : trainer ? "Authoring" : "Learning";
-  const accent = admin
-    ? "var(--brand-blue)"
-    : trainer
-      ? "var(--cat-onboarding)"
-      : "var(--color-primary)";
-
   return (
-    <Sidebar
-      collapsible="icon"
-      className="border-r border-sidebar-border"
-      style={{ ["--view-accent" as string]: accent }}
-    >
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="h-14 justify-center border-b border-sidebar-border px-3">
         <Link to="/home" className="overflow-hidden" aria-label="NS Lessons by Netscribes">
           <BrandLockup markOnly={collapsed} size="sm" />
@@ -81,9 +71,9 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
+        <SidebarGroup className="px-2 py-3">
           {!collapsed && (
-            <SidebarGroupLabel className="text-[11px] tracking-[0.12em] uppercase">
+            <SidebarGroupLabel className="px-2 text-[10px] tracking-[0.12em] uppercase text-muted-foreground">
               {groupLabel}
             </SidebarGroupLabel>
           )}
@@ -100,18 +90,17 @@ export function AppSidebar() {
                       <motion.span
                         layoutId={`nav-indicator-${groupLabel}`}
                         transition={{ type: "spring", stiffness: 420, damping: 38 }}
-                        className="absolute inset-y-0.5 left-0 rounded-lg"
+                        className="absolute inset-0 rounded-md bg-sidebar-primary"
                         style={{
                           right: 0,
-                          background:
-                            "color-mix(in oklab, var(--view-accent) 12%, transparent)",
                         }}
                       />
                     )}
                     <SidebarMenuButton
                       asChild
                       tooltip={item.title}
-                      className="relative z-10 data-[active=true]:bg-transparent"
+                      isActive={active}
+                      className="relative z-10 h-8 data-[active=true]:bg-transparent data-[active=true]:text-sidebar-primary-foreground"
                     >
                       <Link to={item.url} className="flex items-center gap-2.5">
                         <span
@@ -119,18 +108,24 @@ export function AppSidebar() {
                           className="h-4 w-[2px] shrink-0 rounded-full transition-colors"
                           style={{
                             background: active
-                              ? "var(--view-accent)"
+                              ? "var(--sidebar-primary-foreground)"
                               : "color-mix(in oklab, var(--color-foreground) 14%, transparent)",
                           }}
                         />
                         <item.icon
-                          className="size-4"
                           strokeWidth={1.75}
-                          style={active ? { color: "var(--view-accent)" } : undefined}
+                          className={
+                            active
+                              ? "size-4 text-sidebar-primary-foreground"
+                              : "size-4 text-muted-foreground"
+                          }
                         />
                         <span
-                          className={active ? "font-[590]" : "text-muted-foreground"}
-                          style={active ? { color: "var(--view-accent)" } : undefined}
+                          className={
+                            active
+                              ? "font-[590] text-sidebar-primary-foreground"
+                              : "text-muted-foreground"
+                          }
                         >
                           {item.title}
                         </span>

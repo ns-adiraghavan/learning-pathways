@@ -116,7 +116,11 @@ function MandatoryQuizzesPage() {
                     {q.programTitle} · {q.skillTitle}
                   </TableCell>
                   <TableCell>
-                    <Progress value={q.completionPct} className="h-1.5" />
+                    <Progress
+                      value={q.completionPct}
+                      className="h-1.5"
+                      indicatorClassName="bg-cat-mandatory"
+                    />
                     <span className="tnum mt-1.5 block text-xs text-muted-foreground">
                       {q.completed} / {q.enrolled} completed
                     </span>

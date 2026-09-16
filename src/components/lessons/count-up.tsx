@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 
 /** Counts a number up over ~220ms, ease-out; static when reduced motion is on. */
 export function useCountUp(target: number, duration = 220) {
@@ -30,18 +31,30 @@ export function StatTile({
   label,
   value,
   suffix = "",
+  tint,
+  tone = "neutral",
 }: {
   label: string;
   value: number;
   suffix?: string;
+  tint?: string;
+  tone?: "neutral" | "soft" | "solid";
 }) {
   const shown = useCountUp(value);
   return (
-    <div className="surface px-4 py-3">
-      <p className="text-label text-muted-foreground">{label}</p>
-      <p className="tnum mt-1 text-2xl font-[510]">
+    <div
+      className={cn(
+        "h-full px-4 py-3",
+        tone === "neutral" && "surface",
+        tone === "soft" && "soft-tile",
+        tone === "solid" && "solid-tile",
+      )}
+      style={tint ? { ["--tile-tint" as string]: tint } : undefined}
+    >
+      <p className="text-label stat-tile-label">{label}</p>
+      <p className="tnum stat-tile-value mt-1 text-2xl font-[590]">
         {shown}
-        <span className="text-base text-muted-foreground">{suffix}</span>
+        <span className="stat-tile-suffix text-base">{suffix}</span>
       </p>
     </div>
   );

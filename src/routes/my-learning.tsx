@@ -4,10 +4,10 @@ import { BookOpen } from "lucide-react";
 
 import { getAssignedModules, getProgressSummary } from "@/data/repositories";
 import { formatDate } from "@/lib/format";
-import { CategoryBadge, StatusDot } from "@/components/lessons/badges";
+import { CategoryBadge, CATEGORY_TINT, StatusDot } from "@/components/lessons/badges";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { DoodlePanel } from "@/components/doodle-field";
-import { useCountUp } from "@/components/lessons/count-up";
+import { StatTile } from "@/components/lessons/count-up";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { PageFade, ShimmerBlock, Stagger, StaggerItem } from "@/components/motion/motion";
@@ -31,31 +31,6 @@ export const Route = createFileRoute("/my-learning")({
   }),
   component: MyLearningPage,
 });
-
-function Tile({
-  value,
-  label,
-  tint,
-  suffix,
-}: {
-  value: number;
-  label: string;
-  tint: string;
-  suffix?: string;
-}) {
-  const shown = useCountUp(value, 700);
-  return (
-    <div className="soft-tile p-4" style={{ ["--tile-tint" as string]: tint }}>
-      <p className="tnum text-[28px] leading-none font-[590]" style={{ color: tint }}>
-        {shown}
-        {suffix}
-      </p>
-      <p className="text-[11px] tracking-[0.1em] mt-2 uppercase text-muted-foreground">
-        {label}
-      </p>
-    </div>
-  );
-}
 
 function MyLearningPage() {
   const { data: modules, isPending } = useQuery({
@@ -89,10 +64,10 @@ function MyLearningPage() {
       {summary && total > 0 && (
         <section className="mb-8">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Tile value={summary.completedModules} label="Completed" tint="var(--cat-team)" />
-            <Tile value={summary.inProgressCount} label="In progress" tint="var(--brand-blue)" />
-            <Tile value={summary.overdueCount} label="Overdue" tint="var(--status-overdue)" />
-            <Tile value={pct} suffix="%" label="Overall" tint="var(--cat-onboarding)" />
+            <StatTile value={summary.completedModules} label="Completed" tint="var(--chart-1)" tone="solid" />
+            <StatTile value={summary.inProgressCount} label="In progress" tint="var(--chart-2)" tone="solid" />
+            <StatTile value={summary.overdueCount} label="Overdue" tint="var(--chart-5)" tone="soft" />
+            <StatTile value={pct} suffix="%" label="Overall" tint="var(--chart-3)" tone="soft" />
           </div>
 
           <div className="surface mt-3 grid gap-4 p-5 sm:grid-cols-2">
@@ -127,7 +102,13 @@ function MyLearningPage() {
       ) : (
         <Stagger as="ul" className="space-y-3">
           {list.map((m) => (
-            <StaggerItem as="li" key={m.id} className="surface card-hover p-4">
+            <StaggerItem
+              as="li"
+              key={m.id}
+              className="surface card-hover relative overflow-hidden p-4 pl-5"
+              style={{ ["--cat-tint" as string]: CATEGORY_TINT[m.category] }}
+            >
+              <span aria-hidden className="cat-accent absolute inset-y-0 left-0 w-[3px]" />
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                 <img
                   src={m.posterImage}
@@ -150,7 +131,19 @@ function MyLearningPage() {
                     {m.title}
                   </Link>
                   <div className="mt-2.5 flex items-center gap-3">
-                    <Progress value={m.progressPct} className="h-1.5 flex-1" />
+                    <Progress
+                      value={m.progressPct}
+                      className="h-1.5 flex-1"
+                      indicatorClassName={
+                        m.category === "mandatory"
+                          ? "bg-cat-mandatory"
+                          : m.category === "onboarding"
+                            ? "bg-cat-onboarding"
+                            : m.category === "team"
+                              ? "bg-cat-team"
+                              : "bg-cat-bank"
+                      }
+                    />
                     <span className="tnum text-xs text-muted-foreground">{m.progressPct}%</span>
                   </div>
                   <p className="tnum mt-1.5 text-xs text-muted-foreground">
@@ -189,7 +182,11 @@ function Split({
           {complete} / {total}
         </p>
       </div>
-      <Progress value={pct} className="mt-2 h-1.5" />
+      <Progress
+        value={pct}
+        className="mt-2 h-1.5"
+        indicatorClassName={label === "Mandatory" ? "bg-cat-mandatory" : "bg-cat-team"}
+      />
     </div>
   );
 }

@@ -94,7 +94,19 @@ function ModuleDetailPage() {
       <h1 className="text-title mt-2">{module.title}</h1>
 
       <div className="mt-4 flex items-center gap-3">
-        <Progress value={pct} className="h-2 flex-1" />
+        <Progress
+          value={pct}
+          className="h-2 flex-1"
+          indicatorClassName={
+            module.category === "mandatory"
+              ? "bg-cat-mandatory"
+              : module.category === "onboarding"
+                ? "bg-cat-onboarding"
+                : module.category === "team"
+                  ? "bg-cat-team"
+                  : "bg-cat-bank"
+          }
+        />
         <span className="tnum text-sm text-muted-foreground">{pct}%</span>
       </div>
 
