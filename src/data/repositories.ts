@@ -34,6 +34,10 @@ import {
   reports as mockReports,
   users as mockUsers,
 } from "./admin-mocks";
+import {
+  completionFor,
+  mandatoryQuizzes as mockMandatoryQuizzes,
+} from "./compliance-mocks";
 import type {
   Certificate,
   DifficultyBreakup,
@@ -68,6 +72,8 @@ import type {
   ReportId,
   ReportSummary,
   UserProgressItem,
+  MandatoryQuiz,
+  QuizCompletionRow,
 } from "./types";
 
 function delay<T>(value: T): Promise<T> {
@@ -497,4 +503,50 @@ let settingsStore: PlatformSettings | null = null;
 export async function savePlatformSettings(settings: PlatformSettings): Promise<PlatformSettings> {
   settingsStore = settings;
   return delay(settings);
+}
+
+/* ============================================================
+ * MANDATORY QUIZ COMPLIANCE
+ * ============================================================ */
+
+/** In-session mandatory flags + reminder ticks, until the API lands. */
+const mandatoryFlagStore = new Map<string, boolean>();
+const remindedStore = new Map<string, Map<string, string>>();
+
+// CONNECT: replace with real API call to GET /api/admin/mandatory-quizzes
+export async function getMandatoryQuizzes(): Promise<MandatoryQuiz[]> {
+  if (EMPTY_STATE) return delay([]);
+  const list = mockMandatoryQuizzes.filter((q) => mandatoryFlagStore.get(q.quizId) !== false);
+  return delay(list);
+}
+
+// CONNECT: replace with real API call to GET /api/quizzes/:id/completion
+export async function getQuizCompletion(quizId: string): Promise<QuizCompletionRow[]> {
+  if (EMPTY_STATE) return delay([]);
+  const reminded = remindedStore.get(quizId);
+  const rows = completionFor(quizId).map((r) =>
+    reminded?.has(r.learnerId) ? { ...r, lastRemindedOn: reminded.get(r.learnerId)! } : r,
+  );
+  return delay(rows);
+}
+
+// CONNECT: replace with real API call to PUT /api/quizzes/:id/mandatory
+export async function setQuizMandatory(
+  quizId: string,
+  mandatory: boolean,
+): Promise<{ quizId: string; mandatory: boolean }> {
+  mandatoryFlagStore.set(quizId, mandatory);
+  return delay({ quizId, mandatory });
+}
+
+// CONNECT: replace with real API call to POST /api/quizzes/:id/reminders
+export async function sendQuizReminder(
+  quizId: string,
+  learnerIds: string[],
+): Promise<{ sent: number }> {
+  const today = new Date().toISOString().slice(0, 10);
+  const map = remindedStore.get(quizId) ?? new Map<string, string>();
+  learnerIds.forEach((id) => map.set(id, today));
+  remindedStore.set(quizId, map);
+  return delay({ sent: learnerIds.length });
 }

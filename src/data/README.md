@@ -108,3 +108,26 @@ assignments, reports, light customization. Every read honours `EMPTY_STATE`.
 - Export and Schedule are UI actions only while mocked.
 - While mocked, assignment edits, added users and saved settings live in
   in-memory maps. Delete them when the API lands.
+
+## Mandatory quiz compliance
+
+Demo records live in `compliance-mocks.ts`; types are in the MANDATORY QUIZ
+COMPLIANCE section of `types.ts`. A quiz carries `mandatory: boolean`
+(compliance-tracked org-wide) alongside `required: boolean` (needed to finish
+the module) — the two are independent. Every read honours `EMPTY_STATE`.
+
+| Function | Returns (see `types.ts`) | Endpoint marker |
+| --- | --- | --- |
+| `getMandatoryQuizzes()` | `MandatoryQuiz[]` | `GET /api/admin/mandatory-quizzes` |
+| `getQuizCompletion(quizId)` | `QuizCompletionRow[]` | `GET /api/quizzes/:id/completion` |
+| `setQuizMandatory(quizId, mandatory)` | `{ quizId, mandatory }` | `PUT /api/quizzes/:id/mandatory` |
+| `sendQuizReminder(quizId, learnerIds)` | `{ sent: number }` | `POST /api/quizzes/:id/reminders` |
+
+### Notes for the backend team
+
+- `QuizCompletionRow.status` is `completed | not-completed`; `completedOn`,
+  `scorePct` and `lastRemindedOn` are `null` when they do not apply.
+- CSV downloads are generated client-side from the rows already returned — no
+  export endpoint is needed.
+- While mocked, mandatory flags and reminder timestamps live in in-memory maps.
+  Delete them when the API lands.
