@@ -208,6 +208,8 @@ export interface DraftActivity {
   meta: string;
   required: boolean;
   draft: boolean;
+  /** Quiz only: compliance-tracked across the org. */
+  mandatory: boolean;
 }
 
 export type PushEnrollment = "all-skill" | "audience" | "manual";
