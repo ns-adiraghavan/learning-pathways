@@ -95,6 +95,7 @@ export function ContentFlowTab({
         meta: NEW_ACTIVITY_META[type],
         required: true,
         draft: true,
+        mandatory: false,
       },
     ]);
 
