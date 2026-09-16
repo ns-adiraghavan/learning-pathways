@@ -64,7 +64,10 @@ export interface QuizActivity {
   type: "quiz";
   templateId: string;
   questions: QuizQuestion[];
+  /** Needed to finish the module. */
   required: boolean;
+  /** Compliance-tracked across the org (distinct from `required`). */
+  mandatory: boolean;
   timeLimitMins: number;
   shuffle: boolean;
 }
