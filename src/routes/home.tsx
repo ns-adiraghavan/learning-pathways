@@ -2,10 +2,17 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2, FileSignature, ClipboardList, PartyPopper } from "lucide-react";
 
-import { getAssignedModules, getCurrentUser, getPendingActions } from "@/data/repositories";
+import {
+  getAssignedModules,
+  getCertificates,
+  getCurrentUser,
+  getPendingActions,
+  getProgressSummary,
+} from "@/data/repositories";
 import type { LearningModule, ModuleCategory } from "@/data/types";
 import { CATEGORY_LABEL, formatDate } from "@/lib/format";
 import { ModuleCard } from "@/components/lessons/module-card";
+import { StatTile } from "@/components/lessons/count-up";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { DoodlePanel } from "@/components/doodle-field";
 import { PageFade, ShimmerBlock, Stagger, StaggerItem } from "@/components/motion/motion";
@@ -48,6 +55,14 @@ function HomePage() {
     queryKey: ["pending-actions"],
     queryFn: getPendingActions,
   });
+  const { data: summary } = useQuery({
+    queryKey: ["progress-summary"],
+    queryFn: getProgressSummary,
+  });
+  const { data: certificates = [] } = useQuery({
+    queryKey: ["certificates"],
+    queryFn: getCertificates,
+  });
 
   const all = modules ?? [];
   const continueRow = [...all]
@@ -68,6 +83,15 @@ function HomePage() {
           </p>
         </div>
       </header>
+
+      {summary && (
+        <section className="mb-8 grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Learning summary">
+          <StatTile label="In progress" value={summary.inProgressCount} tint="var(--chart-1)" tone="solid" />
+          <StatTile label="Due soon" value={continueRow.length} tint="var(--chart-2)" tone="solid" />
+          <StatTile label="Completed" value={summary.completedModules} tint="var(--chart-3)" tone="soft" />
+          <StatTile label="Certificates" value={certificates.length} tint="var(--chart-4)" tone="soft" />
+        </section>
+      )}
 
       {isPending ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

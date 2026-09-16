@@ -37,7 +37,7 @@ export function ModuleCard({ module }: { module: LearningModule }) {
             Due {formatDate(module.dueDate)}
           </p>
         </div>
-        <ProgressRing value={module.progressPct} />
+        <ProgressRing value={module.progressPct} color={tint} />
       </div>
     </Link>
   );

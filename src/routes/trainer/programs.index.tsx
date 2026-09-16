@@ -4,6 +4,7 @@ import { Layers, Plus } from "lucide-react";
 
 import { getPrograms } from "@/data/repositories";
 import { EmptyState } from "@/components/lessons/empty-state";
+import { StatTile } from "@/components/lessons/count-up";
 import { StateBadge } from "@/components/trainer/state-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -29,6 +30,14 @@ export const Route = createFileRoute("/trainer/programs/")({
 function ProgramsPage() {
   const { data, isPending } = useQuery({ queryKey: ["programs"], queryFn: getPrograms });
   const programs = data ?? [];
+  const totals = programs.reduce(
+    (sum, program) => ({
+      skills: sum.skills + program.skillCount,
+      modules: sum.modules + program.moduleCount,
+      learners: sum.learners + program.learnerCount,
+    }),
+    { skills: 0, modules: 0, learners: 0 },
+  );
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">
@@ -44,6 +53,15 @@ function ProgramsPage() {
           New program
         </Button>
       </header>
+
+      {!isPending && programs.length > 0 && (
+        <section className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Program summary">
+          <StatTile label="Programs" value={programs.length} tint="var(--chart-1)" tone="solid" />
+          <StatTile label="Skills" value={totals.skills} tint="var(--chart-2)" tone="solid" />
+          <StatTile label="Modules" value={totals.modules} tint="var(--chart-3)" tone="soft" />
+          <StatTile label="Learners" value={totals.learners} tint="var(--chart-4)" tone="soft" />
+        </section>
+      )}
 
       {isPending ? (
         <div className="grid gap-3">

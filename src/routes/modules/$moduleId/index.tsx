@@ -7,6 +7,7 @@ import { getModule, getModuleProgress } from "@/data/repositories";
 import type { Activity } from "@/data/types";
 import { activityMeta, formatDate } from "@/lib/format";
 import { CategoryBadge, RequiredBadge, StatusDot } from "@/components/lessons/badges";
+import { CATEGORY_TINT } from "@/components/lessons/badges";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -94,7 +95,19 @@ function ModuleDetailPage() {
       <h1 className="text-title mt-2">{module.title}</h1>
 
       <div className="mt-4 flex items-center gap-3">
-        <Progress value={pct} className="h-2 flex-1" />
+        <Progress
+          value={pct}
+          className="h-2 flex-1"
+          indicatorClassName={
+            module.category === "mandatory"
+              ? "bg-cat-mandatory"
+              : module.category === "onboarding"
+                ? "bg-cat-onboarding"
+                : module.category === "team"
+                  ? "bg-cat-team"
+                  : "bg-cat-bank"
+          }
+        />
         <span className="tnum text-sm text-muted-foreground">{pct}%</span>
       </div>
 
