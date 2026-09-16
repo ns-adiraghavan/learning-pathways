@@ -74,7 +74,9 @@ function AdminKpis() {
   const enrolled = quizzes.reduce((sum, q) => sum + q.enrolled, 0);
   const completed = quizzes.reduce((sum, q) => sum + q.completed, 0);
   const pct = enrolled ? Math.round((completed / enrolled) * 100) : 0;
-  const active = users.filter((user) => user.lastActive !== "Never").length;
+  const active = users.filter(
+    (user) => user.role === "Learner" && user.lastActive !== "Never",
+  ).length;
   const overdue = quizzes.reduce((sum, quiz) => sum + quiz.notCompleted, 0);
 
   return (

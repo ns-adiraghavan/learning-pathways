@@ -73,7 +73,7 @@ export function StaggerItem({
 }) {
   const Comp = as === "li" ? motion.li : motion.div;
   return (
-    <Comp className={className} style={style} variants={itemVariants}>
+    <Comp className={className} variants={itemVariants} {...(style ? { style } : {})}>
       {children}
     </Comp>
   );
