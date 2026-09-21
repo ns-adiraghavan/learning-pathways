@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Timer } from "lucide-react";
+import { ListChecks, Play, Timer } from "lucide-react";
 
 import type { QuizActivity as QuizActivityType, QuizResult } from "@/data/types";
 import { submitQuiz } from "@/data/repositories";
@@ -30,6 +30,7 @@ export function QuizActivity({
     [activity],
   );
 
+  const [started, setStarted] = useState(false);
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string | null>>({});
   const [seconds, setSeconds] = useState(activity.timeLimitMins * 60);
@@ -47,8 +48,9 @@ export function QuizActivity({
     setSubmitting(false);
   }
 
+  // The timer only runs once the learner has started — never on mount.
   useEffect(() => {
-    if (result) return;
+    if (!started || result) return;
     const id = window.setInterval(() => {
       setSeconds((s) => {
         if (s <= 1) {
@@ -61,7 +63,42 @@ export function QuizActivity({
     }, 1000);
     return () => window.clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [result]);
+  }, [started, result]);
+
+  // Start screen — the quiz waits for the learner before the clock begins.
+  if (!started) {
+    return (
+      <div className="surface blue-wash animate-soft-in flex flex-col items-center gap-4 px-6 py-10 text-center">
+        <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+          <ListChecks className="size-6" strokeWidth={1.75} />
+        </div>
+        <div>
+          <h2 className="text-card-title">{activity.name}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            When you start, the timer begins and you can't pause it. Give yourself a clear run.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
+          <span className="chip-blue rounded-full px-2.5 py-1">
+            {questions.length} question{questions.length === 1 ? "" : "s"}
+          </span>
+          <span className="chip-blue inline-flex items-center gap-1.5 rounded-full px-2.5 py-1">
+            <Timer className="size-3.5" strokeWidth={1.75} />
+            {activity.timeLimitMins} min
+          </span>
+          {activity.mandatory && (
+            <span className="rounded-full bg-status-mandatory/10 px-2.5 py-1 text-status-mandatory">
+              Compliance-tracked
+            </span>
+          )}
+        </div>
+        <Button className="mt-1" onClick={() => setStarted(true)}>
+          <Play className="size-4" strokeWidth={2} />
+          Start quiz
+        </Button>
+      </div>
+    );
+  }
 
   if (!question) return null;
 
