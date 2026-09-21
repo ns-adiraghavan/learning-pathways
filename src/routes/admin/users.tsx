@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Search, UserPlus, Users } from "lucide-react";
+import { Download, Search, UserPlus, Users } from "lucide-react";
 import { toast } from "sonner";
 
+import { downloadCsv, slugify, toCsv } from "@/lib/csv";
 import { addUser, getUser, getUserProgress, getUsers } from "@/data/repositories";
 import type { AdminRole } from "@/data/types";
 import { EmptyState } from "@/components/lessons/empty-state";

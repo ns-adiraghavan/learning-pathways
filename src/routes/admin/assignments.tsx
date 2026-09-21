@@ -1,20 +1,32 @@
+import { downloadCsv, slugify, toCsv } from "@/lib/csv";
 import { useState } from "react";
+import { downloadCsv, slugify, toCsv } from "@/lib/csv";
 import { createFileRoute } from "@tanstack/react-router";
+import { downloadCsv, slugify, toCsv } from "@/lib/csv";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ClipboardList, Plus, Trash2 } from "lucide-react";
+import { downloadCsv, slugify, toCsv } from "@/lib/csv";
+import { ClipboardList, Download, Plus, Trash2 } from "lucide-react";
+import { downloadCsv, slugify, toCsv } from "@/lib/csv";
 import { toast } from "sonner";
 
+import { downloadCsv, slugify, toCsv } from "@/lib/csv";
 import {
   getAssignableModules,
   getModuleAssignments,
   updateAssignment,
 } from "@/data/repositories";
 import type { ModuleAssignment } from "@/data/types";
+import { downloadCsv, slugify, toCsv } from "@/lib/csv";
 import { EmptyState } from "@/components/lessons/empty-state";
+import { downloadCsv, slugify, toCsv } from "@/lib/csv";
 import { Button } from "@/components/ui/button";
+import { downloadCsv, slugify, toCsv } from "@/lib/csv";
 import { Checkbox } from "@/components/ui/checkbox";
+import { downloadCsv, slugify, toCsv } from "@/lib/csv";
 import { Input } from "@/components/ui/input";
+import { downloadCsv, slugify, toCsv } from "@/lib/csv";
 import { Label } from "@/components/ui/label";
+import { downloadCsv, slugify, toCsv } from "@/lib/csv";
 import {
   Select,
   SelectContent,
@@ -22,7 +34,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { downloadCsv, slugify, toCsv } from "@/lib/csv";
 import { Skeleton } from "@/components/ui/skeleton";
+import { downloadCsv, slugify, toCsv } from "@/lib/csv";
 import {
   Table,
   TableBody,
@@ -31,7 +45,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { downloadCsv, slugify, toCsv } from "@/lib/csv";
 import { STATUS_DOT, STATUS_LABEL } from "@/lib/format";
+import { downloadCsv, slugify, toCsv } from "@/lib/csv";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/assignments")({
