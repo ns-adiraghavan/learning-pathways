@@ -330,6 +330,8 @@ export type AdminRole = "Learner" | "Trainer" | "Administrator";
 
 export type UserStatus = "active" | "inactive" | "invited";
 
+export type EmployeeType = "full-time" | "contract" | "intern";
+
 export interface AdminUser {
   id: string;
   /** Human-facing employee id, distinct from the internal record id. */
@@ -345,10 +347,34 @@ export interface AdminUser {
   department: string;
   location: string;
   role: AdminRole;
+  /** Org attributes (UDFs) used by the advanced learner search. */
+  designation: string;
+  employeeType: EmployeeType;
+  functionArea: string;
+  grade: string;
+  manager: string;
+  joiningDate: string;
   assignedCount: number;
   completeCount: number;
   lastActive: string;
   provisioned: "auto" | "manual";
+}
+
+/**
+ * Multi-field learner search (pointer 10). Backed by the real user-attribute
+ * schema once the directory endpoint lands; today these narrow the mock set.
+ * `q` is the free-text box (name / user id / email); the rest are slicers.
+ */
+export interface UserFilters {
+  q?: string;
+  status?: UserStatus | "all";
+  team?: string;
+  department?: string;
+  location?: string;
+  employeeType?: EmployeeType | "all";
+  functionArea?: string;
+  grade?: string;
+  role?: AdminRole | "all";
 }
 
 export interface UserProgressItem {
@@ -379,7 +405,11 @@ export interface AssignableModule {
   assignedCount: number;
 }
 
-export type ReportId = "completion-ratio" | "time-spent" | "leaderboard-points" | "audit-log";
+export type ReportId =
+  "completion-ratio" | "time-spent" | "leaderboard-points" | "audit-log" | "login";
+
+/** The five slices every report can be viewed through (pointer 17). */
+export type ReportTab = "dashboard" | "by-attributes" | "by-programs" | "by-learner" | "by-modules";
 
 export interface ReportSummary {
   id: ReportId;
@@ -388,18 +418,94 @@ export interface ReportSummary {
   lastRun: string;
 }
 
+export interface ReportColumn {
+  key: string;
+  label: string;
+  numeric?: boolean;
+}
+
+export interface ReportKpi {
+  label: string;
+  value: number;
+  suffix?: string;
+  /** CSS colour token for the tile accent, e.g. "var(--chart-1)". */
+  tint?: string;
+}
+
+/** A small, self-describing chart payload the front-end renders inline. */
+export interface ReportChart {
+  kind: "bar" | "line" | "donut";
+  title: string;
+  /** Single-series magnitude/trend, or the parts of a composition. */
+  series: { label: string; value: number; tint?: string }[];
+  suffix?: string;
+}
+
+/**
+ * One report, resolved for a single tab. The server owns the query engine and
+ * returns this shape per (report, tab, filters); the front-end only renders it.
+ */
 export interface ReportDetail {
   id: ReportId;
   name: string;
   description: string;
-  columns: { key: string; label: string; numeric?: boolean }[];
+  tab: ReportTab;
+  columns: ReportColumn[];
   rows: Record<string, string | number>[];
+  kpis?: ReportKpi[];
+  charts?: ReportChart[];
 }
 
 export interface ReportFilters {
   period: "30d" | "90d" | "year" | "all";
   department: string;
   location: string;
+  team?: string;
+  program?: string;
+  tab?: ReportTab;
+}
+
+/**
+ * Custom report builder (pointer 8) request. UI-only today — the server owns
+ * the query/report engine that turns a field/keyword selection into rows.
+ */
+export interface CustomReportSpec {
+  base: ReportId;
+  keyword: string;
+  fields: string[];
+  groupBy: string;
+}
+
+/* ============================================================
+ * CONFIG SURFACES — thin admin controls over backend engines
+ * (notifications delivery, enrollment rules, points). Pointer 15/14/16.
+ * ============================================================ */
+
+export type NotifChannel = "email" | "inApp" | "push";
+
+export interface NotificationSetting {
+  id: string;
+  label: string;
+  description: string;
+  channels: Record<NotifChannel, boolean>;
+}
+
+export interface EnrollmentRule {
+  id: string;
+  /** Org attribute the rule keys on, e.g. "Department" / "Employee type". */
+  attribute: string;
+  value: string;
+  moduleTitle: string;
+  enabled: boolean;
+}
+
+export interface PointsRule {
+  id: string;
+  event: string;
+  points: number;
+  /** Max points a single learner can earn from this event per module. */
+  perModuleCap: number;
+  enabled: boolean;
 }
 
 export interface PlatformBanner {
@@ -410,7 +516,12 @@ export interface PlatformBanner {
 }
 
 export interface PlatformSettings {
-  terminology: { moduleLabel: string; programLabel: string; skillLabel: string; learnerLabel: string };
+  terminology: {
+    moduleLabel: string;
+    programLabel: string;
+    skillLabel: string;
+    learnerLabel: string;
+  };
   banners: PlatformBanner[];
   notifications: { id: string; label: string; enabled: boolean }[];
   defaultCertificateTemplateId: string | null;
