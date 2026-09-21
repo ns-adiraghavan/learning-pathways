@@ -102,33 +102,44 @@ export function AppSidebar() {
                       isActive={active}
                       className="relative z-10 h-8 data-[active=true]:bg-transparent data-[active=true]:text-sidebar-primary-foreground"
                     >
-                      <Link to={item.url} className="flex items-center gap-2.5">
-                        <span
-                          aria-hidden
-                          className="h-4 w-[2px] shrink-0 rounded-full transition-colors"
-                          style={{
-                            background: active
-                              ? "var(--sidebar-primary-foreground)"
-                              : "color-mix(in oklab, var(--color-foreground) 14%, transparent)",
-                          }}
-                        />
+                      <Link
+                        to={item.url}
+                        className={
+                          collapsed
+                            ? "flex items-center justify-center"
+                            : "flex items-center gap-2.5"
+                        }
+                      >
+                        {!collapsed && (
+                          <span
+                            aria-hidden
+                            className="h-4 w-[2px] shrink-0 rounded-full transition-colors"
+                            style={{
+                              background: active
+                                ? "var(--sidebar-primary-foreground)"
+                                : "color-mix(in oklab, var(--color-foreground) 14%, transparent)",
+                            }}
+                          />
+                        )}
                         <item.icon
                           strokeWidth={1.75}
                           className={
                             active
-                              ? "size-4 text-sidebar-primary-foreground"
-                              : "size-4 text-muted-foreground"
+                              ? "size-4 shrink-0 text-sidebar-primary-foreground"
+                              : "size-4 shrink-0 text-muted-foreground"
                           }
                         />
-                        <span
-                          className={
-                            active
-                              ? "font-[590] text-sidebar-primary-foreground"
-                              : "text-muted-foreground"
-                          }
-                        >
-                          {item.title}
-                        </span>
+                        {!collapsed && (
+                          <span
+                            className={
+                              active
+                                ? "font-[590] text-sidebar-primary-foreground"
+                                : "text-muted-foreground"
+                            }
+                          >
+                            {item.title}
+                          </span>
+                        )}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
