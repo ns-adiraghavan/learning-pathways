@@ -42,7 +42,7 @@ const TEAMS = ["Research Delivery", "Data Solutions", "Client Success", "People 
 export const DEPARTMENTS = ["Research", "Technology", "People Ops", "Client Success"];
 export const LOCATIONS = ["Noida", "Bengaluru", "Mumbai", "Remote"];
 
-export const users: AdminUser[] = NAMES.map((name, i) => {
+export const users: AdminUser[] = NAMES.map((name, i): AdminUser => {
   const assigned = 4 + (i % 5);
   const complete = Math.max(0, assigned - ((i * 3) % 5));
   const role: AdminUser["role"] = i === 0 ? "Administrator" : i % 7 === 0 ? "Trainer" : "Learner";
