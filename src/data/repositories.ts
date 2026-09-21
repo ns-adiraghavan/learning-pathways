@@ -445,6 +445,15 @@ export async function addUser(input: {
   return delay(user);
 }
 
+// CONNECT: replace with real API call to PUT /api/admin/users/:id
+export async function updateUser(
+  id: string,
+  updates: Partial<AdminUser>,
+): Promise<AdminUser | null> {
+  const current = [...mockUsers, ...addedUsers].find((user) => user.id === id);
+  return delay(current ? { ...current, ...updates, id } : null);
+}
+
 // CONNECT: replace with real API call to GET /api/admin/modules
 export async function getAssignableModules(): Promise<AssignableModule[]> {
   if (EMPTY_STATE) return delay([]);
