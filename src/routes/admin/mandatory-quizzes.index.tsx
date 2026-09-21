@@ -34,6 +34,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatDate } from "@/lib/format";
+import { DownloadCsvButton } from "@/components/download-csv-button";
 
 export const Route = createFileRoute("/admin/mandatory-quizzes/")({
   head: () => ({
@@ -71,7 +72,14 @@ function MandatoryQuizzesPage() {
             Compliance-tracked quizzes. Open one to see who is still outstanding.
           </p>
         </div>
-        <MarkMandatoryDialog />
+        <div className="flex flex-wrap justify-end gap-2">
+          <DownloadCsvButton
+            slug="mandatory-quizzes"
+            headers={["Quiz", "Module", "Program", "Skill", "Completed", "Enrolled", "Completion %", "Due date"]}
+            rows={quizzes.map((quiz) => [quiz.quizName, quiz.moduleTitle, quiz.programTitle, quiz.skillTitle, quiz.completed, quiz.enrolled, quiz.completionPct, quiz.dueDate])}
+          />
+          <MarkMandatoryDialog />
+        </div>
       </header>
 
       {isPending ? (

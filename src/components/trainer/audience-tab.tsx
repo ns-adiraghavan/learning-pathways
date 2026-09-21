@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/table";
 import { STATUS_DOT, STATUS_LABEL } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { DownloadCsvButton } from "@/components/download-csv-button";
 
 const FILTERS: { value: EnrolledStatus | "all"; label: string }[] = [
   { value: "all", label: "All" },
@@ -109,6 +110,13 @@ export function AudienceTab({ moduleId }: { moduleId: string }) {
               </span>
             </Button>
           ))}
+          <div className="ml-auto">
+            <DownloadCsvButton
+              slug="trainer-enrolled-learners"
+              headers={["Name", "Email", "Team", "Status", "Progress %", "Due date", "Last activity"]}
+              rows={rows.map((row) => [row.name, row.email, row.team, row.status, row.progressPct, row.dueDate, row.lastActivity])}
+            />
+          </div>
         </div>
 
         {selected.length > 0 && (

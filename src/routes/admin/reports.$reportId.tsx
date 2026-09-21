@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { BarChart3, CalendarClock, ChevronLeft, Download } from "lucide-react";
+import { BarChart3, CalendarClock, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 
 import { getReport } from "@/data/repositories";
@@ -26,6 +26,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { DownloadCsvButton } from "@/components/download-csv-button";
 
 export const Route = createFileRoute("/admin/reports/$reportId")({
   head: () => ({
@@ -82,10 +83,11 @@ function ReportDetailPage() {
             <CalendarClock className="size-4" strokeWidth={1.75} />
             Schedule
           </Button>
-          <Button size="sm" onClick={() => toast.success("Export started — CSV will download")}>
-            <Download className="size-4" strokeWidth={1.75} />
-            Export
-          </Button>
+          <DownloadCsvButton
+            slug={`report-${reportId}`}
+            headers={report?.columns.map((column) => column.label) ?? []}
+            rows={report?.rows.map((row) => report.columns.map((column) => row[column.key] ?? "")) ?? []}
+          />
         </div>
       </header>
 

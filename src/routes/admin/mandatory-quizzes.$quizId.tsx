@@ -30,6 +30,7 @@ import {
 import { downloadCsv, slugify, toCsv } from "@/lib/csv";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { DownloadCsvButton } from "@/components/download-csv-button";
 
 export const Route = createFileRoute("/admin/mandatory-quizzes/$quizId")({
   head: () => ({
@@ -168,6 +169,11 @@ function QuizCompliancePage() {
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
+          <DownloadCsvButton
+            slug={`mandatory-quiz-${slugify(name)}-visible`}
+            headers={["Name", "Email", "Team", "Status", "Completed on", "Score %", "Attempts", "Last reminded"]}
+            rows={visible.map((row) => [row.name, row.email, row.team, row.status, row.completedOn, row.scorePct, row.attempts, row.lastRemindedOn])}
+          />
           <div className="inline-flex rounded-md border border-border p-0.5">
             {FILTERS.map((f) => (
               <button
