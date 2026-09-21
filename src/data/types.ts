@@ -80,6 +80,9 @@ export interface LearningModule {
   description: string;
   posterImage: string;
   category: ModuleCategory;
+  /** Where this module sits in the Program → Skill → Module taxonomy. */
+  programTitle: string;
+  skillTitle: string;
   dueDate: string; // ISO date
   status: ModuleStatus;
   progressPct: number;
