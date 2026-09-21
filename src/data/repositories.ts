@@ -342,14 +342,6 @@ export async function bulkLearnerAction(
   return delay({ affected: learnerIds.length, action });
 }
 
-// CONNECT: replace with real API call to POST /api/trainer/modules/:id/learners/:learnerId/reassign
-export async function reassignLearner(
-  moduleId: string,
-  learnerId: string,
-): Promise<{ moduleId: string; learnerId: string; reset: true }> {
-  return delay({ moduleId, learnerId, reset: true as const });
-}
-
 // CONNECT: replace with real API call to GET /api/trainer/quiz-templates
 export async function getQuizTemplates(): Promise<QuizTemplate[]> {
   if (EMPTY_STATE) return delay([]);
