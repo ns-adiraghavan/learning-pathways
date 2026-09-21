@@ -5,7 +5,7 @@ import { CheckCircle2, FileText, Film, Link2, ListChecks, Lock, SearchX } from "
 
 import { getModule, getModuleProgress } from "@/data/repositories";
 import type { Activity } from "@/data/types";
-import { activityMeta, formatDate } from "@/lib/format";
+import { activityMeta, formatDate, formatMinutes, moduleMinutes } from "@/lib/format";
 import { CategoryBadge, RequiredBadge, StatusDot } from "@/components/lessons/badges";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { Button } from "@/components/ui/button";
@@ -83,7 +83,15 @@ function ModuleDetailPage() {
         className="aspect-[16/6] w-full rounded-xl border border-border object-cover"
       />
 
-      <div className="mt-5 flex flex-wrap items-center gap-2">
+      <nav className="mt-4 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+        <span className="font-[510] text-foreground/70">{module.programTitle}</span>
+        <span aria-hidden>›</span>
+        <span className="font-[510] text-foreground/70">{module.skillTitle}</span>
+        <span aria-hidden>›</span>
+        <span>Module</span>
+      </nav>
+
+      <div className="mt-2 flex flex-wrap items-center gap-2">
         <CategoryBadge category={module.category} />
         <StatusDot status={module.status} withLabel />
         <span className="tnum text-xs text-muted-foreground">
@@ -128,7 +136,12 @@ function ModuleDetailPage() {
 
       <section className="mt-8">
         <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 className="text-card-title">Activities</h2>
+          <div className="flex items-baseline gap-2">
+            <h2 className="text-card-title">Activities</h2>
+            <span className="tnum text-xs text-muted-foreground">
+              {module.activities.length} · {formatMinutes(moduleMinutes(module.activities))} total
+            </span>
+          </div>
           <Button asChild size="sm">
             <Link
               to="/modules/$moduleId/player"
@@ -145,9 +158,7 @@ function ModuleDetailPage() {
             const complete = doneIds.includes(activity.id);
             const locked =
               module.orderLocked &&
-              module.activities
-                .slice(0, i)
-                .some((a) => a.required && !doneIds.includes(a.id));
+              module.activities.slice(0, i).some((a) => a.required && !doneIds.includes(a.id));
             return (
               <li
                 key={activity.id}
@@ -158,7 +169,10 @@ function ModuleDetailPage() {
               >
                 <span className="tnum w-4 shrink-0 text-xs text-muted-foreground">{i + 1}</span>
                 {complete ? (
-                  <CheckCircle2 className="size-4 shrink-0 text-status-complete" strokeWidth={1.75} />
+                  <CheckCircle2
+                    className="size-4 shrink-0 text-status-complete"
+                    strokeWidth={1.75}
+                  />
                 ) : locked ? (
                   <Lock className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.75} />
                 ) : (
