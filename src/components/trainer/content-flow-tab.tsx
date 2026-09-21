@@ -1,30 +1,18 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import {
-  FileText,
-  GripVertical,
-  Image as ImageIcon,
-  Link2,
-  ListChecks,
-  Plus,
-  Trash2,
-  Video,
-} from "lucide-react";
+import { FileText, GripVertical, Link2, ListChecks, Plus, Trash2, Video } from "lucide-react";
 
 import { toast } from "sonner";
 
 import type { ActivityType, DraftActivity, ModuleDraft } from "@/data/types";
-import {
-  getCertificateTemplates,
-  getFeedbackSurveys,
-  setQuizMandatory,
-} from "@/data/repositories";
+import { getCertificateTemplates, getFeedbackSurveys, setQuizMandatory } from "@/data/repositories";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { EmptyState } from "@/components/lessons/empty-state";
+import { CoverPicker } from "@/components/trainer/cover-picker";
 import {
   Select,
   SelectContent,
@@ -125,18 +113,18 @@ export function ContentFlowTab({
             </div>
           </div>
           <div className="grid gap-1.5">
-            <Label>Poster image</Label>
+            <Label>Cover image</Label>
             <div className="overflow-hidden rounded-lg border border-border">
               <img
                 src={draft.posterImage}
-                alt="Module poster"
+                alt="Module cover"
                 className="aspect-video w-full object-cover"
               />
             </div>
-            <Button variant="outline" size="sm" className="mt-1">
-              <ImageIcon className="size-4" strokeWidth={1.75} />
-              Change poster
-            </Button>
+            <CoverPicker
+              value={draft.posterImage}
+              onSelect={(dataUri) => onChange({ ...draft, posterImage: dataUri })}
+            />
           </div>
         </div>
       </section>
@@ -250,9 +238,7 @@ export function ContentFlowTab({
                           checked={a.draft}
                           onCheckedChange={(v) =>
                             setActivities(
-                              draft.activities.map((x) =>
-                                x.id === a.id ? { ...x, draft: v } : x,
-                              ),
+                              draft.activities.map((x) => (x.id === a.id ? { ...x, draft: v } : x)),
                             )
                           }
                         />
@@ -261,9 +247,7 @@ export function ContentFlowTab({
                         variant="ghost"
                         size="icon"
                         aria-label={`Remove ${a.name}`}
-                        onClick={() =>
-                          setActivities(draft.activities.filter((x) => x.id !== a.id))
-                        }
+                        onClick={() => setActivities(draft.activities.filter((x) => x.id !== a.id))}
                       >
                         <Trash2 className="size-4" strokeWidth={1.75} />
                       </Button>
@@ -334,9 +318,7 @@ export function ContentFlowTab({
                   <div
                     className={cn(
                       "mt-2 flex flex-col items-center justify-center rounded-lg border border-border bg-card p-8 text-center",
-                      selectedCert?.orientation === "portrait"
-                        ? "aspect-[3/4]"
-                        : "aspect-[4/3]",
+                      selectedCert?.orientation === "portrait" ? "aspect-[3/4]" : "aspect-[4/3]",
                     )}
                   >
                     <p className="text-label text-muted-foreground">Certificate of completion</p>
