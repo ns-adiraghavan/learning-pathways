@@ -6,6 +6,7 @@ import { getLeaderboard } from "@/data/repositories";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { DownloadCsvButton } from "@/components/download-csv-button";
 
 export const Route = createFileRoute("/leaderboard")({
   head: () => ({
@@ -31,9 +32,16 @@ function LeaderboardPage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6">
-      <header className="mb-6">
-        <h1 className="text-title">Leaderboard</h1>
-        <p className="mt-1 text-sm text-muted-foreground">This quarter, across teams.</p>
+      <header className="page-header blue-wash mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-title">Leaderboard</h1>
+          <p className="mt-1 text-sm text-muted-foreground">This quarter, across teams.</p>
+        </div>
+        <DownloadCsvButton
+          slug="leaderboard"
+          headers={["Rank", "Name", "Team", "Modules complete", "Points"]}
+          rows={rows.map((row) => [row.rank, row.name, row.team, row.modulesComplete, row.points])}
+        />
       </header>
 
       {isPending ? (

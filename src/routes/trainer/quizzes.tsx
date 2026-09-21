@@ -30,6 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { DownloadCsvButton } from "@/components/download-csv-button";
 
 export const Route = createFileRoute("/trainer/quizzes")({
   head: () => ({
@@ -306,15 +307,11 @@ function QuizBuilderPage() {
                   Suspiciously fast completions are flagged.
                 </p>
               </div>
-              <Button
-                size="sm"
-                variant="outline"
-                className="shrink-0"
-                onClick={() => toast.success("Export started")}
-              >
-                <Download className="size-4" strokeWidth={1.75} />
-                Export
-              </Button>
+              <DownloadCsvButton
+                slug="trainer-quiz-results"
+                headers={["Learner", "Team", "Score %", "Passed", "Time taken (min)", "Attempts", "Flag"]}
+                rows={results.map((row) => [row.name, row.team, row.scorePct, row.passed ? "Yes" : "No", row.timeTakenMins, row.attempts, row.outlier ? "Suspiciously fast" : ""])}
+              />
             </div>
 
             {resultsPending ? (
