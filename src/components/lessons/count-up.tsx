@@ -67,7 +67,7 @@ export function StatTile({
 
   if (to) {
     return (
-      <Link to={to} search={search} className={className} style={style}>
+      <Link to={to as "/my-learning"} search={search as never} className={className} style={style}>
         {body}
       </Link>
     );
