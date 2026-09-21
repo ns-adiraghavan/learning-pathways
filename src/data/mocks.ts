@@ -1,7 +1,4 @@
-import posterOnboarding from "@/assets/poster-onboarding.jpg";
-import posterMandatory from "@/assets/poster-mandatory.jpg";
-import posterTeam from "@/assets/poster-team.jpg";
-import posterBank from "@/assets/poster-bank.jpg";
+import { coverDataUri } from "@/lib/covers";
 
 import type {
   Certificate,
@@ -16,11 +13,13 @@ import type {
 const SAMPLE_VIDEO =
   "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4";
 
+// Default covers by category — the crisp on-brand SVG covers, matching each
+// category's accent hue (mandatory=indigo, onboarding=violet, team=teal, bank=amber).
 const posters = {
-  onboarding: posterOnboarding,
-  mandatory: posterMandatory,
-  team: posterTeam,
-  bank: posterBank,
+  onboarding: coverDataUri("violet-mastery"),
+  mandatory: coverDataUri("indigo-strategy"),
+  team: coverDataUri("teal-knowledge"),
+  bank: coverDataUri("amber-focus"),
 } as const;
 
 function q(
@@ -47,7 +46,7 @@ export const currentUser: User = {
   team: "Market Intelligence",
 };
 
-export const modules: LearningModule[] = [
+const rawModules: Omit<LearningModule, "programTitle" | "skillTitle">[] = [
   {
     id: "m-welcome",
     title: "Welcome to Netscribes",
@@ -94,30 +93,49 @@ export const modules: LearningModule[] = [
         timeLimitMins: 6,
         shuffle: true,
         questions: [
-          q("qw1", "What is Netscribes' primary offering?", "easy", [
-            "Market intelligence and data solutions",
-            "Consumer electronics manufacturing",
-            "Freight logistics",
-            "Retail banking",
-          ], 0),
-          q("qw2", "Where should a new joiner raise IT access requests?", "easy", [
-            "Directly to the CEO",
-            "The internal IT helpdesk portal",
-            "A public forum",
-            "Their client's IT team",
-          ], 1),
-          q("qw3", "Which ritual keeps delivery teams aligned each morning?", "medium", [
-            "Quarterly town hall",
-            "Annual appraisal",
-            "Daily stand-up",
-            "Monthly newsletter",
-          ], 2),
-          q("qw4", "Who owns the client relationship on a research engagement?", "hard", [
-            "The engagement manager",
-            "Any available analyst",
-            "The design team",
-            "Nobody in particular",
-          ], 0),
+          q(
+            "qw1",
+            "What is Netscribes' primary offering?",
+            "easy",
+            [
+              "Market intelligence and data solutions",
+              "Consumer electronics manufacturing",
+              "Freight logistics",
+              "Retail banking",
+            ],
+            0,
+          ),
+          q(
+            "qw2",
+            "Where should a new joiner raise IT access requests?",
+            "easy",
+            [
+              "Directly to the CEO",
+              "The internal IT helpdesk portal",
+              "A public forum",
+              "Their client's IT team",
+            ],
+            1,
+          ),
+          q(
+            "qw3",
+            "Which ritual keeps delivery teams aligned each morning?",
+            "medium",
+            ["Quarterly town hall", "Annual appraisal", "Daily stand-up", "Monthly newsletter"],
+            2,
+          ),
+          q(
+            "qw4",
+            "Who owns the client relationship on a research engagement?",
+            "hard",
+            [
+              "The engagement manager",
+              "Any available analyst",
+              "The design team",
+              "Nobody in particular",
+            ],
+            0,
+          ),
         ],
       },
     ],
@@ -161,36 +179,66 @@ export const modules: LearningModule[] = [
         timeLimitMins: 10,
         shuffle: false,
         questions: [
-          q("qs1", "A vendor emails asking for a client list urgently. You:", "easy", [
-            "Send it to keep them happy",
-            "Verify through a known channel before acting",
-            "Forward it to your team",
-            "Post it in a shared drive",
-          ], 1),
-          q("qs2", "Which is safest for sharing a confidential report?", "medium", [
-            "Personal cloud drive link",
-            "Approved client workspace with access control",
-            "WhatsApp",
-            "USB drive left at reception",
-          ], 1),
-          q("qs3", "Client data must be stored for how long after project close?", "hard", [
-            "Forever",
-            "Only as long as the contract's retention clause allows",
-            "Until you need the space",
-            "Six months, always",
-          ], 1),
-          q("qs4", "Strongest signal of a phishing email:", "easy", [
-            "It has a company logo",
-            "Mismatched sender domain and urgent tone",
-            "It arrives on Monday",
-            "It's short",
-          ], 1),
-          q("qs5", "Your laptop is stolen while travelling. First step:", "medium", [
-            "Wait until you're back in office",
-            "Report to IT security immediately",
-            "Buy a new one",
-            "Change your email signature",
-          ], 1),
+          q(
+            "qs1",
+            "A vendor emails asking for a client list urgently. You:",
+            "easy",
+            [
+              "Send it to keep them happy",
+              "Verify through a known channel before acting",
+              "Forward it to your team",
+              "Post it in a shared drive",
+            ],
+            1,
+          ),
+          q(
+            "qs2",
+            "Which is safest for sharing a confidential report?",
+            "medium",
+            [
+              "Personal cloud drive link",
+              "Approved client workspace with access control",
+              "WhatsApp",
+              "USB drive left at reception",
+            ],
+            1,
+          ),
+          q(
+            "qs3",
+            "Client data must be stored for how long after project close?",
+            "hard",
+            [
+              "Forever",
+              "Only as long as the contract's retention clause allows",
+              "Until you need the space",
+              "Six months, always",
+            ],
+            1,
+          ),
+          q(
+            "qs4",
+            "Strongest signal of a phishing email:",
+            "easy",
+            [
+              "It has a company logo",
+              "Mismatched sender domain and urgent tone",
+              "It arrives on Monday",
+              "It's short",
+            ],
+            1,
+          ),
+          q(
+            "qs5",
+            "Your laptop is stolen while travelling. First step:",
+            "medium",
+            [
+              "Wait until you're back in office",
+              "Report to IT security immediately",
+              "Buy a new one",
+              "Change your email signature",
+            ],
+            1,
+          ),
         ],
       },
     ],
@@ -234,24 +282,37 @@ export const modules: LearningModule[] = [
         timeLimitMins: 5,
         shuffle: true,
         questions: [
-          q("qp1", "Who can raise a POSH complaint?", "easy", [
-            "Only full-time employees",
-            "Any employee, contractor or intern",
-            "Only managers",
-            "Only HR",
-          ], 1),
-          q("qp2", "The internal committee must resolve a complaint within:", "medium", [
-            "90 days",
-            "1 year",
-            "No fixed timeline",
-            "7 days",
-          ], 0),
-          q("qp3", "Retaliation against a complainant is:", "easy", [
-            "Acceptable if the complaint is false",
-            "A separate punishable offence",
-            "A manager's discretion",
-            "Not covered by policy",
-          ], 1),
+          q(
+            "qp1",
+            "Who can raise a POSH complaint?",
+            "easy",
+            [
+              "Only full-time employees",
+              "Any employee, contractor or intern",
+              "Only managers",
+              "Only HR",
+            ],
+            1,
+          ),
+          q(
+            "qp2",
+            "The internal committee must resolve a complaint within:",
+            "medium",
+            ["90 days", "1 year", "No fixed timeline", "7 days"],
+            0,
+          ),
+          q(
+            "qp3",
+            "Retaliation against a complainant is:",
+            "easy",
+            [
+              "Acceptable if the complaint is false",
+              "A separate punishable offence",
+              "A manager's discretion",
+              "Not covered by policy",
+            ],
+            1,
+          ),
         ],
       },
     ],
@@ -295,24 +356,37 @@ export const modules: LearningModule[] = [
         timeLimitMins: 8,
         shuffle: true,
         questions: [
-          q("qr1", "Interviewing 20 buyers is which kind of research?", "easy", [
-            "Secondary",
-            "Primary",
-            "Tertiary",
-            "Desk",
-          ], 1),
-          q("qr2", "A vendor-published market size should be:", "medium", [
-            "Quoted as fact",
-            "Triangulated against independent sources",
-            "Ignored entirely",
-            "Rounded up",
-          ], 1),
-          q("qr3", "Best guard against sampling bias in a B2B survey:", "hard", [
-            "Larger sample from the same list",
-            "Stratified sampling across segments",
-            "Asking fewer questions",
-            "Longer field window only",
-          ], 1),
+          q(
+            "qr1",
+            "Interviewing 20 buyers is which kind of research?",
+            "easy",
+            ["Secondary", "Primary", "Tertiary", "Desk"],
+            1,
+          ),
+          q(
+            "qr2",
+            "A vendor-published market size should be:",
+            "medium",
+            [
+              "Quoted as fact",
+              "Triangulated against independent sources",
+              "Ignored entirely",
+              "Rounded up",
+            ],
+            1,
+          ),
+          q(
+            "qr3",
+            "Best guard against sampling bias in a B2B survey:",
+            "hard",
+            [
+              "Larger sample from the same list",
+              "Stratified sampling across segments",
+              "Asking fewer questions",
+              "Longer field window only",
+            ],
+            1,
+          ),
         ],
       },
     ],
@@ -356,24 +430,37 @@ export const modules: LearningModule[] = [
         timeLimitMins: 6,
         shuffle: false,
         questions: [
-          q("qc1", "A client asks for extra analysis mid-sprint. You first:", "easy", [
-            "Say yes immediately",
-            "Clarify the ask and its impact on timeline",
-            "Ignore it",
-            "Escalate to legal",
-          ], 1),
-          q("qc2", "A weekly status note should lead with:", "medium", [
-            "Hours logged",
-            "Decisions needed and risks",
-            "A greeting paragraph",
-            "Tooling notes",
-          ], 1),
-          q("qc3", "Bad news on a deliverable is best delivered:", "hard", [
-            "In the final report",
-            "Early, with options and a recovery plan",
-            "By a junior analyst",
-            "Not at all",
-          ], 1),
+          q(
+            "qc1",
+            "A client asks for extra analysis mid-sprint. You first:",
+            "easy",
+            [
+              "Say yes immediately",
+              "Clarify the ask and its impact on timeline",
+              "Ignore it",
+              "Escalate to legal",
+            ],
+            1,
+          ),
+          q(
+            "qc2",
+            "A weekly status note should lead with:",
+            "medium",
+            ["Hours logged", "Decisions needed and risks", "A greeting paragraph", "Tooling notes"],
+            1,
+          ),
+          q(
+            "qc3",
+            "Bad news on a deliverable is best delivered:",
+            "hard",
+            [
+              "In the final report",
+              "Early, with options and a recovery plan",
+              "By a junior analyst",
+              "Not at all",
+            ],
+            1,
+          ),
         ],
       },
     ],
@@ -417,24 +504,37 @@ export const modules: LearningModule[] = [
         timeLimitMins: 7,
         shuffle: true,
         questions: [
-          q("qd1", "Best chart for share of a whole across 4 segments:", "easy", [
-            "Stacked bar",
-            "Scatter plot",
-            "Line chart",
-            "Gantt",
-          ], 0),
-          q("qd2", "Truncating a bar chart's y-axis at a non-zero value:", "medium", [
-            "Is always fine",
-            "Exaggerates differences and misleads",
-            "Improves accuracy",
-            "Is required",
-          ], 1),
-          q("qd3", "Most effective annotation on a trend line:", "hard", [
-            "Colouring every point",
-            "Labelling the inflection and its cause",
-            "Adding a legend only",
-            "3D depth",
-          ], 1),
+          q(
+            "qd1",
+            "Best chart for share of a whole across 4 segments:",
+            "easy",
+            ["Stacked bar", "Scatter plot", "Line chart", "Gantt"],
+            0,
+          ),
+          q(
+            "qd2",
+            "Truncating a bar chart's y-axis at a non-zero value:",
+            "medium",
+            [
+              "Is always fine",
+              "Exaggerates differences and misleads",
+              "Improves accuracy",
+              "Is required",
+            ],
+            1,
+          ),
+          q(
+            "qd3",
+            "Most effective annotation on a trend line:",
+            "hard",
+            [
+              "Colouring every point",
+              "Labelling the inflection and its cause",
+              "Adding a legend only",
+              "3D depth",
+            ],
+            1,
+          ),
         ],
       },
     ],
@@ -477,24 +577,37 @@ export const modules: LearningModule[] = [
         timeLimitMins: 5,
         shuffle: true,
         questions: [
-          q("qa1", "Pasting client raw data into a public AI tool is:", "easy", [
-            "Encouraged",
-            "A confidentiality breach",
-            "Fine if anonymised by eye",
-            "Required for speed",
-          ], 1),
-          q("qa2", "An AI-generated market figure should be:", "medium", [
-            "Cited as-is",
-            "Verified against a primary source",
-            "Rounded",
-            "Deleted",
-          ], 1),
-          q("qa3", "Best use of AI in a research sprint:", "hard", [
-            "Writing the final client conclusion",
-            "Accelerating first-pass synthesis you then verify",
-            "Choosing the client's strategy",
-            "Replacing peer review",
-          ], 1),
+          q(
+            "qa1",
+            "Pasting client raw data into a public AI tool is:",
+            "easy",
+            [
+              "Encouraged",
+              "A confidentiality breach",
+              "Fine if anonymised by eye",
+              "Required for speed",
+            ],
+            1,
+          ),
+          q(
+            "qa2",
+            "An AI-generated market figure should be:",
+            "medium",
+            ["Cited as-is", "Verified against a primary source", "Rounded", "Deleted"],
+            1,
+          ),
+          q(
+            "qa3",
+            "Best use of AI in a research sprint:",
+            "hard",
+            [
+              "Writing the final client conclusion",
+              "Accelerating first-pass synthesis you then verify",
+              "Choosing the client's strategy",
+              "Replacing peer review",
+            ],
+            1,
+          ),
         ],
       },
     ],
@@ -536,23 +649,42 @@ export const modules: LearningModule[] = [
         timeLimitMins: 4,
         shuffle: false,
         questions: [
-          q("qb1", "Casual leave accrues:", "easy", [
-            "Monthly",
-            "Only in December",
-            "Never",
-            "Every three years",
-          ], 0),
-          q("qb2", "Reimbursement claims must be filed within:", "medium", [
-            "30 days of expense",
-            "2 years",
-            "Any time",
-            "Same day only",
-          ], 0),
+          q(
+            "qb1",
+            "Casual leave accrues:",
+            "easy",
+            ["Monthly", "Only in December", "Never", "Every three years"],
+            0,
+          ),
+          q(
+            "qb2",
+            "Reimbursement claims must be filed within:",
+            "medium",
+            ["30 days of expense", "2 years", "Any time", "Same day only"],
+            0,
+          ),
         ],
       },
     ],
   },
 ];
+
+/** Program → Skill taxonomy each module belongs to (learner-facing breadcrumb). */
+const MODULE_TAXONOMY: Record<string, { programTitle: string; skillTitle: string }> = {
+  "m-welcome": { programTitle: "New Joiner Onboarding", skillTitle: "Company & Culture" },
+  "m-infosec": { programTitle: "ISO Training", skillTitle: "Information Security" },
+  "m-poshcode": { programTitle: "Compliance", skillTitle: "Workplace Conduct" },
+  "m-research": { programTitle: "Research Craft", skillTitle: "Research Methods" },
+  "m-clientcomm": { programTitle: "Research Craft", skillTitle: "Client Communication" },
+  "m-datavis": { programTitle: "Data & Analytics", skillTitle: "Data Visualisation" },
+  "m-genai": { programTitle: "Data & Analytics", skillTitle: "Applied AI" },
+  "m-benefits": { programTitle: "New Joiner Onboarding", skillTitle: "Policies & Benefits" },
+};
+
+export const modules: LearningModule[] = rawModules.map((m) => ({
+  ...m,
+  ...(MODULE_TAXONOMY[m.id] ?? { programTitle: "General", skillTitle: "Modules" }),
+}));
 
 export const pendingActions: PendingAction[] = [
   {
@@ -596,14 +728,78 @@ export const certificates: Certificate[] = [
 ];
 
 export const leaderboard: LeaderboardEntry[] = [
-  { rank: 1, userId: "u-8", name: "Rohit Menon", team: "Data Solutions", modulesComplete: 14, points: 2840, isCurrentUser: false },
-  { rank: 2, userId: "u-3", name: "Sneha Kulkarni", team: "Market Intelligence", modulesComplete: 12, points: 2510, isCurrentUser: false },
-  { rank: 3, userId: "u-5", name: "Imran Sheikh", team: "Technology", modulesComplete: 11, points: 2300, isCurrentUser: false },
-  { rank: 4, userId: "u-1", name: "Ananya Rao", team: "Market Intelligence", modulesComplete: 9, points: 1960, isCurrentUser: true },
-  { rank: 5, userId: "u-7", name: "Divya Nair", team: "Consulting", modulesComplete: 8, points: 1740, isCurrentUser: false },
-  { rank: 6, userId: "u-2", name: "Karan Gupta", team: "Data Solutions", modulesComplete: 7, points: 1520, isCurrentUser: false },
-  { rank: 7, userId: "u-9", name: "Meera Iyer", team: "Design", modulesComplete: 6, points: 1310, isCurrentUser: false },
-  { rank: 8, userId: "u-4", name: "Aditya Bose", team: "Technology", modulesComplete: 5, points: 1120, isCurrentUser: false },
+  {
+    rank: 1,
+    userId: "u-8",
+    name: "Rohit Menon",
+    team: "Data Solutions",
+    modulesComplete: 14,
+    points: 2840,
+    isCurrentUser: false,
+  },
+  {
+    rank: 2,
+    userId: "u-3",
+    name: "Sneha Kulkarni",
+    team: "Market Intelligence",
+    modulesComplete: 12,
+    points: 2510,
+    isCurrentUser: false,
+  },
+  {
+    rank: 3,
+    userId: "u-5",
+    name: "Imran Sheikh",
+    team: "Technology",
+    modulesComplete: 11,
+    points: 2300,
+    isCurrentUser: false,
+  },
+  {
+    rank: 4,
+    userId: "u-1",
+    name: "Ananya Rao",
+    team: "Market Intelligence",
+    modulesComplete: 9,
+    points: 1960,
+    isCurrentUser: true,
+  },
+  {
+    rank: 5,
+    userId: "u-7",
+    name: "Divya Nair",
+    team: "Consulting",
+    modulesComplete: 8,
+    points: 1740,
+    isCurrentUser: false,
+  },
+  {
+    rank: 6,
+    userId: "u-2",
+    name: "Karan Gupta",
+    team: "Data Solutions",
+    modulesComplete: 7,
+    points: 1520,
+    isCurrentUser: false,
+  },
+  {
+    rank: 7,
+    userId: "u-9",
+    name: "Meera Iyer",
+    team: "Design",
+    modulesComplete: 6,
+    points: 1310,
+    isCurrentUser: false,
+  },
+  {
+    rank: 8,
+    userId: "u-4",
+    name: "Aditya Bose",
+    team: "Technology",
+    modulesComplete: 5,
+    points: 1120,
+    isCurrentUser: false,
+  },
 ];
 
 export const notifications: Notification[] = [
