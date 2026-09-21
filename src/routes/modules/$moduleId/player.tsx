@@ -85,9 +85,14 @@ function PlayerPage() {
   }
 
   const activities = module.activities;
-  const index = Math.min(Math.max(0, step), activities.length - 1);
-  const activity = activities[index]!;
   const doneIds = progress?.completedActivityIds ?? [];
+  const isLocked = (target: number) =>
+    module.orderLocked &&
+    activities.slice(0, target).some((a) => a.required && !doneIds.includes(a.id));
+  const requested = Math.min(Math.max(0, step), activities.length - 1);
+  let index = requested;
+  while (index > 0 && isLocked(index)) index -= 1;
+  const activity = activities[index]!;
   const pct = progress?.progressPct ?? module.progressPct;
 
   async function handleComplete() {
@@ -101,7 +106,7 @@ function PlayerPage() {
   }
 
   function goTo(target: number) {
-    if (module!.orderLocked && target > index && !doneIds.includes(activity.id)) return;
+    if (isLocked(target)) return;
     void navigate({ to: ".", search: { step: target } });
   }
 
@@ -145,7 +150,7 @@ function PlayerPage() {
       <ol className="mt-5 flex flex-wrap gap-2">
         {activities.map((a, i) => {
           const complete = doneIds.includes(a.id);
-          const locked = module.orderLocked && i > index && !complete;
+          const locked = isLocked(i);
           return (
             <li key={a.id}>
               <button
