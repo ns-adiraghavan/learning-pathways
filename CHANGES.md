@@ -1,31 +1,34 @@
 # Lessons LMS — composite changed set (all passes)
 
-Unzip at the repo root (paths preserved) and run your sync script — it'll push only what differs.
+Unzip at the repo root (paths preserved) and run your sync script — it pushes only what differs.
 `tsc --noEmit` + `eslint` clean; no dependencies added (`package.json` / `bun.lock` untouched).
+24 files.
 
-23 files. This drop adds the fixes from your latest review on top of the earlier passes.
+## Learner Home — rebuilt to the Clear Sky reference (this pass)
+`routes/home.tsx` is redesigned to match your screenshot-5 reference, on **real Netscribes data**:
+- Hero with a streak chip, a solid/soft **stat ribbon** (Completed / XP / Certificates / In-progress) and a **Resume** card for the active module (program · skill · next activity · % · minutes left).
+- A two-column workspace. Left: rich **Continue / Due soon** cards (cover thumbnail, category chip, status dot, "Next: …", progress bar, est. time, Continue/Start); a **Curriculum roadmap** skill-tree built from the Program→Skill taxonomy with done / active / locked nodes; a pending-actions callout.
+- Right rail: an **Overall progress** ring, **Upcoming quizzes** (from real quiz activities, sorted by due date), the **Team leaderboard** (you highlighted, with "N XP from Nth"), and a quote.
+- XP, ranks, counts, quizzes and roadmap are all derived from the mock repositories — not invented.
 
-## This review — what changed
-| Issue | Fix | Files |
-|---|---|---|
-| **Sidebar weird when collapsed** | In icon-collapsed mode the accent rail and label are hidden and the icon is centered, so the rail is a clean icon strip. | `components/app-sidebar.tsx` |
-| **Default images wrong** (blurry photos) | Module covers now default to the crisp on-brand SVG covers, matched to each category's hue (mandatory=indigo, onboarding=violet, team=teal, bank=amber). The old poster JPGs are no longer referenced. | `data/mocks.ts` |
-| **Inner views ignore Skills/Modules** | `LearningModule` now carries `programTitle` + `skillTitle`; the learner module page shows a **Program › Skill › Module** breadcrumb. | `data/types.ts`, `data/mocks.ts`, `routes/modules/$moduleId/index.tsx` |
-| **Estimated reading time** | New `activityMinutes` / `moduleMinutes` / `formatMinutes` — videos use runtime, **decks estimate ~1.5 min/page**, links ~3 min, quizzes their limit. Shown per activity and as a module total ("N · ~34 min total"). | `lib/format.ts`, `routes/modules/$moduleId/index.tsx` |
-| **Quiz starts immediately** | Quizzes now open on a **start screen** (name, question count, time limit, compliance tag) and the timer only begins when the learner clicks **Start quiz**. | `components/lessons/activities/quiz-activity.tsx` |
+Preview: `lessons-home-redesign.png`. This is the flagship; the same pattern rolls outward to the other screens next.
 
-## Earlier passes (still included)
-Certificates redesign; Admin user directory (slicers, table, bulk, import, edit-user drawer, login-as);
+## Earlier review fixes (included)
+| Issue | Fix |
+|---|---|
+| Sidebar weird when collapsed | Icon-only, centered, accent rail + label hidden when collapsed. |
+| Default images wrong | Module covers default to the crisp on-brand SVG covers, matched to category hue. |
+| Inner views ignore Skills/Modules | `LearningModule` carries `programTitle`/`skillTitle`; module page shows Program › Skill › Module. |
+| Estimated reading time | `activityMinutes`/`moduleMinutes` (deck ≈ 1.5 min/page); shown per activity + module total. |
+| Quiz starts immediately | Quizzes open on a start screen; timer begins only on **Start quiz**. |
+
+## Everything before that (included)
+Certificates redesign; Admin user directory (slicers, table, bulk, import, edit-user, login-as);
 Reports suite (5 reports × 5 tabs, slicers, KPIs, inline charts, export) + custom report builder;
 config surfaces (notifications matrix, enrollment rules, points rules); stock cover gallery + picker;
-plus the data-layer types/mocks/repositories behind them.
+plus the supporting types/mocks/repositories.
 
-## On the design system (honest note)
-The app already runs on Clear Sky's palette (sky `#0ea5e9` primary, Inter, pill radii, ambient sky
-shadows) — the tokens in `DESIGN.md` are in `styles.css` and every screen uses them. What the reference
-`code.html` mock adds is a **Material-3 flavour**: Material Symbols icons (we use lucide), the M3 semantic
-token *names* (`surface-container-*`, `primary-container`, …), and a denser hero/dashboard layout. Matching
-that mock 1:1 is a **larger, focused re-skin** (icon library swap + token remap + layout rebuild), not a
-few tweaks — and it's the kind of change that needs to be seen rendered, not shipped blind. Say the word and
-I'll take the **learner Home** (your screenshot 5) as the flagship and rebuild it to that fidelity first, then
-roll the pattern outward.
+## Verification caveat
+The full app build needs the private `@lovable.dev/vite-tanstack-config` package, which 403s from this
+sandbox, so I can't run the live app here. The new Home was validated by (1) `tsc` + `eslint`, and (2) a
+self-contained static render of the exact layout (the attached PNG). Give it a quick look once deployed.
