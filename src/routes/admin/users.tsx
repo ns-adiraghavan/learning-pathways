@@ -95,12 +95,14 @@ function UsersPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead className="hidden sm:table-cell">Team</TableHead>
-                <TableHead className="hidden md:table-cell">Role</TableHead>
-                <TableHead className="text-right">Assigned</TableHead>
-                <TableHead className="text-right">Complete</TableHead>
-                <TableHead className="hidden text-right sm:table-cell">Last active</TableHead>
+                <TableHead>User Name</TableHead>
+                <TableHead className="hidden md:table-cell">User ID</TableHead>
+                <TableHead className="hidden lg:table-cell">User Email</TableHead>
+                <TableHead className="hidden lg:table-cell">Created On</TableHead>
+                <TableHead className="hidden xl:table-cell">Allowed Views</TableHead>
+                <TableHead>User Status</TableHead>
+                <TableHead className="hidden xl:table-cell">Mobile Number</TableHead>
+                <TableHead className="hidden sm:table-cell">Department</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -112,18 +114,42 @@ function UsersPage() {
                 >
                   <TableCell className="min-w-0">
                     <span className="block truncate text-sm font-[510]">{u.name}</span>
-                    <span className="block truncate text-xs text-muted-foreground">{u.email}</span>
+                    <span className="block truncate text-xs text-muted-foreground md:hidden">
+                      {u.email}
+                    </span>
+                  </TableCell>
+                  <TableCell className="tnum hidden text-sm text-muted-foreground md:table-cell">
+                    {u.userId}
+                  </TableCell>
+                  <TableCell className="hidden text-sm text-muted-foreground lg:table-cell">
+                    {u.email}
+                  </TableCell>
+                  <TableCell className="tnum hidden text-sm text-muted-foreground lg:table-cell">
+                    {u.createdOn}
+                  </TableCell>
+                  <TableCell className="hidden text-xs text-muted-foreground xl:table-cell">
+                    {u.allowedViews.join(", ")}
+                  </TableCell>
+                  <TableCell>
+                    <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <span
+                        className={cn(
+                          "size-1.5 shrink-0 rounded-full",
+                          u.userStatus === "active"
+                            ? "bg-status-complete"
+                            : u.userStatus === "invited"
+                              ? "bg-status-progress"
+                              : "bg-muted-foreground",
+                        )}
+                      />
+                      {u.userStatus}
+                    </span>
+                  </TableCell>
+                  <TableCell className="tnum hidden text-sm text-muted-foreground xl:table-cell">
+                    {u.mobileNumber}
                   </TableCell>
                   <TableCell className="hidden text-sm text-muted-foreground sm:table-cell">
-                    {u.team}
-                  </TableCell>
-                  <TableCell className="hidden text-sm text-muted-foreground md:table-cell">
-                    {u.role}
-                  </TableCell>
-                  <TableCell className="tnum text-right text-sm">{u.assignedCount}</TableCell>
-                  <TableCell className="tnum text-right text-sm">{u.completeCount}</TableCell>
-                  <TableCell className="hidden text-right text-xs text-muted-foreground sm:table-cell">
-                    {u.lastActive}
+                    {u.department}
                   </TableCell>
                 </TableRow>
               ))}
