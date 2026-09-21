@@ -55,6 +55,7 @@ below honours `EMPTY_STATE`.
 | `getEnrolledLearners(moduleId)` | `EnrolledLearner[]` | `GET /api/trainer/modules/:id/learners` |
 | `getModuleAnalytics(moduleId)` | `ModuleAnalytics` | `GET /api/trainer/modules/:id/analytics` |
 | `bulkLearnerAction(moduleId, learnerIds, action)` | `{ affected, action }` | `POST /api/trainer/modules/:id/learners/bulk` |
+| `reassignLearner(moduleId, learnerId)` | `{ moduleId, learnerId, reset }` | `POST /api/trainer/modules/:id/learners/:learnerId/reassign` |
 | `getQuizTemplates()` | `QuizTemplate[]` | `GET /api/trainer/quiz-templates` |
 | `getCertificateTemplates()` | `CertificateTemplate[]` | `GET /api/trainer/certificate-templates` |
 | `getFeedbackSurveys()` | `FeedbackSurvey[]` | `GET /api/trainer/feedback-surveys` |
@@ -68,7 +69,9 @@ below honours `EMPTY_STATE`.
 - `ModuleSettings.dueMode` is either `fixed` (`dueDate`) or `relative`
   (`dueWithinDays` after the learner joins) — this drives mandatory vs onboarding
   due logic.
-- `bulkLearnerAction` covers `remind | unenroll | change-due-date`.
+- `bulkLearnerAction` covers `remind | unenroll | change-due-date`; `reassignLearner`
+  is the single-learner reset (clears progress and re-issues the assignment).
+- `Notification.linkTo` is an in-app route the client navigates to on click.
 - Certificate templates and quiz templates are **pre-built assets**; the trainer
   only picks one by id (`certificateTemplateId`, `QuizTemplate.id`).
 - While mocked, `saveModuleDraft` keeps drafts in an in-memory map. Delete that

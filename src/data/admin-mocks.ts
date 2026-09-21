@@ -45,14 +45,25 @@ export const LOCATIONS = ["Noida", "Bengaluru", "Mumbai", "Remote"];
 export const users: AdminUser[] = NAMES.map((name, i) => {
   const assigned = 4 + (i % 5);
   const complete = Math.max(0, assigned - ((i * 3) % 5));
+  const role: AdminUser["role"] = i === 0 ? "Administrator" : i % 7 === 0 ? "Trainer" : "Learner";
   return {
     id: `u-${i + 1}`,
+    userId: `NS-${String(10240 + i * 7)}`,
     name,
+    mobileNumber: `+91 9${String(800000000 + i * 1234567).slice(0, 9)}`,
+    createdOn: `2025-${String((i % 12) + 1).padStart(2, "0")}-${String((i % 27) + 1).padStart(2, "0")}`,
+    allowedViews:
+      role === "Administrator"
+        ? ["learner", "trainer", "admin"]
+        : role === "Trainer"
+          ? ["learner", "trainer"]
+          : ["learner"],
+    userStatus: i % 9 === 0 ? "inactive" : i % 13 === 0 ? "invited" : "active",
     email: `${name.toLowerCase().replace(/[^a-z]+/g, ".")}@netscribes.com`,
     team: TEAMS[i % TEAMS.length]!,
     department: DEPARTMENTS[i % DEPARTMENTS.length]!,
     location: LOCATIONS[i % LOCATIONS.length]!,
-    role: i === 0 ? "Administrator" : i % 7 === 0 ? "Trainer" : "Learner",
+    role,
     assignedCount: assigned,
     completeCount: complete,
     lastActive: ["Today", "Yesterday", "2 days ago", "Last week", "3 weeks ago"][i % 5]!,

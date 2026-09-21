@@ -342,6 +342,14 @@ export async function bulkLearnerAction(
   return delay({ affected: learnerIds.length, action });
 }
 
+// CONNECT: replace with real API call to POST /api/trainer/modules/:id/learners/:learnerId/reassign
+export async function reassignLearner(
+  moduleId: string,
+  learnerId: string,
+): Promise<{ moduleId: string; learnerId: string; reset: true }> {
+  return delay({ moduleId, learnerId, reset: true as const });
+}
+
 // CONNECT: replace with real API call to GET /api/trainer/quiz-templates
 export async function getQuizTemplates(): Promise<QuizTemplate[]> {
   if (EMPTY_STATE) return delay([]);
@@ -358,6 +366,14 @@ export async function getCertificateTemplates(): Promise<CertificateTemplate[]> 
 export async function getFeedbackSurveys(): Promise<FeedbackSurvey[]> {
   if (EMPTY_STATE) return delay([]);
   return delay(mockFeedbackSurveys);
+}
+
+// CONNECT: replace with real API call to POST /api/trainer/modules/:id/learners/:learnerId/reassign
+export async function reassignLearner(
+  moduleId: string,
+  learnerId: string,
+): Promise<{ moduleId: string; learnerId: string; reset: true }> {
+  return delay({ moduleId, learnerId, reset: true as const });
 }
 
 // CONNECT: replace with real API call to GET /api/trainer/quiz-templates/:id/questions
@@ -417,8 +433,13 @@ export async function addUser(input: {
 }): Promise<AdminUser> {
   const user: AdminUser = {
     id: `u-new-${addedUsers.length + 1}`,
+    userId: `NS-N${addedUsers.length + 1}`,
     name: input.name,
     email: input.email,
+    mobileNumber: "—",
+    createdOn: new Date().toISOString().slice(0, 10),
+    allowedViews: ["learner"],
+    userStatus: "invited",
     team: input.team,
     department: "Research",
     location: "Noida",
