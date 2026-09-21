@@ -11,6 +11,11 @@ import {
 } from "@/data/repositories";
 import type { PlatformSettings } from "@/data/types";
 import { EmptyState } from "@/components/lessons/empty-state";
+import {
+  EnrollmentRulesSection,
+  NotificationMatrixSection,
+  PointsRulesSection,
+} from "@/components/admin/config-sections";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -160,34 +165,11 @@ function CustomizationPage() {
           )}
         </section>
 
-        <section className="surface p-4 sm:p-5">
-          <h2 className="text-card-title">Notifications</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Choose which emails and in-app nudges Lessons sends.
-          </p>
-          <ul className="mt-4 grid gap-2">
-            {settings.notifications.map((n) => (
-              <li
-                key={n.id}
-                className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2.5"
-              >
-                <span className="text-sm">{n.label}</span>
-                <Switch
-                  checked={n.enabled}
-                  aria-label={n.label}
-                  onCheckedChange={(v) =>
-                    setSettings({
-                      ...settings,
-                      notifications: settings.notifications.map((x) =>
-                        x.id === n.id ? { ...x, enabled: v } : x,
-                      ),
-                    })
-                  }
-                />
-              </li>
-            ))}
-          </ul>
-        </section>
+        <NotificationMatrixSection />
+
+        <EnrollmentRulesSection />
+
+        <PointsRulesSection />
 
         <section className="surface p-4 sm:p-5">
           <h2 className="text-card-title">Default certificate</h2>
