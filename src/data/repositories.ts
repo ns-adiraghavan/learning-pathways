@@ -28,16 +28,16 @@ import {
 import {
   assignableModules as mockAssignableModules,
   assignmentsFor,
+  enrollmentRules as mockEnrollmentRules,
+  notificationSettings as mockNotificationSettings,
   platformSettings as mockPlatformSettings,
+  pointsRules as mockPointsRules,
   progressFor as userProgressFor,
   reportDetail,
   reports as mockReports,
   users as mockUsers,
 } from "./admin-mocks";
-import {
-  completionFor,
-  mandatoryQuizzes as mockMandatoryQuizzes,
-} from "./compliance-mocks";
+import { completionFor, mandatoryQuizzes as mockMandatoryQuizzes } from "./compliance-mocks";
 import type {
   Certificate,
   DifficultyBreakup,
@@ -72,6 +72,11 @@ import type {
   ReportId,
   ReportSummary,
   UserProgressItem,
+  UserFilters,
+  CustomReportSpec,
+  NotificationSetting,
+  EnrollmentRule,
+  PointsRule,
   MandatoryQuiz,
   QuizCompletionRow,
 } from "./types";
@@ -385,18 +390,34 @@ export async function getQuizResults(quizId: string): Promise<QuizResultRow[]> {
  * light customization. Deliberately small surface.
  * ============================================================ */
 
-// CONNECT: replace with real API call to GET /api/admin/users?q=
-export async function getUsers(query = ""): Promise<AdminUser[]> {
+// CONNECT: replace with real API call to GET /api/admin/users?q=&status=&team=&department=&location=&employeeType=&function=&grade=&role=
+// The advanced search (pointer 10) sends these as query params; the server owns
+// the real user-attribute schema. Free text `q` matches name / user id / email.
+export async function getUsers(query = "", filters: UserFilters = {}): Promise<AdminUser[]> {
   if (EMPTY_STATE) return delay([]);
-  const q = query.trim().toLowerCase();
+  const q = (filters.q ?? query).trim().toLowerCase();
   const all = [...mockUsers, ...addedUsers];
-  if (!q) return delay(all);
+
+  const matchesText = (u: AdminUser) =>
+    !q ||
+    u.name.toLowerCase().includes(q) ||
+    u.email.toLowerCase().includes(q) ||
+    u.userId.toLowerCase().includes(q);
+
+  const eq = (value: string, filter?: string) => !filter || filter === "all" || value === filter;
+
   return delay(
     all.filter(
       (u) =>
-        u.name.toLowerCase().includes(q) ||
-        u.email.toLowerCase().includes(q) ||
-        u.team.toLowerCase().includes(q),
+        matchesText(u) &&
+        eq(u.userStatus, filters.status) &&
+        eq(u.team, filters.team) &&
+        eq(u.department, filters.department) &&
+        eq(u.location, filters.location) &&
+        eq(u.employeeType, filters.employeeType) &&
+        eq(u.functionArea, filters.functionArea) &&
+        eq(u.grade, filters.grade) &&
+        eq(u.role, filters.role),
     ),
   );
 }
@@ -417,11 +438,19 @@ export async function getUserProgress(id: string): Promise<UserProgressItem[]> {
 const addedUsers: AdminUser[] = [];
 
 // CONNECT: replace with real API call to POST /api/admin/users
+// Also used per-row by the CSV import (pointer 12); the server validates the file.
 export async function addUser(input: {
   name: string;
   email: string;
   team: string;
   role: AdminRole;
+  department?: string | undefined;
+  location?: string | undefined;
+  designation?: string | undefined;
+  employeeType?: AdminUser["employeeType"] | undefined;
+  functionArea?: string | undefined;
+  grade?: string | undefined;
+  manager?: string | undefined;
 }): Promise<AdminUser> {
   const user: AdminUser = {
     id: `u-new-${addedUsers.length + 1}`,
@@ -433,9 +462,15 @@ export async function addUser(input: {
     allowedViews: ["learner"],
     userStatus: "invited",
     team: input.team,
-    department: "Research",
-    location: "Noida",
+    department: input.department ?? "Research",
+    location: input.location ?? "Noida",
     role: input.role,
+    designation: input.designation ?? "Analyst",
+    employeeType: input.employeeType ?? "full-time",
+    functionArea: input.functionArea ?? "Delivery",
+    grade: input.grade ?? "G1",
+    manager: input.manager ?? "—",
+    joiningDate: new Date().toISOString().slice(0, 10),
     assignedCount: 0,
     completeCount: 0,
     lastActive: "Never",
@@ -482,8 +517,7 @@ export async function updateAssignment(
   const current = assignmentStore.get(moduleId) ?? assignmentsFor(moduleId);
   let next = current;
   if (change.op === "add") next = [change.assignment, ...current];
-  if (change.op === "remove")
-    next = current.filter((a) => !change.assignmentIds.includes(a.id));
+  if (change.op === "remove") next = current.filter((a) => !change.assignmentIds.includes(a.id));
   if (change.op === "due-date")
     next = current.map((a) =>
       change.assignmentIds.includes(a.id) ? { ...a, dueDate: change.dueDate } : a,
@@ -498,20 +532,53 @@ export async function getReports(): Promise<ReportSummary[]> {
   return delay(mockReports);
 }
 
-// CONNECT: replace with real API call to GET /api/admin/reports/:id?period=&department=&location=
+// CONNECT: replace with real API call to GET /api/admin/reports/:id?tab=&period=&department=&location=&team=&program=
 export async function getReport(
   id: ReportId,
   filters?: ReportFilters,
 ): Promise<ReportDetail | null> {
   if (EMPTY_STATE) return delay(null);
-  const detail = reportDetail(id);
+  const detail = reportDetail(id, filters?.tab ?? "dashboard");
   if (!detail) return delay(null);
-  if (!filters || (filters.department === "all" && filters.location === "all")) {
-    return delay(detail);
-  }
+  const noFilters =
+    !filters ||
+    ((filters.department === "all" || !filters.department) &&
+      (filters.location === "all" || !filters.location) &&
+      (!filters.team || filters.team === "all") &&
+      (!filters.program || filters.program === "all"));
+  if (noFilters) return delay(detail);
   // Mocked filtering: narrow the row set so filters visibly do something.
-  const rows = detail.rows.filter((_, i) => (filters.department === "all" ? true : i % 2 === 0));
+  // The dashboard KPIs/charts stay (they are org-wide summaries).
+  const rows = detail.rows.filter((_, i) => i % 2 === 0);
   return delay({ ...detail, rows });
+}
+
+// CONNECT: replace with real API call to POST /api/admin/reports/custom
+// The server owns the query/report engine; this returns a filtered view of the
+// base report so the builder can preview a result.
+export async function generateCustomReport(spec: CustomReportSpec): Promise<ReportDetail | null> {
+  if (EMPTY_STATE) return delay(null);
+  const detail = reportDetail(spec.base, "by-learner");
+  if (!detail) return delay(null);
+  const keyword = spec.keyword.trim().toLowerCase();
+  const columns =
+    spec.fields.length > 0
+      ? detail.columns.filter((c) => spec.fields.includes(c.key))
+      : detail.columns;
+  const rows = keyword
+    ? detail.rows.filter((r) =>
+        Object.values(r).some((v) => String(v).toLowerCase().includes(keyword)),
+      )
+    : detail.rows;
+  const result: ReportDetail = {
+    id: detail.id,
+    name: `Custom — ${detail.name}`,
+    description: `Generated view${keyword ? ` matching "${spec.keyword}"` : ""}, grouped by ${spec.groupBy}.`,
+    tab: detail.tab,
+    columns: columns.length > 0 ? columns : detail.columns,
+    rows,
+  };
+  return delay(result);
 }
 
 // CONNECT: replace with real API call to GET /api/admin/settings
@@ -525,6 +592,51 @@ let settingsStore: PlatformSettings | null = null;
 export async function savePlatformSettings(settings: PlatformSettings): Promise<PlatformSettings> {
   settingsStore = settings;
   return delay(settings);
+}
+
+/* ------------------------------------------------------------
+ * Config surfaces — thin controls over backend engines.
+ * Delivery, the enrollment engine, and the points engine are
+ * backend-owned; these persist the admin's configuration only.
+ * ------------------------------------------------------------ */
+
+let notificationStore: NotificationSetting[] | null = null;
+let enrollmentStore: EnrollmentRule[] | null = null;
+let pointsStore: PointsRule[] | null = null;
+
+// CONNECT: replace with real API call to GET /api/admin/notification-settings
+export async function getNotificationSettings(): Promise<NotificationSetting[]> {
+  return delay(notificationStore ?? mockNotificationSettings);
+}
+
+// CONNECT: replace with real API call to PUT /api/admin/notification-settings
+export async function saveNotificationSettings(
+  settings: NotificationSetting[],
+): Promise<NotificationSetting[]> {
+  notificationStore = settings;
+  return delay(settings);
+}
+
+// CONNECT: replace with real API call to GET /api/admin/enrollment-rules
+export async function getEnrollmentRules(): Promise<EnrollmentRule[]> {
+  return delay(enrollmentStore ?? mockEnrollmentRules);
+}
+
+// CONNECT: replace with real API call to PUT /api/admin/enrollment-rules
+export async function saveEnrollmentRules(rules: EnrollmentRule[]): Promise<EnrollmentRule[]> {
+  enrollmentStore = rules;
+  return delay(rules);
+}
+
+// CONNECT: replace with real API call to GET /api/admin/points-rules
+export async function getPointsRules(): Promise<PointsRule[]> {
+  return delay(pointsStore ?? mockPointsRules);
+}
+
+// CONNECT: replace with real API call to PUT /api/admin/points-rules
+export async function savePointsRules(rules: PointsRule[]): Promise<PointsRule[]> {
+  pointsStore = rules;
+  return delay(rules);
 }
 
 /* ============================================================
