@@ -35,7 +35,7 @@ export function ScorecardDialog({
   if (!result) return null;
 
   return (
-    <Dialog open={open}>
+    <Dialog open={open} onOpenChange={(v) => !v && onDone()}>
       <DialogContent className="sm:max-w-md">
         <DialogTitle className="sr-only">Quiz scorecard</DialogTitle>
         <div className="flex flex-col items-center text-center">

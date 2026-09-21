@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { CheckCircle2, FileText, Film, Link2, ListChecks, SearchX } from "lucide-react";
+import { CheckCircle2, FileText, Film, Link2, ListChecks, Lock, SearchX } from "lucide-react";
 
 import { getModule, getModuleProgress } from "@/data/repositories";
 import type { Activity } from "@/data/types";
@@ -143,14 +143,24 @@ function ModuleDetailPage() {
         <ul className="surface overflow-hidden">
           {module.activities.map((activity, i) => {
             const complete = doneIds.includes(activity.id);
+            const locked =
+              module.orderLocked &&
+              module.activities
+                .slice(0, i)
+                .some((a) => a.required && !doneIds.includes(a.id));
             return (
               <li
                 key={activity.id}
-                className="flex items-center gap-3 border-b border-border px-4 py-3.5 last:border-0"
+                className={
+                  "flex items-center gap-3 border-b border-border px-4 py-3.5 last:border-0" +
+                  (locked ? " opacity-60" : "")
+                }
               >
                 <span className="tnum w-4 shrink-0 text-xs text-muted-foreground">{i + 1}</span>
                 {complete ? (
                   <CheckCircle2 className="size-4 shrink-0 text-status-complete" strokeWidth={1.75} />
+                ) : locked ? (
+                  <Lock className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.75} />
                 ) : (
                   <ActivityIcon activity={activity} />
                 )}
@@ -161,15 +171,21 @@ function ModuleDetailPage() {
                   </div>
                   <p className="tnum text-xs text-muted-foreground">{activityMeta(activity)}</p>
                 </div>
-                <Button asChild size="sm" variant="outline" className="shrink-0">
-                  <Link
-                    to="/modules/$moduleId/player"
-                    params={{ moduleId: module.id }}
-                    search={{ step: i }}
-                  >
-                    {complete ? "Review" : "Continue"}
-                  </Link>
-                </Button>
+                {locked ? (
+                  <Button size="sm" variant="outline" className="shrink-0" disabled>
+                    Locked
+                  </Button>
+                ) : (
+                  <Button asChild size="sm" variant="outline" className="shrink-0">
+                    <Link
+                      to="/modules/$moduleId/player"
+                      params={{ moduleId: module.id }}
+                      search={{ step: i }}
+                    >
+                      {complete ? "Review" : "Continue"}
+                    </Link>
+                  </Button>
+                )}
               </li>
             );
           })}

@@ -613,6 +613,7 @@ export const notifications: Notification[] = [
     body: "It was due on 12 Sep. Finish the assessment to keep workspace access.",
     createdAt: "2026-09-11T04:10:00Z",
     read: false,
+    linkTo: "/modules/m-infosec",
   },
   {
     id: "n-2",
@@ -620,6 +621,7 @@ export const notifications: Notification[] = [
     body: "Client Communication Craft was added to your plan.",
     createdAt: "2026-09-09T11:02:00Z",
     read: false,
+    linkTo: "/modules/m-clientcomm",
   },
   {
     id: "n-3",
@@ -627,5 +629,6 @@ export const notifications: Notification[] = [
     body: "Data Visualisation Fundamentals — credential NS-DVF-20260821-4417.",
     createdAt: "2026-08-21T09:30:00Z",
     read: true,
+    linkTo: "/certificates",
   },
 ];

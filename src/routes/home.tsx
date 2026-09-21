@@ -86,10 +86,10 @@ function HomePage() {
 
       {summary && (
         <section className="mb-8 grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Learning summary">
-          <StatTile label="In progress" value={summary.inProgressCount} tint="var(--chart-1)" tone="solid" />
-          <StatTile label="Due soon" value={continueRow.length} tint="var(--chart-2)" tone="solid" />
-          <StatTile label="Completed" value={summary.completedModules} tint="var(--chart-3)" tone="soft" />
-          <StatTile label="Certificates" value={certificates.length} tint="var(--chart-4)" tone="soft" />
+          <StatTile label="In progress" value={summary.inProgressCount} tint="var(--chart-1)" tone="solid" to="/my-learning" search={{ status: "in-progress" }} />
+          <StatTile label="Due soon" value={continueRow.length} tint="var(--chart-2)" tone="solid" to="/my-learning" search={{ status: "overdue" }} />
+          <StatTile label="Completed" value={summary.completedModules} tint="var(--chart-3)" tone="soft" to="/my-learning" search={{ status: "completed" }} />
+          <StatTile label="Certificates" value={certificates.length} tint="var(--chart-4)" tone="soft" to="/certificates" />
         </section>
       )}
 

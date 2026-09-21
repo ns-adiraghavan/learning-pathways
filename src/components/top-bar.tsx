@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Bell, LogOut, Moon, Search, Shield, Sun, UserCog } from "lucide-react";
@@ -33,6 +34,7 @@ export function TopBar() {
     queryFn: getNotifications,
   });
   const unread = notifications.filter((n) => !n.read).length;
+  const [notifOpen, setNotifOpen] = useState(false);
 
   const initials = (user?.name ?? "NS")
     .split(" ")
@@ -61,7 +63,7 @@ export function TopBar() {
       </div>
 
       <div className="ml-auto flex items-center gap-1">
-        <Popover>
+        <Popover open={notifOpen} onOpenChange={setNotifOpen}>
           <PopoverTrigger asChild>
             <Button variant="ghost" size="icon" className="relative" aria-label="Notifications">
               <Bell className="size-4" strokeWidth={1.75} />
@@ -79,9 +81,18 @@ export function TopBar() {
             ) : (
               <ul className="max-h-80 overflow-y-auto">
                 {notifications.map((n) => (
-                  <li key={n.id} className="border-b border-border px-3 py-2.5 last:border-0">
-                    <p className="text-sm font-[510]">{n.title}</p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">{n.body}</p>
+                  <li key={n.id} className="border-b border-border last:border-0">
+                    <button
+                      type="button"
+                      className="block w-full px-3 py-2.5 text-left transition-colors hover:bg-accent"
+                      onClick={() => {
+                        setNotifOpen(false);
+                        void navigate({ to: n.linkTo });
+                      }}
+                    >
+                      <p className="text-sm font-[510]">{n.title}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">{n.body}</p>
+                    </button>
                   </li>
                 ))}
               </ul>

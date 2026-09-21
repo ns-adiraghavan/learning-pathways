@@ -5,7 +5,6 @@ import type { QuizActivity as QuizActivityType, QuizResult } from "@/data/types"
 import { submitQuiz } from "@/data/repositories";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { DifficultyBadge } from "@/components/lessons/badges";
 import { ScorecardDialog } from "./scorecard-dialog";
 import { formatClock } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -86,9 +85,6 @@ export function QuizActivity({
       <Progress value={((index + 1) / questions.length) * 100} className="h-1.5" />
 
       <div key={question.id} className="animate-step-in space-y-4">
-        <div className="flex items-start gap-3">
-          <DifficultyBadge difficulty={question.difficulty} />
-        </div>
         <h2 className="text-lg font-[510]">{question.prompt}</h2>
 
         <div className="space-y-2">

@@ -12,7 +12,14 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { PageFade, ShimmerBlock, Stagger, StaggerItem } from "@/components/motion/motion";
 
+const STATUS_VALUES = ["all", "in-progress", "completed", "overdue"] as const;
+type StatusFilter = (typeof STATUS_VALUES)[number];
+
 export const Route = createFileRoute("/my-learning")({
+  validateSearch: (search: Record<string, unknown>): { status: StatusFilter } => {
+    const raw = String(search["status"] ?? "all") as StatusFilter;
+    return { status: STATUS_VALUES.includes(raw) ? raw : "all" };
+  },
   head: () => ({
     meta: [
       { title: "My Learning — Lessons" },
@@ -32,7 +39,15 @@ export const Route = createFileRoute("/my-learning")({
   component: MyLearningPage,
 });
 
+const FILTER_LABEL: Record<StatusFilter, string> = {
+  all: "In flight",
+  "in-progress": "In progress",
+  completed: "Completed",
+  overdue: "Overdue",
+};
+
 function MyLearningPage() {
+  const { status } = Route.useSearch();
   const { data: modules, isPending } = useQuery({
     queryKey: ["modules"],
     queryFn: getAssignedModules,
@@ -42,7 +57,15 @@ function MyLearningPage() {
     queryFn: getProgressSummary,
   });
 
-  const list = (modules ?? []).filter((m) => m.status !== "complete");
+  const all = modules ?? [];
+  const list =
+    status === "completed"
+      ? all.filter((m) => m.status === "complete")
+      : status === "overdue"
+        ? all.filter((m) => m.status === "overdue")
+        : status === "in-progress"
+          ? all.filter((m) => m.status === "in-progress")
+          : all.filter((m) => m.status !== "complete");
   const total = summary?.totalModules ?? 0;
   const pct = total ? Math.round(((summary?.completedModules ?? 0) / total) * 100) : 0;
 
@@ -64,10 +87,10 @@ function MyLearningPage() {
       {summary && total > 0 && (
         <section className="mb-8">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatTile value={summary.completedModules} label="Completed" tint="var(--chart-1)" tone="solid" />
-            <StatTile value={summary.inProgressCount} label="In progress" tint="var(--chart-2)" tone="solid" />
-            <StatTile value={summary.overdueCount} label="Overdue" tint="var(--chart-5)" tone="soft" />
-            <StatTile value={pct} suffix="%" label="Overall" tint="var(--chart-3)" tone="soft" />
+            <StatTile value={summary.completedModules} label="Completed" tint="var(--chart-1)" tone="solid" to="/my-learning" search={{ status: "completed" }} />
+            <StatTile value={summary.inProgressCount} label="In progress" tint="var(--chart-2)" tone="solid" to="/my-learning" search={{ status: "in-progress" }} />
+            <StatTile value={summary.overdueCount} label="Overdue" tint="var(--chart-5)" tone="soft" to="/my-learning" search={{ status: "overdue" }} />
+            <StatTile value={pct} suffix="%" label="Overall" tint="var(--chart-3)" tone="soft" to="/my-learning" search={{ status: "all" }} />
           </div>
 
           <div className="surface mt-3 grid gap-4 p-5 sm:grid-cols-2">
@@ -85,7 +108,18 @@ function MyLearningPage() {
         </section>
       )}
 
-      <h2 className="text-card-title mb-3">Continue learning</h2>
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <h2 className="text-card-title">
+          {status === "all" ? "Continue learning" : FILTER_LABEL[status]}
+        </h2>
+        {status !== "all" && (
+          <Button asChild size="sm" variant="ghost" className="h-7">
+            <Link to="/my-learning" search={{ status: "all" }}>
+              Clear filter
+            </Link>
+          </Button>
+        )}
+      </div>
 
       {isPending ? (
         <div className="space-y-3">
@@ -96,7 +130,7 @@ function MyLearningPage() {
       ) : list.length === 0 ? (
         <EmptyState
           icon={BookOpen}
-          title="Nothing in progress"
+          title="Nothing here yet"
           description="When a module is assigned to you it shows up here with its progress and due date."
         />
       ) : (

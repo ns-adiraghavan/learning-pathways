@@ -156,6 +156,8 @@ export interface Notification {
   body: string;
   createdAt: string;
   read: boolean;
+  /** In-app route this notification deep-links to. */
+  linkTo: string;
 }
 
 /* ============================================================
@@ -326,10 +328,19 @@ export interface QuizResultRow {
 
 export type AdminRole = "Learner" | "Trainer" | "Administrator";
 
+export type UserStatus = "active" | "inactive" | "invited";
+
 export interface AdminUser {
   id: string;
+  /** Human-facing employee id, distinct from the internal record id. */
+  userId: string;
   name: string;
   email: string;
+  mobileNumber: string;
+  createdOn: string;
+  /** Views this person may switch between. */
+  allowedViews: ("learner" | "trainer" | "admin")[];
+  userStatus: UserStatus;
   team: string;
   department: string;
   location: string;

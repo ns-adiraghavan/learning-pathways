@@ -1,14 +1,25 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Users } from "lucide-react";
+import { MoreHorizontal, Users } from "lucide-react";
 import { toast } from "sonner";
 
-import { bulkLearnerAction, getEnrolledLearners, getModuleAnalytics } from "@/data/repositories";
+import {
+  bulkLearnerAction,
+  getEnrolledLearners,
+  getModuleAnalytics,
+  reassignLearner,
+} from "@/data/repositories";
 import type { EnrolledStatus } from "@/data/types";
 import { StatTile } from "@/components/lessons/count-up";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -146,6 +157,7 @@ export function AudienceTab({ moduleId }: { moduleId: string }) {
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Progress</TableHead>
                   <TableHead className="hidden text-right sm:table-cell">Last activity</TableHead>
+                  <TableHead className="w-10" />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -182,6 +194,40 @@ export function AudienceTab({ moduleId }: { moduleId: string }) {
                     <TableCell className="tnum text-right text-sm">{l.progressPct}%</TableCell>
                     <TableCell className="hidden text-right text-xs text-muted-foreground sm:table-cell">
                       {l.lastActivity}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8"
+                            aria-label={`Actions for ${l.name}`}
+                          >
+                            <MoreHorizontal className="size-4" strokeWidth={1.75} />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onSelect={() => {
+                              void bulkLearnerAction(moduleId, [l.id], "remind").then(() =>
+                                toast.success(`Reminder sent to ${l.name}`),
+                              );
+                            }}
+                          >
+                            Send reminder
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() => {
+                              void reassignLearner(moduleId, l.id).then(() =>
+                                toast.success(`${l.name} reassigned — progress reset`),
+                              );
+                            }}
+                          >
+                            Reassign / reset
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}
