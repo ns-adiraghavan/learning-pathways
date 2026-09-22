@@ -1,30 +1,27 @@
-# Lessons LMS — composite changed set (all passes)
+# Lessons — this response's changes only
 
-Unzip at the repo root (paths preserved) and run your sync script — it pushes only what differs.
-`tsc --noEmit` + `eslint` clean; no dependencies added. 27 files.
+Everything prior is assumed pushed. Unzip at the repo root and sync. `tsc` + `eslint` clean; no new deps.
+16 files — 2 new (`src/lib/module-flow.ts`, `src/routes/browse.tsx`).
 
-## This pass — your latest feedback
-| Item | What changed | Files |
-|---|---|---|
-| **Collapsed sidebar looked broken** | The wide logo cropped to a strip read as a sliver. Collapsed now shows the square **favicon mark**, centered. | `components/brand-lockup.tsx` |
-| **Opening a module jumped to the video** | Home's Resume / Continue / Start now open the **module overview** (summary of all components) instead of the player. From there you enter the player. | `routes/home.tsx` |
-| **Module overview = summary of components** | Added a contents line ("2 decks · 1 quiz · ~34 min total") under the title, keeping the Program › Skill breadcrumb and the full activity list. | `routes/modules/$moduleId/index.tsx` |
-| **My Learning too similar to Home** | Rebuilt as a **module-wise** working view, distinct from Home's dashboard: a completion-by-category strip, status tabs with counts + program filter + search, and a detailed row per module (cover, category, status, **contents**, progress, est. time, due, Open). | `routes/my-learning.tsx` |
-| **Leaderboard needs team / time / a visual** | Added a **period** selector (week / month / quarter), a **team** filter, an **Individuals ↔ By team** toggle, and a **bar-chart** visual (top learners, or points by team), alongside the ranked list (medals for top 3, you highlighted) and a period/view-aware CSV export. | `routes/leaderboard.tsx` |
-| **Download certificate in the module + bulk** | The module overview shows a **Download certificate** card when the module is complete and a credential exists (renders the Clear Sky SVG). Bulk **Download all** already lives on the Certificates page. | `routes/modules/$moduleId/index.tsx` |
+## Your list
+1. **Certificates scale** — `routes/certificates.tsx` now shows a search box once you have more than a few, a 3-up responsive grid, and separate "no certificates" vs "no matches" states. Per-cert Download/Share and Download-all stay.
+2. **Cleaner quiz result** — `scorecard-dialog.tsx` drops the difficulty table; it now shows the score ring, "X of Y correct · pass mark", and a compact Correct / Incorrect / Skipped trio.
+3. **Users & Progress columns** — realigned to your spec: **User Name · User ID · User Email · Created On · Allowed Views · User Status · Mobile Number · Department** (Last active removed; Team/Designation/Grade/Manager/Progress dropped from the table — still on the profile/edit drawer).
+4. **Report variety** — the five reports are named to match your reference: Completion Ratio Report, Leaderboard Points Report, Time Spent Analytics, Audit Logs, Login Reports (each keeps the Dashboard / By Learner Attributes / By Programs / By Learner / By Modules tabs + custom builder).
+5. **Deactivate learners** — a row action **Deactivate (left company)** / **Reactivate** (sets status via `updateUser`), inactive names show struck-through; plus a **Sync from Coefficient** button in the header.
+6. **Push-to-all + custom reports** — confirmed present: module Settings → Push enrollment → "Everyone on this skill", and the Reports custom builder. No new work needed; flagging so you know it's covered.
+7. **Video/PPT before quiz** — new `lib/module-flow.ts`: a quiz is locked until every earlier video/deck/link is complete (on top of the existing order-lock). Used by the player and the module overview.
+8. **Clickable notifications** — the bell items already navigate; now they show an unread dot + a chevron so it's obviously clickable.
+9. **Search by type** — `/search` has type chips (All / Videos / Decks & slides / Quizzes / Links) alongside the list/grid + sort controls.
+10. **Bulk certificate download** — a **Certificates** (zip) button on the trainer quiz **Results** tab (all who passed) and on the **Mandatory Quizzes** completion view (all completed).
+11. **Logo cut-off** — the sidebar now uses a compact lockup (square mark + "NS Lessons") instead of the wide logo, so the wordmark no longer clips.
 
-Note on "same thing with skills": there's no learner-facing Skill route yet (skills live in the trainer
-authoring side). The module overview now carries the Program › Skill breadcrumb; a dedicated learner
-**Skill** page (its modules, summarised) is a clean next follow-on if you want it.
+## New Browse catalog (reachable from Home)
+`routes/browse.tsx` — a learner-facing **Program → Skill → Module** tree (each program lists its skills; each skill lists its modules with status + time, linking to the module overview). Reachable from the sidebar (**Browse**) and a "Browse catalog" link on Home.
 
-## Earlier passes (included)
-Learner **Home** rebuilt to the Clear Sky reference; the five review fixes (sidebar, default covers,
-Program→Skill breadcrumb, estimated reading time, quiz start screen); Certificates redesign; Admin user
-directory; Reports suite + custom builder; config surfaces; cover gallery + picker; supporting
-types/mocks/repositories.
+## Teams
+`data/admin-mocks.ts` now uses your real roster — Sales, Presales, Marketing, Business Development, Data Tech, Tech Solutions, Data Analytics and Engineering, Thought Leadership, Info Services, Research, Finance, HR, Admin, PMO, Process Excellence, COE, IT Support, Payroll — across **~120 generated employees**, so the team rollup, leaderboard-by-team and reports feel like a real org.
 
-## Verification caveat
-The live build needs the private `@lovable.dev/vite-tanstack-config` package (403 in this sandbox) and the
-Tailwind CDN is also blocked here, so I validate with `tsc` + `eslint` and, for net-new layouts, a
-self-contained static render. My Learning and Leaderboard reuse the same utilities/patterns already
-rendered on Home, so give them a quick look once deployed.
+## Notes
+- `routeTree.gen.ts` includes `/browse` (mirrors the generated pattern; the TanStack plugin reproduces it on build).
+- Verified via `tsc` + `eslint` + review (the live build needs the private Lovable vite plugin, 403 here; the Tailwind CDN is blocked too). Give the new Browse page, the Users columns, and the quiz-gating a quick look once deployed.
