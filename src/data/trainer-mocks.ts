@@ -285,6 +285,7 @@ export function draftFor(summary: TrainerModuleSummary): ModuleDraft {
           required: true,
           draft: summary.state === "draft",
           mandatory: true,
+          passingPct: 70,
         },
       ] as DraftActivity[]
     ).slice(0, Math.max(2, summary.activityCount)),
