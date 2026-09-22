@@ -219,6 +219,8 @@ export interface DraftActivity {
   draft: boolean;
   /** Quiz only: compliance-tracked across the org. */
   mandatory: boolean;
+  /** Quiz only: trainer-set pass mark (% correct). Flows through to scoring. */
+  passingPct?: number;
 }
 
 export type PushEnrollment = "all-skill" | "audience" | "manual";
