@@ -199,6 +199,29 @@ export function ContentFlowTab({
                       {a.type === "quiz" && (
                         <label
                           className="hidden items-center gap-1.5 text-xs text-muted-foreground lg:flex"
+                          title="Pass mark — the % of questions a learner must get right"
+                        >
+                          Pass %
+                          <Input
+                            type="number"
+                            min={0}
+                            max={100}
+                            value={a.passingPct ?? 70}
+                            onChange={(e) =>
+                              setActivities(
+                                draft.activities.map((x) =>
+                                  x.id === a.id ? { ...x, passingPct: Number(e.target.value) } : x,
+                                ),
+                              )
+                            }
+                            className="tnum h-8 w-16"
+                            aria-label={`Pass mark for ${a.name}`}
+                          />
+                        </label>
+                      )}
+                      {a.type === "quiz" && (
+                        <label
+                          className="hidden items-center gap-1.5 text-xs text-muted-foreground lg:flex"
                           title="Compliance-tracked across the org"
                         >
                           Mandatory (compliance-tracked)
