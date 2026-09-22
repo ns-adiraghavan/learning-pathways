@@ -81,6 +81,9 @@ function QuizCompliancePage() {
   const completed = rows.filter((r) => r.status === "completed");
   const notCompleted = rows.filter((r) => r.status === "not-completed");
   const pct = rows.length ? Math.round((completed.length / rows.length) * 100) : 0;
+  const passMark = quiz?.passMarkPct ?? 70;
+  const didPass = (r: QuizCompletionRow) =>
+    r.status === "completed" && r.scorePct !== null && r.scorePct >= passMark;
 
   const teams = useMemo(
     () => Array.from(new Set(rows.map((row) => row.team))).sort((a, b) => a.localeCompare(b)),
@@ -94,6 +97,19 @@ function QuizCompliancePage() {
           (filter === "all" || row.status === filter) && (team === "all" || row.team === team),
       ),
     [rows, filter, team],
+  );
+
+  // Certificates track the current team filter and only go to learners who passed.
+  const certifiable = useMemo(
+    () =>
+      rows.filter(
+        (r) =>
+          (team === "all" || r.team === team) &&
+          r.status === "completed" &&
+          r.scorePct !== null &&
+          r.scorePct >= passMark,
+      ),
+    [rows, team, passMark],
   );
 
   const shownCompleted = useCountUp(completed.length);
@@ -112,12 +128,23 @@ function QuizCompliancePage() {
 
   function download(list: QuizCompletionRow[], suffix: string) {
     const csv = toCsv(
-      ["Name", "Email", "Team", "Status", "Completed on", "Score %", "Attempts", "Last reminded"],
+      [
+        "Name",
+        "Email",
+        "Team",
+        "Status",
+        "Result",
+        "Completed on",
+        "Score %",
+        "Attempts",
+        "Last reminded",
+      ],
       list.map((r) => [
         r.name,
         r.email,
         r.team,
         r.status === "completed" ? "Completed" : "Not completed",
+        r.status === "completed" && r.scorePct !== null ? (didPass(r) ? "Pass" : "Fail") : "",
         r.completedOn ?? "",
         r.scorePct ?? "",
         r.attempts,
@@ -128,10 +155,10 @@ function QuizCompliancePage() {
   }
 
   function downloadCertificates() {
-    if (completed.length === 0) return;
+    if (certifiable.length === 0) return;
     const today = new Date().toISOString().slice(0, 10);
     const zip = createZip(
-      completed.map((r) => {
+      certifiable.map((r) => {
         const cert: Certificate = {
           id: r.learnerId,
           moduleId: "",
@@ -145,8 +172,11 @@ function QuizCompliancePage() {
         };
       }),
     );
+    const scope = team === "all" ? "" : ` (${team})`;
     downloadBlob(`certificates-${slugify(name)}-${today}.zip`, zip);
-    toast.success(`Downloaded ${completed.length} certificates`);
+    toast.success(
+      `Downloaded ${certifiable.length} certificate${certifiable.length === 1 ? "" : "s"}${scope}`,
+    );
   }
 
   return (
@@ -170,7 +200,7 @@ function QuizCompliancePage() {
           </p>
           {quiz && (
             <p className="tnum mt-0.5 text-xs text-muted-foreground">
-              Due {formatDate(quiz.dueDate)}
+              Due {formatDate(quiz.dueDate)} · Pass mark {passMark}%
             </p>
           )}
         </div>
@@ -201,6 +231,7 @@ function QuizCompliancePage() {
               "Email",
               "Team",
               "Status",
+              "Result",
               "Completed on",
               "Score %",
               "Attempts",
@@ -211,6 +242,11 @@ function QuizCompliancePage() {
               row.email,
               row.team,
               row.status,
+              row.status === "completed" && row.scorePct !== null
+                ? didPass(row)
+                  ? "Pass"
+                  : "Fail"
+                : "",
               row.completedOn,
               row.scorePct,
               row.attempts,
@@ -271,11 +307,16 @@ function QuizCompliancePage() {
           <Button
             variant="secondary"
             size="sm"
-            disabled={completed.length === 0}
+            disabled={certifiable.length === 0}
             onClick={downloadCertificates}
+            title={
+              team === "all"
+                ? "Certificates for everyone who passed"
+                : `Certificates for ${team} passers`
+            }
           >
             <Download className="size-4" strokeWidth={1.75} />
-            Certificates ({completed.length})
+            Certificates ({certifiable.length})
           </Button>
           <Button
             variant="outline"
@@ -315,6 +356,7 @@ function QuizCompliancePage() {
                 <TableHead>Status</TableHead>
                 <TableHead className="hidden text-right md:table-cell">Completed on</TableHead>
                 <TableHead className="text-right">Score</TableHead>
+                <TableHead className="text-right">Result</TableHead>
                 <TableHead className="text-right">Attempts</TableHead>
               </TableRow>
             </TableHeader>
@@ -362,8 +404,30 @@ function QuizCompliancePage() {
                   <TableCell className="tnum hidden text-right text-xs text-muted-foreground md:table-cell">
                     {r.completedOn ? formatDate(r.completedOn) : "—"}
                   </TableCell>
-                  <TableCell className="tnum text-right text-sm">
+                  <TableCell
+                    className={cn(
+                      "tnum text-right text-sm",
+                      r.scorePct !== null &&
+                        (didPass(r) ? "text-status-complete" : "text-status-overdue"),
+                    )}
+                  >
                     {r.scorePct === null ? "—" : `${r.scorePct}%`}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {r.status !== "completed" || r.scorePct === null ? (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    ) : (
+                      <span
+                        className={cn(
+                          "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-[590]",
+                          didPass(r)
+                            ? "bg-status-complete/12 text-status-complete"
+                            : "bg-status-overdue/12 text-status-overdue",
+                        )}
+                      >
+                        {didPass(r) ? "Pass" : "Fail"}
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell className="tnum text-right text-sm">{r.attempts}</TableCell>
                 </TableRow>
