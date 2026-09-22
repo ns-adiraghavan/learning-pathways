@@ -1,18 +1,17 @@
+import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen } from "lucide-react";
+import { BookOpen, ChevronRight, Search } from "lucide-react";
 
-import { getAssignedModules, getProgressSummary } from "@/data/repositories";
-import { formatDate } from "@/lib/format";
-import { CategoryBadge, CATEGORY_TINT, StatusDot } from "@/components/lessons/badges";
+import { getAssignedModules } from "@/data/repositories";
+import type { Activity, ActivityType, LearningModule, ModuleCategory } from "@/data/types";
+import { CATEGORY_LABEL, formatDate, formatMinutes, moduleMinutes } from "@/lib/format";
 import { EmptyState } from "@/components/lessons/empty-state";
-import { DoodlePanel } from "@/components/doodle-field";
-import { StatTile } from "@/components/lessons/count-up";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { PageFade, ShimmerBlock, Stagger, StaggerItem } from "@/components/motion/motion";
+import { PageFade, ShimmerBlock } from "@/components/motion/motion";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
-const STATUS_VALUES = ["all", "in-progress", "completed", "overdue"] as const;
+const STATUS_VALUES = ["all", "in-progress", "overdue", "completed", "not-started"] as const;
 type StatusFilter = (typeof STATUS_VALUES)[number];
 
 export const Route = createFileRoute("/my-learning")({
@@ -26,201 +25,306 @@ export const Route = createFileRoute("/my-learning")({
       {
         name: "description",
         content:
-          "Your learning snapshot and every module in flight, with progress, due dates and a quick way to resume.",
+          "Every module you're assigned, module by module — progress, contents, due dates and status.",
       },
       { property: "og:title", content: "My Learning — Lessons" },
       {
         property: "og:description",
         content:
-          "Your learning snapshot and every module in flight, with progress, due dates and a quick way to resume.",
+          "Every module you're assigned, module by module — progress, contents, due dates and status.",
       },
     ],
   }),
   component: MyLearningPage,
 });
 
-const FILTER_LABEL: Record<StatusFilter, string> = {
-  all: "In flight",
-  "in-progress": "In progress",
-  completed: "Completed",
-  overdue: "Overdue",
+const FILTERS: { value: StatusFilter; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "in-progress", label: "In progress" },
+  { value: "overdue", label: "Overdue" },
+  { value: "not-started", label: "Not started" },
+  { value: "completed", label: "Completed" },
+];
+
+const CATS: ModuleCategory[] = ["mandatory", "onboarding", "team", "bank"];
+
+const CAT_TINT: Record<ModuleCategory, string> = {
+  mandatory: "var(--cat-mandatory)",
+  onboarding: "var(--cat-onboarding)",
+  team: "var(--cat-team)",
+  bank: "var(--cat-bank)",
 };
+
+const CAT_CHIP: Record<ModuleCategory, string> = {
+  mandatory: "bg-cat-mandatory/12 text-cat-mandatory",
+  onboarding: "bg-cat-onboarding/12 text-cat-onboarding",
+  team: "bg-cat-team/12 text-cat-team",
+  bank: "bg-cat-bank/12 text-cat-bank",
+};
+
+const STATUS_DOT: Record<LearningModule["status"], { dot: string; label: string; text?: string }> =
+  {
+    overdue: { dot: "bg-status-overdue", label: "Overdue", text: "text-status-overdue" },
+    "in-progress": { dot: "bg-status-progress", label: "In progress" },
+    "not-started": { dot: "bg-muted-foreground/50", label: "Not started" },
+    complete: { dot: "bg-status-complete", label: "Complete" },
+  };
+
+const TYPE_LABEL: Record<ActivityType, string> = {
+  video: "video",
+  deck: "deck",
+  weblink: "link",
+  quiz: "quiz",
+};
+
+function contents(activities: Activity[]): string {
+  const counts = activities.reduce<Record<string, number>>((acc, a) => {
+    acc[a.type] = (acc[a.type] ?? 0) + 1;
+    return acc;
+  }, {});
+  return (["video", "deck", "weblink", "quiz"] as ActivityType[])
+    .filter((t) => counts[t])
+    .map((t) => `${counts[t]} ${TYPE_LABEL[t]}${counts[t]! > 1 ? "s" : ""}`)
+    .join(" · ");
+}
+
+function matchesStatus(m: LearningModule, f: StatusFilter): boolean {
+  if (f === "all") return true;
+  if (f === "completed") return m.status === "complete";
+  if (f === "in-progress") return m.status === "in-progress";
+  if (f === "overdue") return m.status === "overdue";
+  return m.status === "not-started";
+}
 
 function MyLearningPage() {
   const { status } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const [q, setQ] = useState("");
+  const [program, setProgram] = useState("all");
+
   const { data: modules, isPending } = useQuery({
     queryKey: ["modules"],
     queryFn: getAssignedModules,
   });
-  const { data: summary } = useQuery({
-    queryKey: ["progress-summary"],
-    queryFn: getProgressSummary,
-  });
+  const all = useMemo(() => modules ?? [], [modules]);
 
-  const all = modules ?? [];
-  const list =
-    status === "completed"
-      ? all.filter((m) => m.status === "complete")
-      : status === "overdue"
-        ? all.filter((m) => m.status === "overdue")
-        : status === "in-progress"
-          ? all.filter((m) => m.status === "in-progress")
-          : all.filter((m) => m.status !== "complete");
-  const total = summary?.totalModules ?? 0;
-  const pct = total ? Math.round(((summary?.completedModules ?? 0) / total) * 100) : 0;
+  const programs = useMemo(() => Array.from(new Set(all.map((m) => m.programTitle))).sort(), [all]);
+
+  const byCategory = useMemo(
+    () =>
+      CATS.map((c) => {
+        const list = all.filter((m) => m.category === c);
+        return {
+          category: c,
+          total: list.length,
+          done: list.filter((m) => m.status === "complete").length,
+        };
+      }).filter((c) => c.total > 0),
+    [all],
+  );
+
+  const rows = useMemo(() => {
+    const query = q.trim().toLowerCase();
+    return all
+      .filter((m) => matchesStatus(m, status))
+      .filter((m) => program === "all" || m.programTitle === program)
+      .filter(
+        (m) =>
+          !query ||
+          m.title.toLowerCase().includes(query) ||
+          m.skillTitle.toLowerCase().includes(query) ||
+          m.programTitle.toLowerCase().includes(query),
+      )
+      .sort((a, b) => b.progressPct - a.progressPct || a.title.localeCompare(b.title));
+  }, [all, status, program, q]);
+
+  const counts = useMemo(
+    () =>
+      Object.fromEntries(
+        FILTERS.map((f) => [f.value, all.filter((m) => matchesStatus(m, f.value)).length]),
+      ),
+    [all],
+  );
 
   return (
-    <PageFade className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6">
-      <header className="surface blue-wash relative mb-6 overflow-hidden p-5">
-        <DoodlePanel />
-        <div className="relative">
-          <p className="text-[11px] tracking-[0.14em] uppercase text-brand-blue">
-            Your learning, at a glance
-          </p>
-          <h1 className="text-title mt-1">My Learning</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Your progress and everything still in flight.
-          </p>
-        </div>
+    <PageFade className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">
+      <header className="mb-6">
+        <h1 className="text-title">My Learning</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Every module you're assigned, module by module — contents, progress and due dates.
+        </p>
       </header>
 
-      {summary && total > 0 && (
-        <section className="mb-8">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatTile value={summary.completedModules} label="Completed" tint="var(--chart-1)" tone="solid" to="/my-learning" search={{ status: "completed" }} />
-            <StatTile value={summary.inProgressCount} label="In progress" tint="var(--chart-2)" tone="solid" to="/my-learning" search={{ status: "in-progress" }} />
-            <StatTile value={summary.overdueCount} label="Overdue" tint="var(--chart-5)" tone="soft" to="/my-learning" search={{ status: "overdue" }} />
-            <StatTile value={pct} suffix="%" label="Overall" tint="var(--chart-3)" tone="soft" to="/my-learning" search={{ status: "all" }} />
-          </div>
-
-          <div className="surface mt-3 grid gap-4 p-5 sm:grid-cols-2">
-            <Split
-              label="Mandatory"
-              complete={summary.mandatoryComplete}
-              total={summary.mandatoryTotal}
-            />
-            <Split
-              label="Optional"
-              complete={summary.optionalComplete}
-              total={summary.optionalTotal}
-            />
-          </div>
+      {/* Completion by category — the broader, module-wise read */}
+      {byCategory.length > 0 && (
+        <section className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {byCategory.map((c) => {
+            const pct = c.total ? Math.round((c.done / c.total) * 100) : 0;
+            return (
+              <div
+                key={c.category}
+                className="surface p-4"
+                style={{ ["--cat-tint" as string]: CAT_TINT[c.category] }}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-label text-muted-foreground">
+                    {CATEGORY_LABEL[c.category]}
+                  </span>
+                  <span className="tnum text-xs text-muted-foreground">
+                    {c.done}/{c.total}
+                  </span>
+                </div>
+                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-secondary">
+                  <div
+                    className="h-1.5 rounded-full"
+                    style={{ width: `${Math.max(3, pct)}%`, background: "var(--cat-tint)" }}
+                  />
+                </div>
+                <p className="tnum mt-1.5 text-xs text-muted-foreground">{pct}% complete</p>
+              </div>
+            );
+          })}
         </section>
       )}
 
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <h2 className="text-card-title">
-          {status === "all" ? "Continue learning" : FILTER_LABEL[status]}
-        </h2>
-        {status !== "all" && (
-          <Button asChild size="sm" variant="ghost" className="h-7">
-            <Link to="/my-learning" search={{ status: "all" }}>
-              Clear filter
-            </Link>
-          </Button>
-        )}
+      {/* Controls */}
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="flex flex-wrap gap-1.5">
+          {FILTERS.map((f) => (
+            <button
+              key={f.value}
+              type="button"
+              onClick={() => void navigate({ search: { status: f.value } })}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm transition-colors",
+                status === f.value
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {f.label}
+              <span className="tnum text-xs opacity-80">{counts[f.value]}</span>
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-2 sm:ml-auto">
+          <div className="relative">
+            <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search modules"
+              className="h-9 w-44 pl-8"
+              aria-label="Search modules"
+            />
+          </div>
+          <select
+            value={program}
+            onChange={(e) => setProgram(e.target.value)}
+            aria-label="Filter by program"
+            className="h-9 rounded-md border border-input bg-card px-2 text-sm text-foreground"
+          >
+            <option value="all">All programs</option>
+            {programs.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {isPending ? (
-        <div className="space-y-3">
-          {[0, 1, 2].map((i) => (
+        <div className="grid gap-3">
+          {[0, 1, 2, 3].map((i) => (
             <ShimmerBlock key={i} className="h-24 rounded-2xl" />
           ))}
         </div>
-      ) : list.length === 0 ? (
+      ) : rows.length === 0 ? (
         <EmptyState
           icon={BookOpen}
-          title="Nothing here yet"
-          description="When a module is assigned to you it shows up here with its progress and due date."
+          title="Nothing here"
+          description="No modules match this filter. Clear it, or check another status tab."
         />
       ) : (
-        <Stagger as="ul" className="space-y-3">
-          {list.map((m) => (
-            <StaggerItem
-              as="li"
-              key={m.id}
-              className="surface card-hover relative overflow-hidden p-4 pl-5"
-              style={{ ["--cat-tint" as string]: CATEGORY_TINT[m.category] }}
-            >
-              <span aria-hidden className="cat-accent absolute inset-y-0 left-0 w-[3px]" />
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <ul className="grid gap-3">
+          {rows.map((m) => {
+            const s = STATUS_DOT[m.status];
+            return (
+              <li
+                key={m.id}
+                className="surface card-hover flex items-center gap-4 p-4"
+                style={{ ["--cat-tint" as string]: CAT_TINT[m.category] }}
+              >
                 <img
                   src={m.posterImage}
                   alt=""
                   loading="lazy"
-                  width={1024}
-                  height={576}
-                  className="h-20 w-full shrink-0 rounded-xl border border-border object-cover sm:w-32"
+                  width={192}
+                  height={128}
+                  className="hidden h-16 w-24 shrink-0 rounded-xl border border-border object-cover sm:block"
                 />
                 <div className="min-w-0 flex-1">
-                  <div className="mb-1.5 flex flex-wrap items-center gap-2">
-                    <CategoryBadge category={m.category} />
-                    <StatusDot status={m.status} withLabel />
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      className={cn(
+                        "rounded-full px-2.5 py-0.5 text-xs font-[590]",
+                        CAT_CHIP[m.category],
+                      )}
+                    >
+                      {CATEGORY_LABEL[m.category]}
+                    </span>
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1.5 text-xs text-muted-foreground",
+                        s.text,
+                      )}
+                    >
+                      <span className={cn("size-1.5 rounded-full", s.dot)} />
+                      {s.label}
+                    </span>
                   </div>
-                  <Link
-                    to="/modules/$moduleId"
-                    params={{ moduleId: m.id }}
-                    className="text-card-title hover:text-primary"
-                  >
-                    {m.title}
-                  </Link>
-                  <div className="mt-2.5 flex items-center gap-3">
-                    <Progress
-                      value={m.progressPct}
-                      className="h-1.5 flex-1"
-                      indicatorClassName={
-                        m.category === "mandatory"
-                          ? "bg-cat-mandatory"
-                          : m.category === "onboarding"
-                            ? "bg-cat-onboarding"
-                            : m.category === "team"
-                              ? "bg-cat-team"
-                              : "bg-cat-bank"
-                      }
-                    />
+                  <h3 className="mt-1 truncate text-card-title">
+                    <Link
+                      to="/modules/$moduleId"
+                      params={{ moduleId: m.id }}
+                      className="hover:text-primary"
+                    >
+                      {m.title}
+                    </Link>
+                  </h3>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {m.programTitle} › {m.skillTitle}
+                  </p>
+                  <p className="tnum mt-0.5 text-xs text-muted-foreground">
+                    {contents(m.activities)} · {formatMinutes(moduleMinutes(m.activities))} · due{" "}
+                    {formatDate(m.dueDate)}
+                  </p>
+                  <div className="mt-2 flex items-center gap-3">
+                    <div className="h-1.5 w-full max-w-56 overflow-hidden rounded-full bg-secondary">
+                      <div
+                        className="h-1.5 rounded-full"
+                        style={{
+                          width: `${Math.max(2, m.progressPct)}%`,
+                          background: "var(--cat-tint)",
+                        }}
+                      />
+                    </div>
                     <span className="tnum text-xs text-muted-foreground">{m.progressPct}%</span>
                   </div>
-                  <p className="tnum mt-1.5 text-xs text-muted-foreground">
-                    Due {formatDate(m.dueDate)}
-                  </p>
                 </div>
-                <Button asChild size="sm" className="shrink-0">
-                  <Link to="/modules/$moduleId/player" params={{ moduleId: m.id }} search={{ step: 0 }}>
-                    Resume
-                  </Link>
-                </Button>
-              </div>
-            </StaggerItem>
-          ))}
-        </Stagger>
+                <Link
+                  to="/modules/$moduleId"
+                  params={{ moduleId: m.id }}
+                  className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[color:var(--brand-blue-soft)] bg-secondary px-4 py-1.5 text-sm font-[510] text-primary transition-colors hover:bg-accent"
+                >
+                  Open <ChevronRight className="size-4" strokeWidth={1.75} />
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
       )}
     </PageFade>
-  );
-}
-
-function Split({
-  label,
-  complete,
-  total,
-}: {
-  label: string;
-  complete: number;
-  total: number;
-}) {
-  const pct = total ? Math.round((complete / total) * 100) : 0;
-  return (
-    <div>
-      <div className="flex items-baseline justify-between">
-        <p className="text-label text-muted-foreground">{label}</p>
-        <p className="tnum text-sm font-[510]">
-          {complete} / {total}
-        </p>
-      </div>
-      <Progress
-        value={pct}
-        className="mt-2 h-1.5"
-        indicatorClassName={label === "Mandatory" ? "bg-cat-mandatory" : "bg-cat-team"}
-      />
-    </div>
   );
 }
