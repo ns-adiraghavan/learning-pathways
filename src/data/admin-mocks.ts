@@ -18,41 +18,67 @@ import type {
 
 import { trainerModules } from "./trainer-mocks";
 
-const NAMES = [
-  "Ananya Rao",
-  "Rahul Menon",
-  "Priya Nair",
-  "Vikram Iyer",
-  "Sneha Kulkarni",
-  "Arjun Desai",
-  "Meera Joshi",
-  "Karthik Reddy",
-  "Divya Sharma",
-  "Nikhil Bose",
-  "Farah Sheikh",
-  "Rohan Gupta",
-  "Ishita Verma",
-  "Sameer Khan",
-  "Lakshmi Pillai",
-  "Tanvi Shah",
-  "Aditya Rane",
-  "Neha Bansal",
-  "Imran Qureshi",
-  "Pooja Mehta",
-  "Suresh Babu",
-  "Kavya Krishnan",
-  "Manish Agarwal",
-  "Ritika Sen",
+const FIRST = [
+  "Ananya",
+  "Rahul",
+  "Priya",
+  "Vikram",
+  "Sneha",
+  "Arjun",
+  "Meera",
+  "Karthik",
+  "Divya",
+  "Nikhil",
+  "Farah",
+  "Rohan",
+  "Ishita",
+  "Sameer",
+  "Lakshmi",
+  "Tanvi",
+  "Aditya",
+  "Neha",
+  "Imran",
+  "Pooja",
+  "Suresh",
+  "Kavya",
+  "Manish",
+  "Ritika",
 ];
+const LAST = ["Rao", "Menon", "Iyer", "Sharma", "Khan", "Nair"];
+
+// ~120 people so the directory, rollup and reports feel like a real org.
+const NAMES = Array.from(
+  { length: 120 },
+  (_, i) => `${FIRST[i % FIRST.length]} ${LAST[Math.floor(i / FIRST.length) % LAST.length]}`,
+);
 
 export const TEAMS = [
-  "Research Delivery",
-  "Data Solutions",
-  "Client Success",
-  "People Ops",
-  "Technology",
+  "Sales",
+  "Presales",
+  "Marketing",
+  "Business Development",
+  "Data Tech",
+  "Tech Solutions",
+  "Data Analytics and Engineering",
+  "Thought Leadership",
+  "Info Services",
+  "Research",
+  "Finance",
+  "HR",
+  "Admin",
+  "PMO",
+  "Process Excellence",
+  "COE",
+  "IT Support",
+  "Payroll",
 ];
-export const DEPARTMENTS = ["Research", "Technology", "People Ops", "Client Success"];
+export const DEPARTMENTS = [
+  "Delivery",
+  "Technology",
+  "Sales & Marketing",
+  "Corporate",
+  "Operations",
+];
 export const LOCATIONS = ["Noida", "Bengaluru", "Mumbai", "Remote"];
 export const DESIGNATIONS = [
   "Analyst",
@@ -173,31 +199,31 @@ export function assignmentsFor(moduleId: string): ModuleAssignment[] {
 export const reports: ReportSummary[] = [
   {
     id: "completion-ratio",
-    name: "Completion Ratio",
+    name: "Completion Ratio Report",
     description: "Assigned vs completed modules, sliced by team, program and learner.",
     lastRun: "Ran 2 days ago",
   },
   {
     id: "time-spent",
-    name: "Time Spent",
+    name: "Time Spent Analytics",
     description: "Average and total learning hours across the organisation.",
     lastRun: "Ran last week",
   },
   {
     id: "leaderboard-points",
-    name: "Leaderboard Points",
+    name: "Leaderboard Points Report",
     description: "Points earned by learners over the period.",
     lastRun: "Ran yesterday",
   },
   {
     id: "login",
-    name: "Login Activity",
+    name: "Login Reports",
     description: "Sign-in frequency and active users over the period.",
     lastRun: "Ran today",
   },
   {
     id: "audit-log",
-    name: "Audit Log",
+    name: "Audit Logs",
     description: "Who changed what — assignments, publishes, settings.",
     lastRun: "Live",
   },
@@ -343,11 +369,11 @@ function metricCells(meta: MetricMeta, key: string): Record<string, number> {
 }
 
 const REPORT_NAME: Record<ReportId, string> = {
-  "completion-ratio": "Completion Ratio",
-  "time-spent": "Time Spent",
-  "leaderboard-points": "Leaderboard Points",
-  login: "Login Activity",
-  "audit-log": "Audit Log",
+  "completion-ratio": "Completion Ratio Report",
+  "time-spent": "Time Spent Analytics",
+  "leaderboard-points": "Leaderboard Points Report",
+  login: "Login Reports",
+  "audit-log": "Audit Logs",
 };
 
 function tabRows(
