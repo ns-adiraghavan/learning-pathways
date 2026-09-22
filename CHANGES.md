@@ -1,27 +1,17 @@
-# Lessons — this response's changes only
+# Lessons — pass-mark wire-through (follow-up to batch 4)
 
-Everything prior is assumed pushed. Unzip at the repo root and sync. `tsc` + `eslint` clean; no new deps.
-16 files — 1 new (`src/data/org.ts`). No new routes, so `routeTree.gen.ts` is untouched.
+Everything prior is assumed pushed. Unzip at the repo root and sync. `tsc` + `eslint` clean; no new deps. 4 files, all edits (no new files).
 
-## Your list
+## What changed
+The trainer's per-quiz **Passing %** now flows all the way through to learner scoring, instead of only living in the builder's local state.
 
-1. **Assignment search** — the Assignments module picker is now a search box (searches **program, skill and module** together) over a scrollable, single-select list showing each module's `Program › Skill` and enrolled count. The selected module is confirmed above the assignment table. (`routes/admin/assignments.tsx`; `AssignableModule` gained a `skillTitle`.)
+- **`data/types.ts`** — `DraftActivity` gained an optional `passingPct` (quiz only).
+- **`components/trainer/content-flow-tab.tsx`** — each quiz activity row now has an editable **Pass %** field (0–100) beside the Mandatory / Required toggles, so the pass mark is set where the trainer builds the module's activity flow.
+- **`data/repositories.ts`** — a session-level `quizPassMarkStore` (keyed by quiz activity id) is the bridge:
+  - `saveModuleDraft` writes each quiz's `passingPct` into the store on Save.
+  - `submitQuiz` resolves the pass mark as **store → the quiz's own `passingPct` → 70%**, so scoring reflects what the trainer set.
+  - `getModule` overlays the stored pass mark onto the quiz activity, so the learner's quiz start screen and scorecard show the trainer's value.
+- **`data/trainer-mocks.ts`** — the seeded draft "Assessment" quiz carries a default `passingPct: 70` so the field is populated out of the box.
 
-2. **Quiz pass/fail is explicit + certs follow the team filter** —
-   - Mandatory-quiz compliance page now has a **Result** column (Pass/Fail chip), the score is coloured by pass/fail, and the header shows the **pass mark**. The CSV export gained a Result column too.
-   - **Certificates now respect the team filter.** The button was zipping *all* completed learners regardless of the team dropdown; it now certifies only those in the current team filter **who passed**, and the button count + toast reflect that scope.
-   - Trainer quiz **Results** tab gained an explicit Pass/Fail chip alongside the score.
-
-3. **Enrollment rules are editable** — the Customization → Enrollment rules section can now **add, edit and remove** rules inline: attribute dropdown (Department / Employee type / Location / Function / Division / Grade / Designation), an editable match value, an editable target module, an enable toggle and a delete button. Save is disabled until every rule is complete. (`components/admin/config-sections.tsx`.)
-
-4. **Function + Division org model (the correction)** — new `data/org.ts` holds the taxonomy: the 18 teams are **Divisions**, each rolling up to a **Function** — **Sales** (Marketing, Sales, Presales, Business Development), **Operations** (Data Tech, Tech Solutions, Data Analytics and Engineering, Thought Leadership, Info Services, Research), **Support** (Finance, HR, Admin, PMO, Process Excellence, COE, IT Support, Payroll). Each employee's `functionArea` is now **derived from their division**, never assigned independently. The stale rosters are fixed everywhere they showed: the **leaderboard** entries, the **current user**, and the **trainer** learner/quiz-result rosters now use real divisions. The **leaderboard** also gained a third view, **By function**, that rolls divisions up (with a per-function CSV), and the individual/team CSVs now carry the Function column. New-user creation and the CSV import sample were realigned too.
-
-5. **Clickable stat tiles** — Home ribbon tiles now navigate: **Completed** → My Learning (completed), **In progress** → My Learning (in-progress), **Certificates** → Certificates, **XP points** → Leaderboard. My Learning's completion-by-category cards are now filter buttons — tap one to filter the list to that category, tap again to clear.
-
-6. **Quiz scoring = correct ÷ total, pass mark set by the trainer** — score is already correct-over-total; the **pass mark is no longer hard-coded at 70%**. Quizzes carry a `passingPct` (set per quiz, e.g. 60/70/75/80 in the seed data), `submitQuiz` uses it, the learner sees the pass mark on the quiz start screen, and the scorecard reports against it. The trainer's Quiz builder already exposes the Passing % control.
-
-7. **Audience & Analytics advanced search** — the trainer module editor's Audience & Analytics tab gained a free-text search (name / user ID / email) and a **Filters** panel matching the admin directory: Team/Division, Function, Designation, Department, Location, Employee type, Grade, Manager and Joined-on/after. Enrolled-learner records were enriched with those attributes so the search is real, not cosmetic.
-
-## Notes
-- Verified via `tsc` (0 errors) + `eslint` (0 issues). The live build still needs the private Lovable vite plugin (403 here) and the Tailwind CDN is blocked, so give the Assignments picker, the mandatory-quiz Result/cert-filter behaviour, the editable enrollment rules and the leaderboard "By function" view a quick look once deployed.
-- `data/org.ts` is the single source of truth for the Division→Function mapping — point new team/reporting code at `functionForDivision()` rather than re-hardcoding the roster.
+## Note on the demo data
+The trainer draft modules and the learner-facing modules are seeded as separate mock sets with different activity ids (`<moduleId>-a4` vs `a-welcome-4`, etc.). The mechanism above is real and correct — it keys on the quiz activity id, so a saved pass mark takes effect for the learner quiz of that same id and for any quiz authored with a matching id. Once the real backend replaces these mocks (draft and published module share one id), the trainer's Pass % edit will change that exact quiz's scoring end to end with no further work. Verified via `tsc` (0 errors) + `eslint` (0 issues).
