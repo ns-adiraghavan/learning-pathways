@@ -194,13 +194,21 @@ function HomePage() {
             <section>
               <div className="mb-3 flex items-center justify-between gap-3">
                 <h2 className="text-[20px] font-[590]">Continue / Due soon</h2>
-                <Link
-                  to="/my-learning"
-                  search={{ status: "all" }}
-                  className="inline-flex items-center gap-1 text-sm font-[510] text-primary hover:underline"
-                >
-                  View all <ArrowRight className="size-4" strokeWidth={1.75} />
-                </Link>
+                <div className="flex items-center gap-3">
+                  <Link
+                    to="/browse"
+                    className="inline-flex items-center gap-1 text-sm font-[510] text-primary hover:underline"
+                  >
+                    Browse catalog
+                  </Link>
+                  <Link
+                    to="/my-learning"
+                    search={{ status: "all" }}
+                    className="inline-flex items-center gap-1 text-sm font-[510] text-primary hover:underline"
+                  >
+                    View all <ArrowRight className="size-4" strokeWidth={1.75} />
+                  </Link>
+                </div>
               </div>
               <div className="flex flex-col gap-3">
                 {continueRow.map((m) => (
