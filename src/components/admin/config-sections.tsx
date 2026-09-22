@@ -10,10 +10,30 @@ import {
   saveNotificationSettings,
   savePointsRules,
 } from "@/data/repositories";
+import { Plus, Trash2 } from "lucide-react";
+
 import type { EnrollmentRule, NotifChannel, NotificationSetting, PointsRule } from "@/data/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+/** Org attributes an enrollment rule can key on. */
+const RULE_ATTRIBUTES = [
+  "Department",
+  "Employee type",
+  "Location",
+  "Function",
+  "Division",
+  "Grade",
+  "Designation",
+];
 
 const CHANNELS: { key: NotifChannel; label: string }[] = [
   { key: "email", label: "Email" },
@@ -96,7 +116,7 @@ export function NotificationMatrixSection() {
   );
 }
 
-/** (Pointer 14) Enrollment trigger rules — display + enable. Engine is backend-owned. */
+/** (Pointer 14) Enrollment trigger rules — add, edit, enable, remove. Engine is backend-owned. */
 export function EnrollmentRulesSection() {
   const { data } = useQuery({ queryKey: ["enrollment-rules"], queryFn: getEnrollmentRules });
   const [rules, setRules] = useState<EnrollmentRule[] | null>(null);
@@ -105,48 +125,107 @@ export function EnrollmentRulesSection() {
   }, [data]);
   if (!rules) return null;
 
+  const patch = (id: string, updates: Partial<EnrollmentRule>) =>
+    setRules((prev) => prev!.map((x) => (x.id === id ? { ...x, ...updates } : x)));
+
+  const addRule = () =>
+    setRules((prev) => [
+      ...prev!,
+      {
+        id: `er-new-${Date.now()}`,
+        attribute: "Department",
+        value: "",
+        moduleTitle: "",
+        enabled: true,
+      },
+    ]);
+
+  const removeRule = (id: string) => setRules((prev) => prev!.filter((x) => x.id !== id));
+
+  const incomplete = rules.some((r) => !r.value.trim() || !r.moduleTitle.trim());
+
   return (
     <section className="surface p-4 sm:p-5">
       <div className="mb-1 flex items-start justify-between gap-3">
         <h2 className="text-card-title">Enrollment rules</h2>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() =>
-            void saveEnrollmentRules(rules).then(() => toast.success("Enrollment rules saved"))
-          }
-        >
-          Save
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={addRule}>
+            <Plus className="size-4" strokeWidth={2} />
+            Add rule
+          </Button>
+          <Button
+            size="sm"
+            disabled={incomplete}
+            onClick={() =>
+              void saveEnrollmentRules(rules).then(() => toast.success("Enrollment rules saved"))
+            }
+          >
+            Save
+          </Button>
+        </div>
       </div>
       <p className="mb-4 text-sm text-muted-foreground">
-        Auto-enroll matching learners into a module. The enrollment engine applies these on join.
+        Auto-enroll matching learners into a module. Set the attribute, the value to match, and the
+        module to enroll into. The enrollment engine applies these on join.
       </p>
-      <ul className="grid gap-2">
-        {rules.map((r) => (
-          <li
-            key={r.id}
-            className="flex items-center gap-3 rounded-md border border-border px-3 py-2.5"
-          >
-            <div className="min-w-0 flex-1 text-sm">
-              <p className="truncate">
-                <span className="font-[510]">{r.attribute}</span>{" "}
-                <span className="text-muted-foreground">is</span>{" "}
-                <span className="chip-blue rounded px-1.5 py-0.5 text-xs">{r.value}</span>
-                <span className="text-muted-foreground"> → enroll in </span>
-                <span className="font-[510]">{r.moduleTitle}</span>
-              </p>
-            </div>
-            <Switch
-              checked={r.enabled}
-              aria-label={`Enable ${r.attribute} rule`}
-              onCheckedChange={(v) =>
-                setRules((prev) => prev!.map((x) => (x.id === r.id ? { ...x, enabled: v } : x)))
-              }
-            />
-          </li>
-        ))}
-      </ul>
+
+      {rules.length === 0 ? (
+        <p className="rounded-md border border-dashed border-border px-3 py-6 text-center text-sm text-muted-foreground">
+          No rules yet. Add one to auto-enroll matching learners.
+        </p>
+      ) : (
+        <ul className="grid gap-2">
+          {rules.map((r) => (
+            <li
+              key={r.id}
+              className="grid items-center gap-2 rounded-md border border-border px-3 py-2.5 sm:grid-cols-[minmax(140px,1fr)_minmax(120px,1fr)_minmax(160px,1.4fr)_auto_auto]"
+            >
+              <Select value={r.attribute} onValueChange={(v) => patch(r.id, { attribute: v })}>
+                <SelectTrigger className="h-9" aria-label="Attribute">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {RULE_ATTRIBUTES.map((a) => (
+                    <SelectItem key={a} value={a}>
+                      {a}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                value={r.value}
+                onChange={(e) => patch(r.id, { value: e.target.value })}
+                placeholder="is… e.g. Research"
+                aria-label="Value to match"
+                className="h-9"
+              />
+              <Input
+                value={r.moduleTitle}
+                onChange={(e) => patch(r.id, { moduleTitle: e.target.value })}
+                placeholder="→ enroll in module"
+                aria-label="Module to enroll into"
+                className="h-9"
+              />
+              <div className="flex items-center justify-center">
+                <Switch
+                  checked={r.enabled}
+                  aria-label={`Enable ${r.attribute} rule`}
+                  onCheckedChange={(v) => patch(r.id, { enabled: v })}
+                />
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-8"
+                aria-label="Remove rule"
+                onClick={() => removeRule(r.id)}
+              >
+                <Trash2 className="size-4" strokeWidth={1.75} />
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }
