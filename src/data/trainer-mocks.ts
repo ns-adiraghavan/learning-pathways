@@ -2,6 +2,8 @@ import posterOnboarding from "@/assets/poster-onboarding.jpg";
 import posterMandatory from "@/assets/poster-mandatory.jpg";
 import posterTeam from "@/assets/poster-team.jpg";
 
+import { functionForDivision } from "./org";
+
 import type {
   BuilderQuestion,
   CertificateTemplate,
@@ -246,44 +248,46 @@ export function draftFor(summary: TrainerModuleSummary): ModuleDraft {
     orderLocked: true,
     certificateTemplateId: "ct-classic",
     feedbackSurveyId: "fs-standard",
-    activities: ([
-      {
-        id: `${summary.id}-a1`,
-        name: "Standard overview",
-        type: "video",
-        meta: "12 min",
-        required: true,
-        draft: false,
-        mandatory: false,
-      },
-      {
-        id: `${summary.id}-a2`,
-        name: "Controls handbook",
-        type: "deck",
-        meta: "18 pages",
-        required: true,
-        draft: false,
-        mandatory: false,
-      },
-      {
-        id: `${summary.id}-a3`,
-        name: "Reference portal",
-        type: "weblink",
-        meta: "External link",
-        required: false,
-        draft: false,
-        mandatory: false,
-      },
-      {
-        id: `${summary.id}-a4`,
-        name: "Assessment",
-        type: "quiz",
-        meta: "10 questions · 15 min",
-        required: true,
-        draft: summary.state === "draft",
-        mandatory: true,
-      },
-    ] as DraftActivity[]).slice(0, Math.max(2, summary.activityCount)),
+    activities: (
+      [
+        {
+          id: `${summary.id}-a1`,
+          name: "Standard overview",
+          type: "video",
+          meta: "12 min",
+          required: true,
+          draft: false,
+          mandatory: false,
+        },
+        {
+          id: `${summary.id}-a2`,
+          name: "Controls handbook",
+          type: "deck",
+          meta: "18 pages",
+          required: true,
+          draft: false,
+          mandatory: false,
+        },
+        {
+          id: `${summary.id}-a3`,
+          name: "Reference portal",
+          type: "weblink",
+          meta: "External link",
+          required: false,
+          draft: false,
+          mandatory: false,
+        },
+        {
+          id: `${summary.id}-a4`,
+          name: "Assessment",
+          type: "quiz",
+          meta: "10 questions · 15 min",
+          required: true,
+          draft: summary.state === "draft",
+          mandatory: true,
+        },
+      ] as DraftActivity[]
+    ).slice(0, Math.max(2, summary.activityCount)),
     settings: {
       pushEnrollment: "all-skill",
       targetAudience: "All delivery teams",
@@ -315,7 +319,26 @@ const FIRST = [
   "Sameer",
 ];
 const LAST = ["Rao", "Menon", "Nair", "Sharma", "Iyer", "Bose", "Patel", "Reddy"];
-const TEAMS = ["Market Intelligence", "Data Solutions", "Client Success", "Technology"];
+// Real divisions (teams) — keep the trainer roster in step with the org taxonomy.
+const TEAMS = [
+  "Research",
+  "Data Analytics and Engineering",
+  "Tech Solutions",
+  "Info Services",
+  "Marketing",
+  "Presales",
+  "Data Tech",
+  "Thought Leadership",
+  "Sales",
+  "Business Development",
+];
+
+const L_DESIGNATIONS = ["Analyst", "Senior Analyst", "Team Lead", "Manager", "Associate Director"];
+const L_DEPARTMENTS = ["Delivery", "Technology", "Sales & Marketing", "Corporate", "Operations"];
+const L_LOCATIONS = ["Noida", "Bengaluru", "Mumbai", "Remote"];
+const L_EMPLOYEE_TYPES: EnrolledLearner["employeeType"][] = ["full-time", "contract", "intern"];
+const L_GRADES = ["G1", "G2", "G3", "G4", "G5"];
+const L_MANAGERS = ["Ananya Rao", "Vikram Iyer", "Farah Sheikh", "Suresh Babu"];
 
 export function learnersFor(moduleId: string): EnrolledLearner[] {
   const total = 48;
@@ -323,16 +346,27 @@ export function learnersFor(moduleId: string): EnrolledLearner[] {
     const name = `${FIRST[i % FIRST.length]} ${LAST[i % LAST.length]}`;
     const bucket = i % 5;
     const status = bucket < 2 ? "not-started" : bucket < 4 ? "in-progress" : "complete";
-    const progressPct = status === "complete" ? 100 : status === "in-progress" ? 25 + ((i * 7) % 60) : 0;
+    const progressPct =
+      status === "complete" ? 100 : status === "in-progress" ? 25 + ((i * 7) % 60) : 0;
+    const team = TEAMS[i % TEAMS.length]!;
     return {
       id: `${moduleId}-l${i}`,
+      userId: `NS-${String(20480 + i * 11)}`,
       name,
       email: `${name.toLowerCase().replace(" ", ".")}@netscribes.com`,
-      team: TEAMS[i % TEAMS.length]!,
+      team,
       status: status as EnrolledLearner["status"],
       progressPct,
       dueDate: "2026-12-31",
       lastActivity: status === "not-started" ? "—" : `${1 + (i % 14)} days ago`,
+      designation: L_DESIGNATIONS[i % L_DESIGNATIONS.length]!,
+      department: L_DEPARTMENTS[i % L_DEPARTMENTS.length]!,
+      location: L_LOCATIONS[i % L_LOCATIONS.length]!,
+      employeeType: L_EMPLOYEE_TYPES[i % L_EMPLOYEE_TYPES.length]!,
+      functionArea: functionForDivision(team),
+      grade: L_GRADES[i % L_GRADES.length]!,
+      manager: L_MANAGERS[i % L_MANAGERS.length]!,
+      joiningDate: `202${(i % 4) + 1}-${String((i % 12) + 1).padStart(2, "0")}-${String((i % 27) + 1).padStart(2, "0")}`,
     };
   });
 }
