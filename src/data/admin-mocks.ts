@@ -16,7 +16,8 @@ import type {
   UserProgressItem,
 } from "./types";
 
-import { trainerModules } from "./trainer-mocks";
+import { skills as trainerSkills, trainerModules } from "./trainer-mocks";
+import { DIVISIONS, FUNCTIONS as ORG_FUNCTIONS, functionForDivision } from "./org";
 
 const FIRST = [
   "Ananya",
@@ -52,26 +53,8 @@ const NAMES = Array.from(
   (_, i) => `${FIRST[i % FIRST.length]} ${LAST[Math.floor(i / FIRST.length) % LAST.length]}`,
 );
 
-export const TEAMS = [
-  "Sales",
-  "Presales",
-  "Marketing",
-  "Business Development",
-  "Data Tech",
-  "Tech Solutions",
-  "Data Analytics and Engineering",
-  "Thought Leadership",
-  "Info Services",
-  "Research",
-  "Finance",
-  "HR",
-  "Admin",
-  "PMO",
-  "Process Excellence",
-  "COE",
-  "IT Support",
-  "Payroll",
-];
+// Divisions ARE the teams (18 of them). Each rolls up to a Function — see org.ts.
+export const TEAMS = [...DIVISIONS];
 export const DEPARTMENTS = [
   "Delivery",
   "Technology",
@@ -87,7 +70,8 @@ export const DESIGNATIONS = [
   "Manager",
   "Associate Director",
 ];
-export const FUNCTIONS = ["Delivery", "Sales", "Support", "Operations", "Engineering"];
+// The three Functions divisions roll up to (Sales / Operations / Support).
+export const FUNCTIONS = [...ORG_FUNCTIONS];
 export const GRADES = ["G1", "G2", "G3", "G4", "G5"];
 export const EMPLOYEE_TYPES: AdminUser["employeeType"][] = ["full-time", "contract", "intern"];
 const MANAGERS = ["Ananya Rao", "Vikram Iyer", "Farah Sheikh", "Suresh Babu"];
@@ -116,7 +100,8 @@ export const users: AdminUser[] = NAMES.map((name, i): AdminUser => {
     role,
     designation: DESIGNATIONS[i % DESIGNATIONS.length]!,
     employeeType: EMPLOYEE_TYPES[i % EMPLOYEE_TYPES.length]!,
-    functionArea: FUNCTIONS[i % FUNCTIONS.length]!,
+    // Function is derived from the division, never assigned independently.
+    functionArea: functionForDivision(TEAMS[i % TEAMS.length]!),
     grade: GRADES[i % GRADES.length]!,
     manager: i === 0 ? "—" : MANAGERS[i % MANAGERS.length]!,
     joiningDate: `202${(i % 4) + 1}-${String((i % 12) + 1).padStart(2, "0")}-${String((i % 27) + 1).padStart(2, "0")}`,
@@ -163,6 +148,7 @@ export const assignableModules: AssignableModule[] = trainerModules.map((m) => (
       : m.title.includes("Client") || m.title.includes("Research")
         ? "Research Craft"
         : "New Joiner Onboarding",
+  skillTitle: trainerSkills.find((s) => s.id === m.skillId)?.title ?? "General",
   assignedCount: m.enrolled,
 }));
 
@@ -261,7 +247,7 @@ const AUDIT_EVENTS = [
     when: "Yesterday 17:05",
     actor: "Priya Nair",
     action: "Assigned team",
-    target: "Client Success → Onboarding",
+    target: "Info Services → Onboarding",
   },
   {
     when: "Yesterday 11:22",
