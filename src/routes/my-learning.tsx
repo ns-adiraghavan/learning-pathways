@@ -101,6 +101,7 @@ function MyLearningPage() {
   const navigate = Route.useNavigate();
   const [q, setQ] = useState("");
   const [program, setProgram] = useState("all");
+  const [category, setCategory] = useState<ModuleCategory | "all">("all");
 
   const { data: modules, isPending } = useQuery({
     queryKey: ["modules"],
@@ -128,6 +129,7 @@ function MyLearningPage() {
     return all
       .filter((m) => matchesStatus(m, status))
       .filter((m) => program === "all" || m.programTitle === program)
+      .filter((m) => category === "all" || m.category === category)
       .filter(
         (m) =>
           !query ||
@@ -136,7 +138,7 @@ function MyLearningPage() {
           m.programTitle.toLowerCase().includes(query),
       )
       .sort((a, b) => b.progressPct - a.progressPct || a.title.localeCompare(b.title));
-  }, [all, status, program, q]);
+  }, [all, status, program, q, category]);
 
   const counts = useMemo(
     () =>
@@ -160,10 +162,17 @@ function MyLearningPage() {
         <section className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {byCategory.map((c) => {
             const pct = c.total ? Math.round((c.done / c.total) * 100) : 0;
+            const active = category === c.category;
             return (
-              <div
+              <button
                 key={c.category}
-                className="surface p-4"
+                type="button"
+                aria-pressed={active}
+                onClick={() => setCategory((prev) => (prev === c.category ? "all" : c.category))}
+                className={cn(
+                  "surface card-hover p-4 text-left transition-shadow",
+                  active && "ring-2 ring-primary/40",
+                )}
                 style={{ ["--cat-tint" as string]: CAT_TINT[c.category] }}
               >
                 <div className="flex items-center justify-between">
@@ -180,8 +189,10 @@ function MyLearningPage() {
                     style={{ width: `${Math.max(3, pct)}%`, background: "var(--cat-tint)" }}
                   />
                 </div>
-                <p className="tnum mt-1.5 text-xs text-muted-foreground">{pct}% complete</p>
-              </div>
+                <p className="tnum mt-1.5 text-xs text-muted-foreground">
+                  {active ? "Filtering — tap to clear" : `${pct}% complete`}
+                </p>
+              </button>
             );
           })}
         </section>
