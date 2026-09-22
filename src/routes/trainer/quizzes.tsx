@@ -5,7 +5,10 @@ import { Download, FileQuestion, FileSpreadsheet, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import { getQuizResults, getQuizTemplates, getTemplateQuestions } from "@/data/repositories";
-import type { BuilderQuestion, QuizSettings } from "@/data/types";
+import type { BuilderQuestion, Certificate, QuizResultRow, QuizSettings } from "@/data/types";
+import { certificateSvg } from "@/lib/certificate";
+import { createZip, downloadBlob } from "@/lib/zip";
+import { slugify } from "@/lib/csv";
 import { DifficultyBadge } from "@/components/lessons/badges";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { Button } from "@/components/ui/button";
@@ -59,6 +62,30 @@ const DEFAULT_SETTINGS: QuizSettings = {
   timeLimitMins: 15,
 };
 
+/** Bulk-download a completion certificate (SVG) for every learner who passed. */
+function downloadQuizCertificates(quizName: string, rows: QuizResultRow[]) {
+  const passed = rows.filter((r) => r.passed);
+  if (passed.length === 0) {
+    toast.info("No passed learners to certify yet");
+    return;
+  }
+  const today = new Date().toISOString().slice(0, 10);
+  const zip = createZip(
+    passed.map((r) => {
+      const cert: Certificate = {
+        id: r.learnerId,
+        moduleId: "",
+        title: quizName,
+        issuedOn: today,
+        credentialId: `NS-Q-${r.learnerId.toUpperCase()}`,
+      };
+      return { name: `certificate-${slugify(r.name)}.svg`, content: certificateSvg(cert, r.name) };
+    }),
+  );
+  downloadBlob(`certificates-${slugify(quizName)}-${today}.zip`, zip);
+  toast.success(`Downloaded ${passed.length} certificates`);
+}
+
 function QuizBuilderPage() {
   const [templateId, setTemplateId] = useState<string | null>(null);
   const [questions, setQuestions] = useState<BuilderQuestion[]>([]);
@@ -90,8 +117,8 @@ function QuizBuilderPage() {
       <header className="mb-6">
         <h1 className="text-title">Quiz builder</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Start from a pre-built quiz template or upload the Excel template — no quiz design
-          from scratch.
+          Start from a pre-built quiz template or upload the Excel template — no quiz design from
+          scratch.
         </p>
       </header>
 
@@ -124,8 +151,8 @@ function QuizBuilderPage() {
               </div>
               <p className="text-card-title">Upload an Excel template</p>
               <p className="mt-1 max-w-xs text-sm text-muted-foreground">
-                Drop an .xlsx file here, or browse. Questions, options and difficulty are read
-                from the sheet.
+                Drop an .xlsx file here, or browse. Questions, options and difficulty are read from
+                the sheet.
               </p>
               <div className="mt-4 flex flex-wrap justify-center gap-2">
                 <Button size="sm" variant="outline">
@@ -205,10 +232,7 @@ function QuizBuilderPage() {
                             setQuestion(q.id, { difficulty: v as BuilderQuestion["difficulty"] })
                           }
                         >
-                          <SelectTrigger
-                            className="h-8 w-[104px]"
-                            aria-label="Question difficulty"
-                          >
+                          <SelectTrigger className="h-8 w-[104px]" aria-label="Question difficulty">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -307,11 +331,43 @@ function QuizBuilderPage() {
                   Suspiciously fast completions are flagged.
                 </p>
               </div>
-              <DownloadCsvButton
-                slug="trainer-quiz-results"
-                headers={["Learner", "Team", "Score %", "Passed", "Time taken (min)", "Attempts", "Flag"]}
-                rows={results.map((row) => [row.name, row.team, row.scorePct, row.passed ? "Yes" : "No", row.timeTakenMins, row.attempts, row.outlier ? "Suspiciously fast" : ""])}
-              />
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={results.length === 0}
+                  onClick={() =>
+                    downloadQuizCertificates(
+                      templates.find((t) => t.id === templateId)?.name ?? "Quiz completion",
+                      results,
+                    )
+                  }
+                >
+                  <Download className="size-4" strokeWidth={1.75} />
+                  Certificates
+                </Button>
+                <DownloadCsvButton
+                  slug="trainer-quiz-results"
+                  headers={[
+                    "Learner",
+                    "Team",
+                    "Score %",
+                    "Passed",
+                    "Time taken (min)",
+                    "Attempts",
+                    "Flag",
+                  ]}
+                  rows={results.map((row) => [
+                    row.name,
+                    row.team,
+                    row.scorePct,
+                    row.passed ? "Yes" : "No",
+                    row.timeTakenMins,
+                    row.attempts,
+                    row.outlier ? "Suspiciously fast" : "",
+                  ])}
+                />
+              </div>
             </div>
 
             {resultsPending ? (
