@@ -1,27 +1,27 @@
 # Lessons — this response's changes only
 
 Everything prior is assumed pushed. Unzip at the repo root and sync. `tsc` + `eslint` clean; no new deps.
-16 files — 2 new (`src/lib/module-flow.ts`, `src/routes/browse.tsx`).
+16 files — 1 new (`src/data/org.ts`). No new routes, so `routeTree.gen.ts` is untouched.
 
 ## Your list
-1. **Certificates scale** — `routes/certificates.tsx` now shows a search box once you have more than a few, a 3-up responsive grid, and separate "no certificates" vs "no matches" states. Per-cert Download/Share and Download-all stay.
-2. **Cleaner quiz result** — `scorecard-dialog.tsx` drops the difficulty table; it now shows the score ring, "X of Y correct · pass mark", and a compact Correct / Incorrect / Skipped trio.
-3. **Users & Progress columns** — realigned to your spec: **User Name · User ID · User Email · Created On · Allowed Views · User Status · Mobile Number · Department** (Last active removed; Team/Designation/Grade/Manager/Progress dropped from the table — still on the profile/edit drawer).
-4. **Report variety** — the five reports are named to match your reference: Completion Ratio Report, Leaderboard Points Report, Time Spent Analytics, Audit Logs, Login Reports (each keeps the Dashboard / By Learner Attributes / By Programs / By Learner / By Modules tabs + custom builder).
-5. **Deactivate learners** — a row action **Deactivate (left company)** / **Reactivate** (sets status via `updateUser`), inactive names show struck-through; plus a **Sync from Coefficient** button in the header.
-6. **Push-to-all + custom reports** — confirmed present: module Settings → Push enrollment → "Everyone on this skill", and the Reports custom builder. No new work needed; flagging so you know it's covered.
-7. **Video/PPT before quiz** — new `lib/module-flow.ts`: a quiz is locked until every earlier video/deck/link is complete (on top of the existing order-lock). Used by the player and the module overview.
-8. **Clickable notifications** — the bell items already navigate; now they show an unread dot + a chevron so it's obviously clickable.
-9. **Search by type** — `/search` has type chips (All / Videos / Decks & slides / Quizzes / Links) alongside the list/grid + sort controls.
-10. **Bulk certificate download** — a **Certificates** (zip) button on the trainer quiz **Results** tab (all who passed) and on the **Mandatory Quizzes** completion view (all completed).
-11. **Logo cut-off** — the sidebar now uses a compact lockup (square mark + "NS Lessons") instead of the wide logo, so the wordmark no longer clips.
 
-## New Browse catalog (reachable from Home)
-`routes/browse.tsx` — a learner-facing **Program → Skill → Module** tree (each program lists its skills; each skill lists its modules with status + time, linking to the module overview). Reachable from the sidebar (**Browse**) and a "Browse catalog" link on Home.
+1. **Assignment search** — the Assignments module picker is now a search box (searches **program, skill and module** together) over a scrollable, single-select list showing each module's `Program › Skill` and enrolled count. The selected module is confirmed above the assignment table. (`routes/admin/assignments.tsx`; `AssignableModule` gained a `skillTitle`.)
 
-## Teams
-`data/admin-mocks.ts` now uses your real roster — Sales, Presales, Marketing, Business Development, Data Tech, Tech Solutions, Data Analytics and Engineering, Thought Leadership, Info Services, Research, Finance, HR, Admin, PMO, Process Excellence, COE, IT Support, Payroll — across **~120 generated employees**, so the team rollup, leaderboard-by-team and reports feel like a real org.
+2. **Quiz pass/fail is explicit + certs follow the team filter** —
+   - Mandatory-quiz compliance page now has a **Result** column (Pass/Fail chip), the score is coloured by pass/fail, and the header shows the **pass mark**. The CSV export gained a Result column too.
+   - **Certificates now respect the team filter.** The button was zipping *all* completed learners regardless of the team dropdown; it now certifies only those in the current team filter **who passed**, and the button count + toast reflect that scope.
+   - Trainer quiz **Results** tab gained an explicit Pass/Fail chip alongside the score.
+
+3. **Enrollment rules are editable** — the Customization → Enrollment rules section can now **add, edit and remove** rules inline: attribute dropdown (Department / Employee type / Location / Function / Division / Grade / Designation), an editable match value, an editable target module, an enable toggle and a delete button. Save is disabled until every rule is complete. (`components/admin/config-sections.tsx`.)
+
+4. **Function + Division org model (the correction)** — new `data/org.ts` holds the taxonomy: the 18 teams are **Divisions**, each rolling up to a **Function** — **Sales** (Marketing, Sales, Presales, Business Development), **Operations** (Data Tech, Tech Solutions, Data Analytics and Engineering, Thought Leadership, Info Services, Research), **Support** (Finance, HR, Admin, PMO, Process Excellence, COE, IT Support, Payroll). Each employee's `functionArea` is now **derived from their division**, never assigned independently. The stale rosters are fixed everywhere they showed: the **leaderboard** entries, the **current user**, and the **trainer** learner/quiz-result rosters now use real divisions. The **leaderboard** also gained a third view, **By function**, that rolls divisions up (with a per-function CSV), and the individual/team CSVs now carry the Function column. New-user creation and the CSV import sample were realigned too.
+
+5. **Clickable stat tiles** — Home ribbon tiles now navigate: **Completed** → My Learning (completed), **In progress** → My Learning (in-progress), **Certificates** → Certificates, **XP points** → Leaderboard. My Learning's completion-by-category cards are now filter buttons — tap one to filter the list to that category, tap again to clear.
+
+6. **Quiz scoring = correct ÷ total, pass mark set by the trainer** — score is already correct-over-total; the **pass mark is no longer hard-coded at 70%**. Quizzes carry a `passingPct` (set per quiz, e.g. 60/70/75/80 in the seed data), `submitQuiz` uses it, the learner sees the pass mark on the quiz start screen, and the scorecard reports against it. The trainer's Quiz builder already exposes the Passing % control.
+
+7. **Audience & Analytics advanced search** — the trainer module editor's Audience & Analytics tab gained a free-text search (name / user ID / email) and a **Filters** panel matching the admin directory: Team/Division, Function, Designation, Department, Location, Employee type, Grade, Manager and Joined-on/after. Enrolled-learner records were enriched with those attributes so the search is real, not cosmetic.
 
 ## Notes
-- `routeTree.gen.ts` includes `/browse` (mirrors the generated pattern; the TanStack plugin reproduces it on build).
-- Verified via `tsc` + `eslint` + review (the live build needs the private Lovable vite plugin, 403 here; the Tailwind CDN is blocked too). Give the new Browse page, the Users columns, and the quiz-gating a quick look once deployed.
+- Verified via `tsc` (0 errors) + `eslint` (0 issues). The live build still needs the private Lovable vite plugin (403 here) and the Tailwind CDN is blocked, so give the Assignments picker, the mandatory-quiz Result/cert-filter behaviour, the editable enrollment rules and the leaderboard "By function" view a quick look once deployed.
+- `data/org.ts` is the single source of truth for the Division→Function mapping — point new team/reporting code at `functionForDivision()` rather than re-hardcoding the roster.
