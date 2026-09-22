@@ -111,10 +111,32 @@ export async function getAssignedModules(): Promise<LearningModule[]> {
   return delay(mockModules);
 }
 
+/**
+ * Trainer-set quiz pass marks, keyed by quiz activity id. Written when a module
+ * draft is saved (see saveModuleDraft) and read by both getModule (so the learner
+ * sees the right pass mark) and submitQuiz (so scoring uses it).
+ */
+const quizPassMarkStore = new Map<string, number>();
+
+function applyQuizPassMarks(module: LearningModule): LearningModule {
+  if (![...quizPassMarkStore.keys()].some((id) => module.activities.some((a) => a.id === id))) {
+    return module;
+  }
+  return {
+    ...module,
+    activities: module.activities.map((a) =>
+      a.type === "quiz" && quizPassMarkStore.has(a.id)
+        ? { ...a, passingPct: quizPassMarkStore.get(a.id)! }
+        : a,
+    ),
+  };
+}
+
 // CONNECT: replace with real API call to GET /api/modules/:id
 export async function getModule(id: string): Promise<LearningModule | null> {
   if (EMPTY_STATE) return delay(null);
-  return delay(mockModules.find((m) => m.id === id) ?? null);
+  const module = mockModules.find((m) => m.id === id);
+  return delay(module ? applyQuizPassMarks(module) : null);
 }
 
 // CONNECT: replace with real API call to GET /api/modules/:id/progress
@@ -177,8 +199,9 @@ export async function submitQuiz(
 
   const right = breakup.reduce((sum, b) => sum + b.right, 0);
   const scorePct = questions.length ? Math.round((right / questions.length) * 100) : 0;
-  // Pass mark is set by the trainer on the quiz; fall back to 70% if unset.
-  const passMarkPct = quiz?.passingPct ?? 70;
+  // Pass mark is set by the trainer on the quiz (draft save persists it here),
+  // then the quiz's own value, then a 70% fallback.
+  const passMarkPct = quizPassMarkStore.get(quizId) ?? quiz?.passingPct ?? 70;
 
   return delay({
     quizId,
@@ -304,6 +327,12 @@ export async function getModuleDraft(id: string): Promise<ModuleDraft | null> {
 // CONNECT: replace with real API call to PUT /api/trainer/modules/:id/draft
 export async function saveModuleDraft(draft: ModuleDraft): Promise<ModuleDraft> {
   draftStore.set(draft.id, draft);
+  // Persist each quiz's pass mark so learner scoring (submitQuiz) uses it.
+  for (const a of draft.activities) {
+    if (a.type === "quiz" && typeof a.passingPct === "number") {
+      quizPassMarkStore.set(a.id, a.passingPct);
+    }
+  }
   return delay(draft);
 }
 
