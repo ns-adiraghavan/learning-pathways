@@ -161,14 +161,52 @@ function HomePage() {
               </p>
             </div>
             <div className="mt-1 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-              <RibbonTile tint="var(--chart-1)" tone="solid" value={done} label="Completed" />
-              <RibbonTile tint="var(--chart-4)" value={xp} label="XP points" />
-              <RibbonTile tint="var(--chart-3)" value={certificates.length} label="Certificates" />
-              <RibbonTile
-                tint="var(--chart-2)"
-                value={summary?.inProgressCount ?? 0}
-                label="In progress"
-              />
+              <Link
+                to="/my-learning"
+                search={{ status: "completed" }}
+                className="block rounded-[var(--radius)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                aria-label={`${done} completed — view completed modules`}
+              >
+                <RibbonTile
+                  tint="var(--chart-1)"
+                  tone="solid"
+                  value={done}
+                  label="Completed"
+                  interactive
+                />
+              </Link>
+              <Link
+                to="/leaderboard"
+                className="block rounded-[var(--radius)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                aria-label={`${xp} XP points — view leaderboard`}
+              >
+                <RibbonTile tint="var(--chart-4)" value={xp} label="XP points" interactive />
+              </Link>
+              <Link
+                to="/certificates"
+                className="block rounded-[var(--radius)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                aria-label={`${certificates.length} certificates — view certificates`}
+              >
+                <RibbonTile
+                  tint="var(--chart-3)"
+                  value={certificates.length}
+                  label="Certificates"
+                  interactive
+                />
+              </Link>
+              <Link
+                to="/my-learning"
+                search={{ status: "in-progress" }}
+                className="block rounded-[var(--radius)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                aria-label={`${summary?.inProgressCount ?? 0} in progress — view in-progress modules`}
+              >
+                <RibbonTile
+                  tint="var(--chart-2)"
+                  value={summary?.inProgressCount ?? 0}
+                  label="In progress"
+                  interactive
+                />
+              </Link>
             </div>
           </div>
 
@@ -459,15 +497,21 @@ function RibbonTile({
   value,
   label,
   tone = "soft",
+  interactive = false,
 }: {
   tint: string;
   value: number;
   label: string;
   tone?: "soft" | "solid";
+  interactive?: boolean;
 }) {
   return (
     <div
-      className={cn("px-4 py-3", tone === "solid" ? "solid-tile" : "soft-tile")}
+      className={cn(
+        "px-4 py-3",
+        tone === "solid" ? "solid-tile" : "soft-tile",
+        interactive && "card-hover cursor-pointer transition-transform",
+      )}
       style={{ ["--tile-tint" as string]: tint }}
     >
       <p className="tnum stat-tile-value text-2xl font-[590] leading-none">
