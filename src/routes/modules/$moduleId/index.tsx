@@ -19,6 +19,7 @@ import type { Activity, ActivityType } from "@/data/types";
 import { activityMeta, formatDate, formatMinutes, moduleMinutes } from "@/lib/format";
 import { downloadText } from "@/lib/csv";
 import { certificateFilename, certificateSvg } from "@/lib/certificate";
+import { isStepLocked } from "@/lib/module-flow";
 import { CategoryBadge, RequiredBadge, StatusDot } from "@/components/lessons/badges";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { Button } from "@/components/ui/button";
@@ -228,9 +229,7 @@ function ModuleDetailPage() {
         <ul className="surface overflow-hidden">
           {module.activities.map((activity, i) => {
             const complete = doneIds.includes(activity.id);
-            const locked =
-              module.orderLocked &&
-              module.activities.slice(0, i).some((a) => a.required && !doneIds.includes(a.id));
+            const locked = isStepLocked(module.activities, i, doneIds, module.orderLocked);
             return (
               <li
                 key={activity.id}
