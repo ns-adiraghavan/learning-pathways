@@ -4,6 +4,7 @@ import {
   BarChart3,
   BookOpen,
   ClipboardList,
+  Compass,
   FileQuestion,
   Home,
   Layers,
@@ -33,6 +34,7 @@ import {
 const learnerItems = [
   { title: "Home", url: "/home", icon: Home },
   { title: "My Learning", url: "/my-learning", icon: BookOpen },
+  { title: "Browse", url: "/browse", icon: Compass },
   { title: "Leaderboard", url: "/leaderboard", icon: Trophy },
   { title: "Certificates", url: "/certificates", icon: Award },
 ] as const;
@@ -65,8 +67,8 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="h-14 justify-center border-b border-sidebar-border px-3">
-        <Link to="/home" className="overflow-hidden" aria-label="NS Lessons by Netscribes">
-          <BrandLockup markOnly={collapsed} size="sm" />
+        <Link to="/home" className="min-w-0" aria-label="NS Lessons by Netscribes">
+          <BrandLockup markOnly={collapsed} compact size="sm" />
         </Link>
       </SidebarHeader>
 
