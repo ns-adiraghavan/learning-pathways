@@ -7,6 +7,8 @@ const mark = "/favicon.png";
 interface BrandLockupProps {
   /** Hide the divider + wordmark (collapsed sidebar). */
   markOnly?: boolean;
+  /** Compact lockup: square mark + "NS Lessons", no wide logo (fits the sidebar). */
+  compact?: boolean;
   size?: "sm" | "md" | "lg" | "xl";
   className?: string;
 }
@@ -22,7 +24,7 @@ const TEXT = {
 const DIV_H = { sm: "h-4", md: "h-5", lg: "h-6", xl: "h-8" } as const;
 
 /** The Netscribes mark + the "NS Lessons" wordmark, read as one unit. */
-export function BrandLockup({ markOnly, size = "md", className }: BrandLockupProps) {
+export function BrandLockup({ markOnly, compact, size = "md", className }: BrandLockupProps) {
   // Collapsed: show the square favicon mark (the wide logo cropped to a strip
   // reads as a sliver). Expanded: the wide wordmark logo + "NS Lessons".
   if (markOnly) {
@@ -33,6 +35,20 @@ export function BrandLockup({ markOnly, size = "md", className }: BrandLockupPro
           alt="NS Lessons"
           className={cn(MARK_SZ[size], "shrink-0 rounded-md object-contain")}
         />
+      </span>
+    );
+  }
+
+  // Compact: square mark + wordmark, no wide logo — fits a narrow sidebar.
+  if (compact) {
+    return (
+      <span className={cn("flex min-w-0 items-center gap-2", className)}>
+        <img
+          src={mark}
+          alt=""
+          className={cn(MARK_SZ[size], "shrink-0 rounded-md object-contain")}
+        />
+        <Wordmark size={size} />
       </span>
     );
   }
