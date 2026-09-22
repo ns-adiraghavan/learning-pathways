@@ -1,7 +1,15 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Award, Download, FileSignature, GraduationCap, Package, Share2 } from "lucide-react";
+import {
+  Award,
+  Download,
+  FileSignature,
+  GraduationCap,
+  Package,
+  Search,
+  Share2,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { getCertificates, getCurrentUser, getPendingActions } from "@/data/repositories";
@@ -13,6 +21,7 @@ import { certificateFilename, certificateSvg } from "@/lib/certificate";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { DoodlePanel } from "@/components/doodle-field";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -49,13 +58,20 @@ function CertificatesPage() {
   });
 
   const signatures = actions.filter((a) => a.kind === "esignature");
-  const list = certs ?? [];
+  const all = certs ?? [];
   const recipientName = currentUser?.name ?? "Netscribes Learner";
+  const [query, setQuery] = useState("");
+  const qq = query.trim().toLowerCase();
+  const list = qq
+    ? all.filter(
+        (c) => c.title.toLowerCase().includes(qq) || c.credentialId.toLowerCase().includes(qq),
+      )
+    : all;
 
   // Earned vs the full set the learner is working toward (signatures still open
   // stand in for credentials not yet earned) — a simple "X of Y" standing.
-  const target = list.length + signatures.length;
-  const earned = list.length;
+  const target = all.length + signatures.length;
+  const earned = all.length;
 
   const downloadOne = (cert: Certificate) => {
     downloadText(certificateFilename(cert), certificateSvg(cert, recipientName), "image/svg+xml");
@@ -118,19 +134,39 @@ function CertificatesPage() {
         )}
       </header>
 
+      {earned > 6 && (
+        <div className="relative mb-4 max-w-sm">
+          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search certificates"
+            aria-label="Search certificates"
+            className="h-9 pl-8"
+          />
+        </div>
+      )}
+
       {isPending ? (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Skeleton className="h-52 rounded-2xl" />
           <Skeleton className="h-52 rounded-2xl" />
           <Skeleton className="h-52 rounded-2xl" />
         </div>
-      ) : list.length === 0 ? (
+      ) : all.length === 0 ? (
         <EmptyState
           icon={Award}
           title="No certificates yet"
           description="Finish a module end to end and its certificate lands here automatically."
         />
+      ) : list.length === 0 ? (
+        <EmptyState
+          icon={Award}
+          title="No matches"
+          description={`No certificate matches “${query}”.`}
+        />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {list.map((c) => (
             <article key={c.id} className="surface card-hover animate-soft-in flex flex-col p-5">
               <div className="mb-3 flex items-start justify-between">
