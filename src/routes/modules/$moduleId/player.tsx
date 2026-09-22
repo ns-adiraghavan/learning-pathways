@@ -6,6 +6,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 import { completeActivity, getModule, getModuleProgress } from "@/data/repositories";
 import { activityMeta } from "@/lib/format";
+import { isStepLocked } from "@/lib/module-flow";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { RequiredBadge } from "@/components/lessons/badges";
 import { VideoActivity } from "@/components/lessons/activities/video-activity";
@@ -19,7 +20,7 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/modules/$moduleId/player")({
   validateSearch: (search: Record<string, unknown>) => ({
-    step: Number(search['step'] ?? 0) || 0,
+    step: Number(search["step"] ?? 0) || 0,
   }),
   head: () => ({
     meta: [
@@ -87,8 +88,7 @@ function PlayerPage() {
   const activities = module.activities;
   const doneIds = progress?.completedActivityIds ?? [];
   const isLocked = (target: number) =>
-    module.orderLocked &&
-    activities.slice(0, target).some((a) => a.required && !doneIds.includes(a.id));
+    isStepLocked(activities, target, doneIds, module.orderLocked);
   const requested = Math.min(Math.max(0, step), activities.length - 1);
   let index = requested;
   while (index > 0 && isLocked(index)) index -= 1;
@@ -180,45 +180,45 @@ function PlayerPage() {
       </ol>
 
       <AnimatePresence mode="wait" initial={false}>
-      <motion.section
-        key={activity.id}
-        className="mt-6"
-        initial={reduce ? false : { opacity: 0, x: 18 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={reduce ? { opacity: 0 } : { opacity: 0, x: -18 }}
-        transition={{ duration: 0.22, ease: [0.22, 0.61, 0.36, 1] }}
-      >
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <h2 className="text-card-title">{activity.name}</h2>
-          {activity.required && <RequiredBadge />}
-          <span className="tnum text-xs text-muted-foreground">{activityMeta(activity)}</span>
-        </div>
+        <motion.section
+          key={activity.id}
+          className="mt-6"
+          initial={reduce ? false : { opacity: 0, x: 18 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={reduce ? { opacity: 0 } : { opacity: 0, x: -18 }}
+          transition={{ duration: 0.22, ease: [0.22, 0.61, 0.36, 1] }}
+        >
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <h2 className="text-card-title">{activity.name}</h2>
+            {activity.required && <RequiredBadge />}
+            <span className="tnum text-xs text-muted-foreground">{activityMeta(activity)}</span>
+          </div>
 
-        {activity.type === "video" && (
-          <VideoActivity
-            activity={activity}
-            onComplete={handleComplete}
-            done={doneIds.includes(activity.id)}
-          />
-        )}
-        {activity.type === "deck" && (
-          <DeckActivity
-            activity={activity}
-            onComplete={handleComplete}
-            done={doneIds.includes(activity.id)}
-          />
-        )}
-        {activity.type === "weblink" && (
-          <WeblinkActivity
-            activity={activity}
-            onComplete={handleComplete}
-            done={doneIds.includes(activity.id)}
-          />
-        )}
-        {activity.type === "quiz" && (
-          <QuizActivity activity={activity} onComplete={handleComplete} />
-        )}
-      </motion.section>
+          {activity.type === "video" && (
+            <VideoActivity
+              activity={activity}
+              onComplete={handleComplete}
+              done={doneIds.includes(activity.id)}
+            />
+          )}
+          {activity.type === "deck" && (
+            <DeckActivity
+              activity={activity}
+              onComplete={handleComplete}
+              done={doneIds.includes(activity.id)}
+            />
+          )}
+          {activity.type === "weblink" && (
+            <WeblinkActivity
+              activity={activity}
+              onComplete={handleComplete}
+              done={doneIds.includes(activity.id)}
+            />
+          )}
+          {activity.type === "quiz" && (
+            <QuizActivity activity={activity} onComplete={handleComplete} />
+          )}
+        </motion.section>
       </AnimatePresence>
 
       {allDone && (
