@@ -20,6 +20,7 @@ export const mandatoryQuizzes: MandatoryQuiz[] = [
     notCompleted: 7,
     completionPct: 71,
     dueDate: "2026-10-15",
+    passMarkPct: 70,
   },
   {
     id: "mq-2",
@@ -34,6 +35,7 @@ export const mandatoryQuizzes: MandatoryQuiz[] = [
     notCompleted: 13,
     completionPct: 46,
     dueDate: "2026-09-30",
+    passMarkPct: 80,
   },
   {
     id: "mq-3",
@@ -48,6 +50,7 @@ export const mandatoryQuizzes: MandatoryQuiz[] = [
     notCompleted: 2,
     completionPct: 92,
     dueDate: "2026-12-31",
+    passMarkPct: 60,
   },
   {
     id: "mq-4",
@@ -62,6 +65,7 @@ export const mandatoryQuizzes: MandatoryQuiz[] = [
     notCompleted: 12,
     completionPct: 33,
     dueDate: "2026-11-20",
+    passMarkPct: 75,
   },
 ];
 
