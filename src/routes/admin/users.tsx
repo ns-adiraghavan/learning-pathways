@@ -7,18 +7,21 @@ import {
   LogIn,
   MoreHorizontal,
   Pencil,
+  RefreshCw,
   Search,
   SlidersHorizontal,
   Send,
+  UserCheck,
   UserPlus,
   Users,
+  UserX,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { downloadCsv, toCsv } from "@/lib/csv";
 import { datedCsvFilename } from "@/components/download-csv-button";
-import { addUser, getUser, getUserProgress, getUsers } from "@/data/repositories";
+import { addUser, getUser, getUserProgress, getUsers, updateUser } from "@/data/repositories";
 import type { AdminRole, AdminUser, UserFilters } from "@/data/types";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { EditUserDrawer } from "@/components/admin/edit-user-drawer";
@@ -140,6 +143,7 @@ function UsersPage() {
   const [selected, setSelected] = useState<string[]>([]);
   const [progressUserId, setProgressUserId] = useState<string | null>(null);
   const [editUser, setEditUser] = useState<AdminUser | null>(null);
+  const [browseAll, setBrowseAll] = useState(false);
 
   // Full unfiltered set — used to build the slicer option lists (facets).
   const { data: allUsers = [] } = useQuery({
@@ -178,6 +182,34 @@ function UsersPage() {
     setSelected([]);
   };
 
+  // With ~700 people, don't dump the whole directory by default — lead with a
+  // team rollup and only render the full list once the admin searches, filters,
+  // or explicitly opts to browse everyone.
+  const hasCriteria = Boolean((filters.q ?? "").trim()) || activeCount > 0;
+  const showTable = hasCriteria || browseAll;
+
+  const teamRollup = useMemo(() => {
+    const map = new Map<
+      string,
+      { team: string; count: number; active: number; assigned: number; complete: number }
+    >();
+    allUsers.forEach((u) => {
+      const cur = map.get(u.team) ?? {
+        team: u.team,
+        count: 0,
+        active: 0,
+        assigned: 0,
+        complete: 0,
+      };
+      cur.count += 1;
+      if (u.userStatus === "active") cur.active += 1;
+      cur.assigned += u.assignedCount;
+      cur.complete += u.completeCount;
+      map.set(u.team, cur);
+    });
+    return Array.from(map.values()).sort((a, b) => b.count - a.count);
+  }, [allUsers]);
+
   const selectedRows = users.filter((u) => selected.includes(u.id));
   const allChecked = users.length > 0 && users.every((u) => selected.includes(u.id));
 
@@ -188,6 +220,14 @@ function UsersPage() {
     }
     downloadCsv(datedCsvFilename(slug), toCsv(EXPORT_HEADERS, list.map(toExportRow)));
     toast.success(`Exported ${list.length} users`);
+  };
+
+  const queryClient = useQueryClient();
+  const setStatus = (u: AdminUser, status: AdminUser["userStatus"]) => {
+    void updateUser(u.id, { userStatus: status }).then(() => {
+      void queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      toast.success(status === "inactive" ? `${u.name} deactivated` : `${u.name} reactivated`);
+    });
   };
 
   const runBulk = (action: "remind" | "unenroll" | "reset") => {
@@ -208,6 +248,16 @@ function UsersPage() {
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() =>
+              toast.success("Sync queued — pulling the latest roster from Coefficient")
+            }
+          >
+            <RefreshCw className="size-4" strokeWidth={1.75} />
+            Sync from Coefficient
+          </Button>
           <ImportUsersDialog />
           <AddUserDialog />
         </div>
@@ -323,6 +373,7 @@ function UsersPage() {
               onClick={() => {
                 setFilters(EMPTY_FILTERS);
                 setSelected([]);
+                setBrowseAll(false);
               }}
               disabled={activeCount === 0 && !filters.q}
             >
@@ -333,7 +384,50 @@ function UsersPage() {
         </section>
       )}
 
-      {isPending ? (
+      {!showTable ? (
+        <section className="grid gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm text-muted-foreground">
+              <span className="tnum font-[590] text-foreground">{allUsers.length}</span> people
+              across {teamRollup.length} teams — search, filter, or open a team to drill in.
+            </p>
+            <Button size="sm" variant="outline" onClick={() => setBrowseAll(true)}>
+              Browse all users
+            </Button>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {teamRollup.map((t) => {
+              const pct = t.assigned ? Math.round((t.complete / t.assigned) * 100) : 0;
+              return (
+                <button
+                  key={t.team}
+                  type="button"
+                  onClick={() => {
+                    setShowFilters(true);
+                    set("team", t.team);
+                  }}
+                  className="surface card-hover p-4 text-left"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="text-card-title truncate">{t.team}</h3>
+                    <span className="tnum shrink-0 text-sm font-[590]">{t.count}</span>
+                  </div>
+                  <p className="tnum mt-0.5 text-xs text-muted-foreground">{t.active} active</p>
+                  <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-secondary">
+                    <div
+                      className="h-1.5 rounded-full bg-primary"
+                      style={{ width: `${Math.max(2, pct)}%` }}
+                    />
+                  </div>
+                  <p className="tnum mt-1.5 text-xs text-muted-foreground">
+                    {pct}% modules complete
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      ) : isPending ? (
         <Skeleton className="h-96 rounded-2xl" />
       ) : users.length === 0 ? (
         <EmptyState
@@ -381,15 +475,14 @@ function UsersPage() {
                       onCheckedChange={(v) => setSelected(v === true ? users.map((u) => u.id) : [])}
                     />
                   </TableHead>
-                  <TableHead>User</TableHead>
+                  <TableHead>User Name</TableHead>
                   <TableHead className="hidden md:table-cell">User ID</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="hidden lg:table-cell">Team</TableHead>
-                  <TableHead className="hidden xl:table-cell">Department</TableHead>
-                  <TableHead className="hidden xl:table-cell">Designation</TableHead>
-                  <TableHead className="hidden 2xl:table-cell">Grade</TableHead>
-                  <TableHead className="hidden 2xl:table-cell">Manager</TableHead>
-                  <TableHead className="text-right">Progress</TableHead>
+                  <TableHead className="hidden lg:table-cell">User Email</TableHead>
+                  <TableHead className="tnum hidden xl:table-cell">Created On</TableHead>
+                  <TableHead className="hidden 2xl:table-cell">Allowed Views</TableHead>
+                  <TableHead>User Status</TableHead>
+                  <TableHead className="tnum hidden xl:table-cell">Mobile Number</TableHead>
+                  <TableHead className="hidden lg:table-cell">Department</TableHead>
                   <TableHead className="w-10" />
                 </TableRow>
               </TableHeader>
@@ -414,16 +507,28 @@ function UsersPage() {
                       <button
                         type="button"
                         onClick={() => setProgressUserId(u.id)}
-                        className="block max-w-[220px] truncate text-left text-sm font-[510] hover:text-primary"
+                        className={cn(
+                          "block max-w-[220px] truncate text-left text-sm font-[510] hover:text-primary",
+                          u.userStatus === "inactive" && "text-muted-foreground line-through",
+                        )}
                       >
                         {u.name}
                       </button>
-                      <span className="block max-w-[220px] truncate text-xs text-muted-foreground">
+                      <span className="block max-w-[220px] truncate text-xs text-muted-foreground lg:hidden">
                         {u.email}
                       </span>
                     </TableCell>
                     <TableCell className="tnum hidden text-sm text-muted-foreground md:table-cell">
                       {u.userId}
+                    </TableCell>
+                    <TableCell className="hidden max-w-[220px] truncate text-sm text-muted-foreground lg:table-cell">
+                      {u.email}
+                    </TableCell>
+                    <TableCell className="tnum hidden text-sm text-muted-foreground xl:table-cell">
+                      {u.createdOn}
+                    </TableCell>
+                    <TableCell className="hidden text-xs text-muted-foreground capitalize 2xl:table-cell">
+                      {u.allowedViews.join(", ")}
                     </TableCell>
                     <TableCell>
                       <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground capitalize">
@@ -440,26 +545,11 @@ function UsersPage() {
                         {u.userStatus}
                       </span>
                     </TableCell>
+                    <TableCell className="tnum hidden text-sm text-muted-foreground xl:table-cell">
+                      {u.mobileNumber}
+                    </TableCell>
                     <TableCell className="hidden text-sm text-muted-foreground lg:table-cell">
-                      {u.team}
-                    </TableCell>
-                    <TableCell className="hidden text-sm text-muted-foreground xl:table-cell">
                       {u.department}
-                    </TableCell>
-                    <TableCell className="hidden text-sm text-muted-foreground xl:table-cell">
-                      {u.designation}
-                    </TableCell>
-                    <TableCell className="tnum hidden text-sm text-muted-foreground 2xl:table-cell">
-                      {u.grade}
-                    </TableCell>
-                    <TableCell className="hidden text-sm text-muted-foreground 2xl:table-cell">
-                      {u.manager}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <span className="tnum text-sm">
-                        {u.completeCount}
-                        <span className="text-muted-foreground">/{u.assignedCount}</span>
-                      </span>
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
@@ -497,6 +587,21 @@ function UsersPage() {
                             <LogIn className="size-4" strokeWidth={1.75} />
                             Login as
                           </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          {u.userStatus === "inactive" ? (
+                            <DropdownMenuItem onSelect={() => setStatus(u, "active")}>
+                              <UserCheck className="size-4" strokeWidth={1.75} />
+                              Reactivate
+                            </DropdownMenuItem>
+                          ) : (
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onSelect={() => setStatus(u, "inactive")}
+                            >
+                              <UserX className="size-4" strokeWidth={1.75} />
+                              Deactivate (left company)
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -506,8 +611,21 @@ function UsersPage() {
             </Table>
           </div>
 
-          <div className="tnum border-t border-border px-3 py-2 text-xs text-muted-foreground">
-            Showing {users.length} of {allUsers.length} users
+          <div className="flex items-center justify-between border-t border-border px-3 py-2">
+            <span className="tnum text-xs text-muted-foreground">
+              Showing {users.length} of {allUsers.length} users
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setFilters(EMPTY_FILTERS);
+                setBrowseAll(false);
+                setSelected([]);
+              }}
+              className="text-xs font-[510] text-primary hover:underline"
+            >
+              Back to team summary
+            </button>
           </div>
         </section>
       )}
