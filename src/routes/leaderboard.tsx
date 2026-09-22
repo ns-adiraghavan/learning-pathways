@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Medal, Trophy, Users } from "lucide-react";
+import { Building2, Medal, Trophy, Users } from "lucide-react";
 
 import { getLeaderboard } from "@/data/repositories";
+import { functionForDivision } from "@/data/org";
 import type { ReportChart } from "@/data/types";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { ReportChartCard } from "@/components/reports/report-charts";
@@ -49,7 +50,7 @@ function LeaderboardPage() {
 
   const [period, setPeriod] = useState<Period>("quarter");
   const [team, setTeam] = useState("all");
-  const [view, setView] = useState<"people" | "teams">("people");
+  const [view, setView] = useState<"people" | "teams" | "functions">("people");
 
   const factor = PERIODS.find((p) => p.value === period)!.factor;
   const teams = useMemo(() => Array.from(new Set(base.map((e) => e.team))).sort(), [base]);
@@ -84,6 +85,32 @@ function LeaderboardPage() {
       .map((t, i) => ({ ...t, rank: i + 1 }));
   }, [scaled]);
 
+  // Roll divisions up to their Function (Sales / Operations / Support).
+  const functionRows = useMemo(() => {
+    const map = new Map<
+      string,
+      { name: string; points: number; members: number; modules: number; divisions: Set<string> }
+    >();
+    scaled.forEach((e) => {
+      const fn = functionForDivision(e.team);
+      const cur = map.get(fn) ?? {
+        name: fn,
+        points: 0,
+        members: 0,
+        modules: 0,
+        divisions: new Set<string>(),
+      };
+      cur.points += e.points;
+      cur.members += 1;
+      cur.modules += e.modulesComplete;
+      cur.divisions.add(e.team);
+      map.set(fn, cur);
+    });
+    return Array.from(map.values())
+      .sort((a, b) => b.points - a.points)
+      .map((t, i) => ({ ...t, divisions: t.divisions.size, rank: i + 1 }));
+  }, [scaled]);
+
   const chart: ReportChart =
     view === "people"
       ? {
@@ -95,11 +122,25 @@ function LeaderboardPage() {
             tint: e.isCurrentUser ? "var(--chart-4)" : "var(--chart-1)",
           })),
         }
-      : {
-          kind: "bar",
-          title: "Points by team",
-          series: teamRows.map((t) => ({ label: t.team, value: t.points, tint: "var(--chart-1)" })),
-        };
+      : view === "functions"
+        ? {
+            kind: "bar",
+            title: "Points by function",
+            series: functionRows.map((t) => ({
+              label: t.name,
+              value: t.points,
+              tint: "var(--chart-1)",
+            })),
+          }
+        : {
+            kind: "bar",
+            title: "Points by team",
+            series: teamRows.map((t) => ({
+              label: t.team,
+              value: t.points,
+              tint: "var(--chart-1)",
+            })),
+          };
 
   const me = people.find((e) => e.isCurrentUser);
 
@@ -116,13 +157,38 @@ function LeaderboardPage() {
           slug={`leaderboard-${view}-${period}`}
           headers={
             view === "people"
-              ? ["Rank", "Name", "Team", "Modules complete", "Points"]
-              : ["Rank", "Team", "Members", "Modules complete", "Points"]
+              ? ["Rank", "Name", "Team", "Function", "Modules complete", "Points"]
+              : view === "functions"
+                ? ["Rank", "Function", "Divisions", "Members", "Modules complete", "Points"]
+                : ["Rank", "Team", "Function", "Members", "Modules complete", "Points"]
           }
           rows={
             view === "people"
-              ? people.map((r) => [r.rank, r.name, r.team, r.modulesComplete, r.points])
-              : teamRows.map((r) => [r.rank, r.team, r.members, r.modules, r.points])
+              ? people.map((r) => [
+                  r.rank,
+                  r.name,
+                  r.team,
+                  functionForDivision(r.team),
+                  r.modulesComplete,
+                  r.points,
+                ])
+              : view === "functions"
+                ? functionRows.map((r) => [
+                    r.rank,
+                    r.name,
+                    r.divisions,
+                    r.members,
+                    r.modules,
+                    r.points,
+                  ])
+                : teamRows.map((r) => [
+                    r.rank,
+                    r.team,
+                    functionForDivision(r.team),
+                    r.members,
+                    r.modules,
+                    r.points,
+                  ])
           }
         />
       </header>
@@ -130,7 +196,7 @@ function LeaderboardPage() {
       {/* Controls */}
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <div className="flex rounded-full bg-secondary p-0.5">
-          {(["people", "teams"] as const).map((v) => (
+          {(["people", "teams", "functions"] as const).map((v) => (
             <button
               key={v}
               type="button"
@@ -144,10 +210,12 @@ function LeaderboardPage() {
             >
               {v === "people" ? (
                 <Trophy className="size-3.5" strokeWidth={1.75} />
+              ) : v === "functions" ? (
+                <Building2 className="size-3.5" strokeWidth={1.75} />
               ) : (
                 <Users className="size-3.5" strokeWidth={1.75} />
               )}
-              {v === "people" ? "Individuals" : "By team"}
+              {v === "people" ? "Individuals" : v === "functions" ? "By function" : "By team"}
             </button>
           ))}
         </div>
@@ -207,57 +275,76 @@ function LeaderboardPage() {
           <ReportChartCard chart={chart} />
 
           <section className="surface overflow-hidden">
-            {view === "people"
-              ? people.map((r) => (
+            {view === "functions"
+              ? functionRows.map((r) => (
                   <div
-                    key={r.userId}
-                    className={cn(
-                      "flex items-center gap-3 border-b border-border px-4 py-3 last:border-0",
-                      r.isCurrentUser && "bg-primary/5",
-                    )}
-                  >
-                    <Rank rank={r.rank} highlight={r.isCurrentUser} />
-                    <div className="min-w-0 flex-1">
-                      <p
-                        className={cn(
-                          "truncate text-sm font-[510]",
-                          r.isCurrentUser && "text-primary",
-                        )}
-                      >
-                        {r.name}
-                        {r.isCurrentUser && (
-                          <span className="ml-2 rounded bg-primary px-1.5 text-[10px] font-[590] text-primary-foreground">
-                            You
-                          </span>
-                        )}
-                      </p>
-                      <p className="truncate text-xs text-muted-foreground">{r.team}</p>
-                    </div>
-                    <span className="tnum hidden text-xs text-muted-foreground sm:block">
-                      {r.modulesComplete} modules
-                    </span>
-                    <span className="tnum w-16 text-right text-sm font-[590]">
-                      {r.points.toLocaleString("en-IN")}
-                    </span>
-                  </div>
-                ))
-              : teamRows.map((r) => (
-                  <div
-                    key={r.team}
+                    key={r.name}
                     className="flex items-center gap-3 border-b border-border px-4 py-3 last:border-0"
                   >
                     <Rank rank={r.rank} />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-[510]">{r.team}</p>
+                      <p className="truncate text-sm font-[510]">{r.name}</p>
                       <p className="tnum truncate text-xs text-muted-foreground">
-                        {r.members} member{r.members === 1 ? "" : "s"} · {r.modules} modules
+                        {r.divisions} division{r.divisions === 1 ? "" : "s"} · {r.members} member
+                        {r.members === 1 ? "" : "s"} · {r.modules} modules
                       </p>
                     </div>
                     <span className="tnum w-20 text-right text-sm font-[590]">
                       {r.points.toLocaleString("en-IN")}
                     </span>
                   </div>
-                ))}
+                ))
+              : view === "people"
+                ? people.map((r) => (
+                    <div
+                      key={r.userId}
+                      className={cn(
+                        "flex items-center gap-3 border-b border-border px-4 py-3 last:border-0",
+                        r.isCurrentUser && "bg-primary/5",
+                      )}
+                    >
+                      <Rank rank={r.rank} highlight={r.isCurrentUser} />
+                      <div className="min-w-0 flex-1">
+                        <p
+                          className={cn(
+                            "truncate text-sm font-[510]",
+                            r.isCurrentUser && "text-primary",
+                          )}
+                        >
+                          {r.name}
+                          {r.isCurrentUser && (
+                            <span className="ml-2 rounded bg-primary px-1.5 text-[10px] font-[590] text-primary-foreground">
+                              You
+                            </span>
+                          )}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground">{r.team}</p>
+                      </div>
+                      <span className="tnum hidden text-xs text-muted-foreground sm:block">
+                        {r.modulesComplete} modules
+                      </span>
+                      <span className="tnum w-16 text-right text-sm font-[590]">
+                        {r.points.toLocaleString("en-IN")}
+                      </span>
+                    </div>
+                  ))
+                : teamRows.map((r) => (
+                    <div
+                      key={r.team}
+                      className="flex items-center gap-3 border-b border-border px-4 py-3 last:border-0"
+                    >
+                      <Rank rank={r.rank} />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-[510]">{r.team}</p>
+                        <p className="tnum truncate text-xs text-muted-foreground">
+                          {r.members} member{r.members === 1 ? "" : "s"} · {r.modules} modules
+                        </p>
+                      </div>
+                      <span className="tnum w-20 text-right text-sm font-[590]">
+                        {r.points.toLocaleString("en-IN")}
+                      </span>
+                    </div>
+                  ))}
           </section>
         </div>
       )}
