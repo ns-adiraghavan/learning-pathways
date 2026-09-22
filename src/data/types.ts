@@ -70,6 +70,8 @@ export interface QuizActivity {
   mandatory: boolean;
   timeLimitMins: number;
   shuffle: boolean;
+  /** Trainer-set pass mark (% of questions correct). Defaults to 70 if unset. */
+  passingPct?: number;
 }
 
 export type Activity = VideoActivity | DeckActivity | WeblinkActivity | QuizActivity;
@@ -83,6 +85,8 @@ export interface LearningModule {
   /** Where this module sits in the Program → Skill → Module taxonomy. */
   programTitle: string;
   skillTitle: string;
+  /** How many learners are enrolled (org-wide) — shown on cards/search. */
+  enrolledCount: number;
   dueDate: string; // ISO date
   status: ModuleStatus;
   progressPct: number;
@@ -255,6 +259,8 @@ export type EnrolledStatus = "not-started" | "in-progress" | "complete";
 
 export interface EnrolledLearner {
   id: string;
+  /** Human-facing employee id (matches the admin directory). */
+  userId: string;
   name: string;
   email: string;
   team: string;
@@ -262,6 +268,15 @@ export interface EnrolledLearner {
   progressPct: number;
   dueDate: string;
   lastActivity: string;
+  /** Org attributes so the trainer's Audience search mirrors the admin directory. */
+  designation: string;
+  department: string;
+  location: string;
+  employeeType: EmployeeType;
+  functionArea: string;
+  grade: string;
+  manager: string;
+  joiningDate: string;
 }
 
 export interface ModuleAnalytics {
@@ -405,6 +420,7 @@ export interface AssignableModule {
   id: string;
   title: string;
   programTitle: string;
+  skillTitle: string;
   assignedCount: number;
 }
 
@@ -549,6 +565,8 @@ export interface MandatoryQuiz {
   notCompleted: number;
   completionPct: number;
   dueDate: string;
+  /** Pass mark (% correct) the trainer set on this quiz. */
+  passMarkPct: number;
 }
 
 export interface QuizCompletionRow {
