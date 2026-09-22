@@ -1,16 +1,47 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { CheckCircle2, FileText, Film, Link2, ListChecks, Lock, SearchX } from "lucide-react";
+import {
+  Award,
+  CheckCircle2,
+  Download,
+  FileText,
+  Film,
+  Link2,
+  ListChecks,
+  Lock,
+  SearchX,
+} from "lucide-react";
+import { toast } from "sonner";
 
-import { getModule, getModuleProgress } from "@/data/repositories";
-import type { Activity } from "@/data/types";
+import { getCertificates, getCurrentUser, getModule, getModuleProgress } from "@/data/repositories";
+import type { Activity, ActivityType } from "@/data/types";
 import { activityMeta, formatDate, formatMinutes, moduleMinutes } from "@/lib/format";
+import { downloadText } from "@/lib/csv";
+import { certificateFilename, certificateSvg } from "@/lib/certificate";
 import { CategoryBadge, RequiredBadge, StatusDot } from "@/components/lessons/badges";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+
+const TYPE_LABEL: Record<ActivityType, [string, string]> = {
+  video: ["video", "videos"],
+  deck: ["deck", "decks"],
+  weblink: ["link", "links"],
+  quiz: ["quiz", "quizzes"],
+};
+
+function componentsSummary(activities: Activity[]): string {
+  const counts = activities.reduce<Record<string, number>>((acc, a) => {
+    acc[a.type] = (acc[a.type] ?? 0) + 1;
+    return acc;
+  }, {});
+  return (["video", "deck", "weblink", "quiz"] as ActivityType[])
+    .filter((t) => counts[t])
+    .map((t) => `${counts[t]} ${TYPE_LABEL[t][counts[t] === 1 ? 0 : 1]}`)
+    .join(" · ");
+}
 
 export const Route = createFileRoute("/modules/$moduleId/")({
   head: () => ({
@@ -43,6 +74,14 @@ function ModuleDetailPage() {
     queryKey: ["module-progress", moduleId],
     queryFn: () => getModuleProgress(moduleId),
   });
+  const { data: certificates = [] } = useQuery({
+    queryKey: ["certificates"],
+    queryFn: getCertificates,
+  });
+  const { data: currentUser } = useQuery({
+    queryKey: ["current-user"],
+    queryFn: getCurrentUser,
+  });
 
   if (isPending) {
     return (
@@ -72,6 +111,18 @@ function ModuleDetailPage() {
   const pct = progress?.progressPct ?? module.progressPct;
   const doneIds = progress?.completedActivityIds ?? [];
   const long = module.description.length > 180;
+  const complete = module.status === "complete" || pct >= 100;
+  const certificate = certificates.find((c) => c.moduleId === module.id);
+
+  const downloadCertificate = () => {
+    if (!certificate) return;
+    downloadText(
+      certificateFilename(certificate),
+      certificateSvg(certificate, currentUser?.name ?? "Netscribes Learner"),
+      "image/svg+xml",
+    );
+    toast.success("Certificate downloaded");
+  };
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6">
@@ -117,6 +168,27 @@ function ModuleDetailPage() {
         />
         <span className="tnum text-sm text-muted-foreground">{pct}%</span>
       </div>
+
+      <p className="tnum mt-2 text-xs text-muted-foreground">
+        {componentsSummary(module.activities)} · {formatMinutes(moduleMinutes(module.activities))}{" "}
+        total
+      </p>
+
+      {complete && certificate && (
+        <div className="sky-panel mt-5 flex flex-wrap items-center gap-3 p-4">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-status-complete/10 text-status-complete">
+            <Award className="size-5" strokeWidth={1.75} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-[510]">Certificate earned</p>
+            <p className="tnum text-xs text-muted-foreground">{certificate.credentialId}</p>
+          </div>
+          <Button size="sm" onClick={downloadCertificate}>
+            <Download className="size-4" strokeWidth={1.75} />
+            Download certificate
+          </Button>
+        </div>
+      )}
 
       <section className="mt-6">
         <h2 className="text-label mb-1.5 text-muted-foreground">About</h2>
