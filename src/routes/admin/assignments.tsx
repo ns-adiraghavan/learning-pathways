@@ -1,14 +1,10 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ClipboardList, Plus, Trash2 } from "lucide-react";
+import { Check, ClipboardList, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import {
-  getAssignableModules,
-  getModuleAssignments,
-  updateAssignment,
-} from "@/data/repositories";
+import { getAssignableModules, getModuleAssignments, updateAssignment } from "@/data/repositories";
 import type { ModuleAssignment } from "@/data/types";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { DownloadCsvButton } from "@/components/download-csv-button";
@@ -55,6 +51,7 @@ export const Route = createFileRoute("/admin/assignments")({
 
 function AssignmentsPage() {
   const [moduleId, setModuleId] = useState<string | null>(null);
+  const [moduleQuery, setModuleQuery] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
   const [newName, setNewName] = useState("");
   const [newKind, setNewKind] = useState<"user" | "team">("user");
@@ -65,6 +62,20 @@ function AssignmentsPage() {
     queryKey: ["assignable-modules"],
     queryFn: getAssignableModules,
   });
+
+  const selectedModule = modules.find((m) => m.id === moduleId) ?? null;
+
+  // Search across module title, program and skill.
+  const matches = useMemo(() => {
+    const q = moduleQuery.trim().toLowerCase();
+    if (!q) return modules;
+    return modules.filter(
+      (m) =>
+        m.title.toLowerCase().includes(q) ||
+        m.programTitle.toLowerCase().includes(q) ||
+        m.skillTitle.toLowerCase().includes(q),
+    );
+  }, [modules, moduleQuery]);
   const { data: assignments = [], isPending } = useQuery({
     queryKey: ["module-assignments", moduleId],
     queryFn: () => getModuleAssignments(moduleId!),
@@ -108,27 +119,23 @@ function AssignmentsPage() {
         </p>
       </header>
 
-      <div className="surface mb-4 grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-        <div className="grid gap-1.5">
-          <Label htmlFor="module">Module</Label>
-          {modulesPending ? (
-            <Skeleton className="h-9 rounded-md" />
-          ) : (
-            <Select {...(moduleId ? { value: moduleId } : {})} onValueChange={setModuleId}>
-              <SelectTrigger id="module" className="w-full">
-                <SelectValue placeholder="Choose a module" />
-              </SelectTrigger>
-              <SelectContent>
-                {modules.map((m) => (
-                  <SelectItem key={m.id} value={m.id}>
-                    {m.title} · {m.programTitle}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </div>
-          <div className="flex items-center justify-end gap-3">
+      <div className="surface mb-4 grid gap-3 p-4">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <Label htmlFor="module-search">Module</Label>
+            <div className="relative mt-1.5">
+              <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                id="module-search"
+                value={moduleQuery}
+                onChange={(e) => setModuleQuery(e.target.value)}
+                placeholder="Search by program, skill or module"
+                className="h-9 pl-8"
+                aria-label="Search modules by program, skill or module"
+              />
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
             <p className="tnum text-sm text-muted-foreground">
               {moduleId ? `${assignments.length} assignment rows` : "No module selected"}
             </p>
@@ -136,9 +143,76 @@ function AssignmentsPage() {
               slug="admin-assignments"
               disabled={!moduleId}
               headers={["Type", "Assignee", "Detail", "People", "Status", "Progress %", "Due date"]}
-              rows={assignments.map((row) => [row.kind, row.name, row.detail, row.headcount, row.status, row.progressPct, row.dueDate])}
+              rows={assignments.map((row) => [
+                row.kind,
+                row.name,
+                row.detail,
+                row.headcount,
+                row.status,
+                row.progressPct,
+                row.dueDate,
+              ])}
             />
           </div>
+        </div>
+
+        {modulesPending ? (
+          <Skeleton className="h-32 rounded-md" />
+        ) : (
+          <div className="max-h-64 overflow-y-auto rounded-lg border border-border">
+            {matches.length === 0 ? (
+              <p className="px-3 py-6 text-center text-sm text-muted-foreground">
+                No modules match “{moduleQuery}”.
+              </p>
+            ) : (
+              <ul className="divide-y divide-border">
+                {matches.map((m) => {
+                  const active = m.id === moduleId;
+                  return (
+                    <li key={m.id}>
+                      <button
+                        type="button"
+                        onClick={() => setModuleId(m.id)}
+                        className={cn(
+                          "flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors",
+                          active ? "bg-primary/5" : "hover:bg-accent",
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "flex size-4 shrink-0 items-center justify-center rounded-full border",
+                            active
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-border",
+                          )}
+                        >
+                          {active && <Check className="size-3" strokeWidth={2.5} />}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-[510]">{m.title}</span>
+                          <span className="block truncate text-xs text-muted-foreground">
+                            {m.programTitle} › {m.skillTitle}
+                          </span>
+                        </span>
+                        <span className="tnum shrink-0 text-xs text-muted-foreground">
+                          {m.assignedCount} assigned
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        )}
+
+        {selectedModule && (
+          <p className="text-xs text-muted-foreground">
+            Editing assignments for{" "}
+            <span className="font-[510] text-foreground">{selectedModule.title}</span> ·{" "}
+            {selectedModule.programTitle} › {selectedModule.skillTitle}
+          </p>
+        )}
       </div>
 
       {!moduleId ? (
@@ -170,7 +244,7 @@ function AssignmentsPage() {
                 id="assignee"
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
-                placeholder={newKind === "team" ? "e.g. Data Solutions" : "e.g. Meera Joshi"}
+                placeholder={newKind === "team" ? "e.g. Data Tech" : "e.g. Meera Joshi"}
               />
             </div>
             <div className="grid gap-1.5">
