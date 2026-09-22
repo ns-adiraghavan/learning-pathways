@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 
 const logoLight = "/netscribes-logo.png";
 const logoDark = "/netscribes-logo-white.png";
+const mark = "/favicon.png";
 
 interface BrandLockupProps {
   /** Hide the divider + wordmark (collapsed sidebar). */
@@ -11,6 +12,7 @@ interface BrandLockupProps {
 }
 
 const LOGO_H = { sm: "h-4", md: "h-5", lg: "h-6", xl: "h-7" } as const;
+const MARK_SZ = { sm: "size-6", md: "size-7", lg: "size-8", xl: "size-9" } as const;
 const TEXT = {
   sm: "text-[17px]",
   md: "text-[20px]",
@@ -21,6 +23,20 @@ const DIV_H = { sm: "h-4", md: "h-5", lg: "h-6", xl: "h-8" } as const;
 
 /** The Netscribes mark + the "NS Lessons" wordmark, read as one unit. */
 export function BrandLockup({ markOnly, size = "md", className }: BrandLockupProps) {
+  // Collapsed: show the square favicon mark (the wide logo cropped to a strip
+  // reads as a sliver). Expanded: the wide wordmark logo + "NS Lessons".
+  if (markOnly) {
+    return (
+      <span className={cn("flex items-center justify-center", className)}>
+        <img
+          src={mark}
+          alt="NS Lessons"
+          className={cn(MARK_SZ[size], "shrink-0 rounded-md object-contain")}
+        />
+      </span>
+    );
+  }
+
   return (
     <span className={cn("flex min-w-0 items-center gap-2.5", className)}>
       <img
@@ -33,12 +49,8 @@ export function BrandLockup({ markOnly, size = "md", className }: BrandLockupPro
         alt="Netscribes"
         className={cn("hidden w-auto shrink-0 dark:block", LOGO_H[size])}
       />
-      {!markOnly && (
-        <>
-          <span aria-hidden className={cn("w-px shrink-0 bg-border", DIV_H[size])} />
-          <Wordmark size={size} />
-        </>
-      )}
+      <span aria-hidden className={cn("w-px shrink-0 bg-border", DIV_H[size])} />
+      <Wordmark size={size} />
     </span>
   );
 }
@@ -59,8 +71,7 @@ export function Wordmark({
         className,
       )}
     >
-      <span className="text-primary">NS</span>{" "}
-      <span className="text-brand-blue">Lessons</span>
+      <span className="text-primary">NS</span> <span className="text-brand-blue">Lessons</span>
     </span>
   );
 }
