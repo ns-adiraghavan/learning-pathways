@@ -505,9 +505,8 @@ function ResumeCard({ module }: { module: LearningModule }) {
           <Clock className="size-3.5 text-muted-foreground" strokeWidth={1.75} />~{left} min left
         </span>
         <Link
-          to="/modules/$moduleId/player"
+          to="/modules/$moduleId"
           params={{ moduleId: module.id }}
-          search={{ step: 0 }}
           className="inline-flex items-center gap-1.5 rounded-[10px] bg-primary px-4 py-2 text-sm font-[510] text-primary-foreground shadow-sm transition-colors hover:bg-[var(--brand-blue)] active:translate-y-px"
         >
           Resume <Play className="size-4" strokeWidth={2} />
@@ -581,9 +580,8 @@ function ContinueCard({ module }: { module: LearningModule }) {
           {formatMinutes(moduleMinutes(module.activities))}
         </span>
         <Link
-          to="/modules/$moduleId/player"
+          to="/modules/$moduleId"
           params={{ moduleId: module.id }}
-          search={{ step: 0 }}
           className="inline-flex items-center gap-1 rounded-full border border-[color:var(--brand-blue-soft)] bg-secondary px-4 py-1.5 text-sm font-[510] text-primary transition-colors hover:bg-accent"
         >
           {started ? "Continue" : "Start"} <ChevronRight className="size-4" strokeWidth={1.75} />
