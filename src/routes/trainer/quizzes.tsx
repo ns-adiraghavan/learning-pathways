@@ -388,6 +388,7 @@ function QuizBuilderPage() {
                       <TableHead>Learner</TableHead>
                       <TableHead className="hidden sm:table-cell">Team</TableHead>
                       <TableHead className="text-right">Score</TableHead>
+                      <TableHead className="text-right">Result</TableHead>
                       <TableHead className="text-right">Time taken</TableHead>
                       <TableHead className="text-right">Attempts</TableHead>
                       <TableHead className="text-right">Flag</TableHead>
@@ -407,6 +408,18 @@ function QuizBuilderPage() {
                           )}
                         >
                           {r.scorePct}%
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <span
+                            className={cn(
+                              "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-[590]",
+                              r.passed
+                                ? "bg-status-complete/12 text-status-complete"
+                                : "bg-status-overdue/12 text-status-overdue",
+                            )}
+                          >
+                            {r.passed ? "Pass" : "Fail"}
+                          </span>
                         </TableCell>
                         <TableCell className="tnum text-right text-sm">
                           {r.timeTakenMins} min
