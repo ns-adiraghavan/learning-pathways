@@ -86,6 +86,9 @@ export function QuizActivity({
             <Timer className="size-3.5" strokeWidth={1.75} />
             {activity.timeLimitMins} min
           </span>
+          <span className="chip-blue rounded-full px-2.5 py-1">
+            Pass mark {activity.passingPct ?? 70}%
+          </span>
           {activity.mandatory && (
             <span className="rounded-full bg-status-mandatory/10 px-2.5 py-1 text-status-mandatory">
               Compliance-tracked
