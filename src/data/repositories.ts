@@ -38,6 +38,7 @@ import {
   users as mockUsers,
 } from "./admin-mocks";
 import { completionFor, mandatoryQuizzes as mockMandatoryQuizzes } from "./compliance-mocks";
+import { functionForDivision } from "./org";
 import type {
   Certificate,
   DifficultyBreakup,
@@ -176,7 +177,8 @@ export async function submitQuiz(
 
   const right = breakup.reduce((sum, b) => sum + b.right, 0);
   const scorePct = questions.length ? Math.round((right / questions.length) * 100) : 0;
-  const passMarkPct = 70;
+  // Pass mark is set by the trainer on the quiz; fall back to 70% if unset.
+  const passMarkPct = quiz?.passingPct ?? 70;
 
   return delay({
     quizId,
@@ -467,7 +469,7 @@ export async function addUser(input: {
     role: input.role,
     designation: input.designation ?? "Analyst",
     employeeType: input.employeeType ?? "full-time",
-    functionArea: input.functionArea ?? "Delivery",
+    functionArea: input.functionArea ?? functionForDivision(input.team),
     grade: input.grade ?? "G1",
     manager: input.manager ?? "—",
     joiningDate: new Date().toISOString().slice(0, 10),
