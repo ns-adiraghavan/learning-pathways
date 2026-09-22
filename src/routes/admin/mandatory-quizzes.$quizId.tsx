@@ -5,7 +5,9 @@ import { ArrowLeft, BellRing, Check, Download, ShieldCheck } from "lucide-react"
 import { toast } from "sonner";
 
 import { getMandatoryQuizzes, getQuizCompletion, sendQuizReminder } from "@/data/repositories";
-import type { QuizCompletionRow } from "@/data/types";
+import { certificateSvg } from "@/lib/certificate";
+import { createZip, downloadBlob } from "@/lib/zip";
+import type { Certificate, QuizCompletionRow } from "@/data/types";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { ProgressRing } from "@/components/lessons/progress-ring";
 import { useCountUp } from "@/components/lessons/count-up";
@@ -89,8 +91,7 @@ function QuizCompliancePage() {
     () =>
       rows.filter(
         (row) =>
-          (filter === "all" || row.status === filter) &&
-          (team === "all" || row.team === team),
+          (filter === "all" || row.status === filter) && (team === "all" || row.team === team),
       ),
     [rows, filter, team],
   );
@@ -126,6 +127,28 @@ function QuizCompliancePage() {
     downloadCsv(`mandatory-quiz-${slugify(name)}-completion${suffix}.csv`, csv);
   }
 
+  function downloadCertificates() {
+    if (completed.length === 0) return;
+    const today = new Date().toISOString().slice(0, 10);
+    const zip = createZip(
+      completed.map((r) => {
+        const cert: Certificate = {
+          id: r.learnerId,
+          moduleId: "",
+          title: name,
+          issuedOn: r.completedOn ?? today,
+          credentialId: `NS-MQ-${r.learnerId.toUpperCase()}`,
+        };
+        return {
+          name: `certificate-${slugify(r.name)}.svg`,
+          content: certificateSvg(cert, r.name),
+        };
+      }),
+    );
+    downloadBlob(`certificates-${slugify(name)}-${today}.zip`, zip);
+    toast.success(`Downloaded ${completed.length} certificates`);
+  }
+
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
       <Link
@@ -141,7 +164,9 @@ function QuizCompliancePage() {
         <div className="min-w-0 flex-1">
           <h1 className="text-title truncate">{name}</h1>
           <p className="mt-1 truncate text-sm text-muted-foreground">
-            {quiz ? `${quiz.moduleTitle} · ${quiz.programTitle} · ${quiz.skillTitle}` : "Compliance-tracked quiz"}
+            {quiz
+              ? `${quiz.moduleTitle} · ${quiz.programTitle} · ${quiz.skillTitle}`
+              : "Compliance-tracked quiz"}
           </p>
           {quiz && (
             <p className="tnum mt-0.5 text-xs text-muted-foreground">
@@ -171,8 +196,26 @@ function QuizCompliancePage() {
         <div className="flex flex-wrap items-center gap-2">
           <DownloadCsvButton
             slug={`mandatory-quiz-${slugify(name)}-visible`}
-            headers={["Name", "Email", "Team", "Status", "Completed on", "Score %", "Attempts", "Last reminded"]}
-            rows={visible.map((row) => [row.name, row.email, row.team, row.status, row.completedOn, row.scorePct, row.attempts, row.lastRemindedOn])}
+            headers={[
+              "Name",
+              "Email",
+              "Team",
+              "Status",
+              "Completed on",
+              "Score %",
+              "Attempts",
+              "Last reminded",
+            ]}
+            rows={visible.map((row) => [
+              row.name,
+              row.email,
+              row.team,
+              row.status,
+              row.completedOn,
+              row.scorePct,
+              row.attempts,
+              row.lastRemindedOn,
+            ])}
           />
           <div className="inline-flex rounded-md border border-border p-0.5">
             {FILTERS.map((f) => (
@@ -224,6 +267,15 @@ function QuizCompliancePage() {
           >
             <Download className="size-4" strokeWidth={1.75} />
             Download all
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={completed.length === 0}
+            onClick={downloadCertificates}
+          >
+            <Download className="size-4" strokeWidth={1.75} />
+            Certificates ({completed.length})
           </Button>
           <Button
             variant="outline"
@@ -292,9 +344,7 @@ function QuizCompliancePage() {
                       <span
                         className={cn(
                           "size-1.5 rounded-full",
-                          r.status === "completed"
-                            ? "bg-status-complete"
-                            : "bg-status-overdue",
+                          r.status === "completed" ? "bg-status-complete" : "bg-status-overdue",
                         )}
                       />
                       {r.status === "completed" ? "Completed" : "Not completed"}
