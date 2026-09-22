@@ -13,6 +13,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as CertificatesRouteImport } from './routes/certificates'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
+import { Route as BrowseRouteImport } from './routes/browse'
+import { Route as SearchRouteImport } from './routes/search'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MyLearningRouteImport } from './routes/my-learning'
 import { Route as ProgressRouteImport } from './routes/progress'
@@ -50,6 +52,16 @@ const HomeRoute = HomeRouteImport.update({
 const LeaderboardRoute = LeaderboardRouteImport.update({
   id: '/leaderboard',
   path: '/leaderboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BrowseRoute = BrowseRouteImport.update({
+  id: '/browse',
+  path: '/browse',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -151,6 +163,8 @@ export interface FileRoutesByFullPath {
   '/certificates': typeof CertificatesRoute
   '/home': typeof HomeRoute
   '/leaderboard': typeof LeaderboardRoute
+  '/browse': typeof BrowseRoute
+  '/search': typeof SearchRoute
   '/login': typeof LoginRoute
   '/my-learning': typeof MyLearningRoute
   '/progress': typeof ProgressRoute
@@ -175,6 +189,8 @@ export interface FileRoutesByTo {
   '/certificates': typeof CertificatesRoute
   '/home': typeof HomeRoute
   '/leaderboard': typeof LeaderboardRoute
+  '/browse': typeof BrowseRoute
+  '/search': typeof SearchRoute
   '/login': typeof LoginRoute
   '/my-learning': typeof MyLearningRoute
   '/progress': typeof ProgressRoute
@@ -200,6 +216,8 @@ export interface FileRoutesById {
   '/certificates': typeof CertificatesRoute
   '/home': typeof HomeRoute
   '/leaderboard': typeof LeaderboardRoute
+  '/browse': typeof BrowseRoute
+  '/search': typeof SearchRoute
   '/login': typeof LoginRoute
   '/my-learning': typeof MyLearningRoute
   '/progress': typeof ProgressRoute
@@ -226,6 +244,8 @@ export interface FileRouteTypes {
     | '/certificates'
     | '/home'
     | '/leaderboard'
+    | '/browse'
+    | '/search'
     | '/login'
     | '/my-learning'
     | '/progress'
@@ -250,6 +270,8 @@ export interface FileRouteTypes {
     | '/certificates'
     | '/home'
     | '/leaderboard'
+    | '/browse'
+    | '/search'
     | '/login'
     | '/my-learning'
     | '/progress'
@@ -274,6 +296,8 @@ export interface FileRouteTypes {
     | '/certificates'
     | '/home'
     | '/leaderboard'
+    | '/browse'
+    | '/search'
     | '/login'
     | '/my-learning'
     | '/progress'
@@ -299,6 +323,8 @@ export interface RootRouteChildren {
   CertificatesRoute: typeof CertificatesRoute
   HomeRoute: typeof HomeRoute
   LeaderboardRoute: typeof LeaderboardRoute
+  BrowseRoute: typeof BrowseRoute
+  SearchRoute: typeof SearchRoute
   LoginRoute: typeof LoginRoute
   MyLearningRoute: typeof MyLearningRoute
   ProgressRoute: typeof ProgressRoute
@@ -347,6 +373,20 @@ declare module '@tanstack/react-router' {
       path: '/leaderboard'
       fullPath: '/leaderboard'
       preLoaderRoute: typeof LeaderboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/browse': {
+      id: '/browse'
+      path: '/browse'
+      fullPath: '/browse'
+      preLoaderRoute: typeof BrowseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -483,6 +523,8 @@ const rootRouteChildren: RootRouteChildren = {
   CertificatesRoute: CertificatesRoute,
   HomeRoute: HomeRoute,
   LeaderboardRoute: LeaderboardRoute,
+  BrowseRoute: BrowseRoute,
+  SearchRoute: SearchRoute,
   LoginRoute: LoginRoute,
   MyLearningRoute: MyLearningRoute,
   ProgressRoute: ProgressRoute,
