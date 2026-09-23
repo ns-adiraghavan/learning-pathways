@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { type ReactNode, useMemo, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronRight, Layers, Plus, Search } from "lucide-react";
+import { toast } from "sonner";
 
-import { getPrograms } from "@/data/repositories";
+import { createProgram, getPrograms } from "@/data/repositories";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { StatTile } from "@/components/lessons/count-up";
 import { StateBadge } from "@/components/trainer/state-badge";
@@ -12,6 +13,18 @@ import { StateFilterPills, type StateFilterValue } from "@/components/trainer/st
 import { SearchBox } from "@/components/ui/search-box";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 const PROGRAM_TINTS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-4)"] as const;
 
@@ -69,10 +82,14 @@ function ProgramsPage() {
             Program → Skill → Module. Start here to author content.
           </p>
         </div>
-        <Button size="sm" className="shrink-0">
-          <Plus className="size-4" strokeWidth={2} />
-          New program
-        </Button>
+        <NewProgramDialog
+          trigger={
+            <Button size="sm" className="shrink-0">
+              <Plus className="size-4" strokeWidth={2} />
+              New program
+            </Button>
+          }
+        />
       </header>
 
       {!isPending && programs.length > 0 && (
@@ -111,7 +128,7 @@ function ProgramsPage() {
           icon={Layers}
           title="No programs yet"
           description="Create a program to group skills and their yearly modules."
-          action={<Button size="sm">Create program</Button>}
+          action={<NewProgramDialog trigger={<Button size="sm">Create program</Button>} />}
         />
       ) : filtered.length === 0 ? (
         <EmptyState
@@ -160,5 +177,81 @@ function ProgramsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+function NewProgramDialog({ trigger }: { trigger: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [owner, setOwner] = useState("");
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: () =>
+      createProgram({ title: title.trim(), description: description.trim(), owner: owner.trim() }),
+    onSuccess: (program) => {
+      toast.success("Program created — add its first skill");
+      setOpen(false);
+      setTitle("");
+      setDescription("");
+      setOwner("");
+      void queryClient.invalidateQueries({ queryKey: ["programs"] });
+      void navigate({ to: "/trainer/programs/$programId", params: { programId: program.id } });
+    },
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>New program</DialogTitle>
+          <DialogDescription>
+            A program groups related skills and their yearly modules. It starts as a draft.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-3">
+          <div className="grid gap-1.5">
+            <Label htmlFor="np-title">Program title</Label>
+            <Input
+              id="np-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Leadership Track"
+              autoFocus
+            />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="np-desc">Description</Label>
+            <Textarea
+              id="np-desc"
+              rows={3}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="What this program covers and who it's for."
+            />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="np-owner">Owner (optional)</Label>
+            <Input
+              id="np-owner"
+              value={owner}
+              onChange={(e) => setOwner(e.target.value)}
+              placeholder="Program owner"
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button disabled={!title.trim() || mutation.isPending} onClick={() => mutation.mutate()}>
+            Create program
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
