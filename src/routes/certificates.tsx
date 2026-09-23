@@ -1,15 +1,7 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Award,
-  Download,
-  FileSignature,
-  GraduationCap,
-  Package,
-  Search,
-  Share2,
-} from "lucide-react";
+import { Award, Download, FileSignature, GraduationCap, Package, Share2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { getCertificates, getCurrentUser, getPendingActions } from "@/data/repositories";
@@ -21,7 +13,7 @@ import { certificateFilename, certificateSvg } from "@/lib/certificate";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { DoodlePanel } from "@/components/doodle-field";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { SearchBox } from "@/components/ui/search-box";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -135,16 +127,12 @@ function CertificatesPage() {
       </header>
 
       {earned > 6 && (
-        <div className="relative mb-4 max-w-sm">
-          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search certificates"
-            aria-label="Search certificates"
-            className="h-9 pl-8"
-          />
-        </div>
+        <SearchBox
+          value={query}
+          onChange={setQuery}
+          placeholder="Search certificates"
+          className="mb-4 max-w-sm"
+        />
       )}
 
       {isPending ? (
