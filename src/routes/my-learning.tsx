@@ -1,14 +1,21 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, ChevronRight, Search } from "lucide-react";
+import { BookOpen, ChevronRight } from "lucide-react";
 
 import { getAssignedModules } from "@/data/repositories";
 import type { Activity, ActivityType, LearningModule, ModuleCategory } from "@/data/types";
 import { CATEGORY_LABEL, formatDate, formatMinutes, moduleMinutes } from "@/lib/format";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { PageFade, ShimmerBlock } from "@/components/motion/motion";
-import { Input } from "@/components/ui/input";
+import { SearchBox } from "@/components/ui/search-box";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 const STATUS_VALUES = ["all", "in-progress", "overdue", "completed", "not-started"] as const;
@@ -219,29 +226,20 @@ function MyLearningPage() {
           ))}
         </div>
         <div className="flex gap-2 sm:ml-auto">
-          <div className="relative">
-            <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search modules"
-              className="h-9 w-44 pl-8"
-              aria-label="Search modules"
-            />
-          </div>
-          <select
-            value={program}
-            onChange={(e) => setProgram(e.target.value)}
-            aria-label="Filter by program"
-            className="h-9 rounded-md border border-input bg-card px-2 text-sm text-foreground"
-          >
-            <option value="all">All programs</option>
-            {programs.map((p) => (
-              <option key={p} value={p}>
-                {p}
-              </option>
-            ))}
-          </select>
+          <SearchBox value={q} onChange={setQ} placeholder="Search modules" className="w-44" />
+          <Select value={program} onValueChange={setProgram}>
+            <SelectTrigger className="h-9 w-auto min-w-36" aria-label="Filter by program">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All programs</SelectItem>
+              {programs.map((p) => (
+                <SelectItem key={p} value={p}>
+                  {p}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
