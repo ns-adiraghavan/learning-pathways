@@ -65,3 +65,25 @@ export function functionForDivision(division: string): FunctionArea {
 export function divisionsForFunction(fn: FunctionArea): string[] {
   return DIVISIONS.filter((d) => DIVISION_TO_FUNCTION[d] === fn);
 }
+
+/**
+ * Legal entity a person is employed under. Netscribes runs two: NDIPL and NAPL.
+ * NAPL shares the same org structure (division → function, departments, etc.) but
+ * is tracked separately so compliance can be sliced/audited per entity.
+ */
+export const ENTITIES = ["NDIPL", "NAPL"] as const;
+export type OrgEntity = (typeof ENTITIES)[number];
+
+/**
+ * Active client/delivery projects people are staffed on. Used as a learner
+ * attribute for reporting and enrollment targeting.
+ */
+export const PROJECTS = [
+  "Tata 1mg Intelligence",
+  "Flipkart Content Ops",
+  "Myntra Catalogue",
+  "TataCliq Insights",
+  "Pharma Competitive Watch",
+  "Internal / Bench",
+] as const;
+export type ProjectName = (typeof PROJECTS)[number];
