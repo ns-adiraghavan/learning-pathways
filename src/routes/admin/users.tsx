@@ -8,7 +8,6 @@ import {
   MoreHorizontal,
   Pencil,
   RefreshCw,
-  Search,
   SlidersHorizontal,
   Send,
   UserCheck,
@@ -54,6 +53,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SearchBox } from "@/components/ui/search-box";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -64,7 +64,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { STATUS_DOT, STATUS_LABEL } from "@/lib/format";
+import { isNewJoiner, STATUS_DOT, STATUS_LABEL } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/users")({
@@ -265,16 +265,13 @@ function UsersPage() {
 
       {/* Search + slicer toggle */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <div className="relative min-w-0 flex-1 sm:max-w-sm">
-          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={filters.q ?? ""}
-            onChange={(e) => set("q", e.target.value)}
-            placeholder="Search name, user ID or email"
-            aria-label="Search users"
-            className="h-9 pl-8"
-          />
-        </div>
+        <SearchBox
+          value={filters.q ?? ""}
+          onChange={(v) => set("q", v)}
+          placeholder="Search name, user ID or email"
+          ariaLabel="Search users"
+          className="min-w-0 flex-1 sm:max-w-sm"
+        />
         <Button
           size="sm"
           variant={showFilters ? "secondary" : "outline"}
@@ -504,16 +501,23 @@ function UsersPage() {
                       />
                     </TableCell>
                     <TableCell className="min-w-0">
-                      <button
-                        type="button"
-                        onClick={() => setProgressUserId(u.id)}
-                        className={cn(
-                          "block max-w-[220px] truncate text-left text-sm font-[510] hover:text-primary",
-                          u.userStatus === "inactive" && "text-muted-foreground line-through",
+                      <span className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setProgressUserId(u.id)}
+                          className={cn(
+                            "max-w-[200px] truncate text-left text-sm font-[510] hover:text-primary",
+                            u.userStatus === "inactive" && "text-muted-foreground line-through",
+                          )}
+                        >
+                          {u.name}
+                        </button>
+                        {isNewJoiner(u.joiningDate) && (
+                          <span className="shrink-0 rounded-[4px] bg-cat-onboarding/12 px-1.5 py-0.5 text-[10px] font-[590] text-cat-onboarding">
+                            New joiner
+                          </span>
                         )}
-                      >
-                        {u.name}
-                      </button>
+                      </span>
                       <span className="block max-w-[220px] truncate text-xs text-muted-foreground lg:hidden">
                         {u.email}
                       </span>
@@ -789,8 +793,13 @@ function UserPanel({
               <p className="mt-0.5 text-sm text-muted-foreground">
                 {user?.team} · {user?.location} · {user?.role}
               </p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
+              <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
                 {user?.provisioned === "manual" ? "Added manually" : "Auto-provisioned"}
+                {user && isNewJoiner(user.joiningDate) && (
+                  <span className="rounded-[4px] bg-cat-onboarding/12 px-1.5 py-0.5 text-[10px] font-[590] text-cat-onboarding">
+                    New joiner
+                  </span>
+                )}
               </p>
             </div>
             {user && (
