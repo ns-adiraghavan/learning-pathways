@@ -1,16 +1,32 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { FileText, GripVertical, Link2, ListChecks, Plus, Trash2, Video } from "lucide-react";
+import {
+  ChevronRight,
+  FileText,
+  GripVertical,
+  Link2,
+  ListChecks,
+  Plus,
+  Trash2,
+  Upload,
+  Video,
+} from "lucide-react";
 
 import { toast } from "sonner";
 
-import type { ActivityType, DraftActivity, ModuleDraft } from "@/data/types";
-import { getCertificateTemplates, getFeedbackSurveys, setQuizMandatory } from "@/data/repositories";
+import type { ActivityType, DraftActivity, ModuleDraft, QuizTemplate } from "@/data/types";
+import {
+  getCertificateTemplates,
+  getFeedbackSurveys,
+  getQuizTemplates,
+  setQuizMandatory,
+} from "@/data/repositories";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { CoverPicker } from "@/components/trainer/cover-picker";
 import {
@@ -51,6 +67,11 @@ export function ContentFlowTab({
   onChange: (next: ModuleDraft) => void;
 }) {
   const [dragId, setDragId] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const { data: quizTemplates = [] } = useQuery({
+    queryKey: ["quiz-templates"],
+    queryFn: getQuizTemplates,
+  });
   const { data: certTemplates = [] } = useQuery({
     queryKey: ["certificate-templates"],
     queryFn: getCertificateTemplates,
@@ -61,6 +82,17 @@ export function ContentFlowTab({
   });
 
   const setActivities = (activities: DraftActivity[]) => onChange({ ...draft, activities });
+
+  const patchActivity = (id: string, patch: Partial<DraftActivity>) =>
+    setActivities(draft.activities.map((x) => (x.id === id ? { ...x, ...patch } : x)));
+
+  const toggleExpanded = (id: string) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   const move = (fromId: string, toId: string) => {
     if (fromId === toId) return;
@@ -73,19 +105,32 @@ export function ContentFlowTab({
     setActivities(list);
   };
 
-  const addActivity = (type: ActivityType) =>
+  const addActivity = (type: ActivityType) => {
+    const id = `new-${Date.now()}`;
     setActivities([
       ...draft.activities,
       {
-        id: `new-${Date.now()}`,
+        id,
         name: `New ${type}`,
         type,
         meta: NEW_ACTIVITY_META[type],
         required: true,
         draft: true,
         mandatory: false,
+        ...(type === "quiz"
+          ? {
+              completionCriteria: "pass" as const,
+              passingPct: 70,
+              timeLimitMins: 15,
+              maxReattempts: 2,
+              shuffle: true,
+            }
+          : {}),
       },
     ]);
+    // Open the new activity so its setup is immediately editable.
+    setExpanded((prev) => new Set(prev).add(id));
+  };
 
   const selectedCert = certTemplates.find((c) => c.id === draft.certificateTemplateId);
 
@@ -169,6 +214,7 @@ export function ContentFlowTab({
             <ul className="grid gap-2">
               {draft.activities.map((a, i) => {
                 const Icon = ACTIVITY_ICON[a.type];
+                const open = expanded.has(a.id);
                 return (
                   <li
                     key={a.id}
@@ -180,101 +226,90 @@ export function ContentFlowTab({
                       setDragId(null);
                     }}
                     className={cn(
-                      "grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-border bg-card px-3 py-2.5",
+                      "overflow-hidden rounded-lg border border-border bg-card",
                       dragId === a.id && "opacity-60",
                     )}
                   >
-                    <span className="flex items-center gap-2 text-muted-foreground">
-                      <GripVertical className="size-4 cursor-grab" strokeWidth={1.75} />
-                      <span className="tnum w-4 text-xs">{i + 1}</span>
-                      <Icon className="size-4" strokeWidth={1.75} />
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-[510]">{a.name}</span>
-                      <span className="block truncate text-xs text-muted-foreground capitalize">
-                        {a.type} · {a.meta}
+                    <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-3 py-2.5">
+                      <span className="flex items-center gap-2 text-muted-foreground">
+                        <GripVertical className="size-4 cursor-grab" strokeWidth={1.75} />
+                        <span className="tnum w-4 text-xs">{i + 1}</span>
+                        <Icon className="size-4" strokeWidth={1.75} />
                       </span>
-                    </span>
-                    <span className="flex shrink-0 items-center gap-3">
-                      {a.type === "quiz" && (
-                        <label
-                          className="hidden items-center gap-1.5 text-xs text-muted-foreground lg:flex"
-                          title="Pass mark — the % of questions a learner must get right"
-                        >
-                          Pass %
-                          <Input
-                            type="number"
-                            min={0}
-                            max={100}
-                            value={a.passingPct ?? 70}
-                            onChange={(e) =>
-                              setActivities(
-                                draft.activities.map((x) =>
-                                  x.id === a.id ? { ...x, passingPct: Number(e.target.value) } : x,
-                                ),
-                              )
-                            }
-                            className="tnum h-8 w-16"
-                            aria-label={`Pass mark for ${a.name}`}
-                          />
-                        </label>
-                      )}
-                      {a.type === "quiz" && (
-                        <label
-                          className="hidden items-center gap-1.5 text-xs text-muted-foreground lg:flex"
-                          title="Compliance-tracked across the org"
-                        >
-                          Mandatory (compliance-tracked)
-                          <Switch
-                            checked={a.mandatory}
-                            onCheckedChange={(v) => {
-                              setActivities(
-                                draft.activities.map((x) =>
-                                  x.id === a.id ? { ...x, mandatory: v } : x,
-                                ),
-                              );
-                              void setQuizMandatory(a.id, v).then(() =>
-                                toast.success(
-                                  v ? "Quiz marked mandatory" : "Quiz no longer mandatory",
-                                ),
-                              );
-                            }}
-                          />
-                        </label>
-                      )}
-                      <label className="hidden items-center gap-1.5 text-xs text-muted-foreground sm:flex">
-                        Required
-                        <Switch
-                          checked={a.required}
-                          onCheckedChange={(v) =>
-                            setActivities(
-                              draft.activities.map((x) =>
-                                x.id === a.id ? { ...x, required: v } : x,
-                              ),
-                            )
-                          }
-                        />
-                      </label>
-                      <label className="hidden items-center gap-1.5 text-xs text-muted-foreground sm:flex">
-                        Draft
-                        <Switch
-                          checked={a.draft}
-                          onCheckedChange={(v) =>
-                            setActivities(
-                              draft.activities.map((x) => (x.id === a.id ? { ...x, draft: v } : x)),
-                            )
-                          }
-                        />
-                      </label>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label={`Remove ${a.name}`}
-                        onClick={() => setActivities(draft.activities.filter((x) => x.id !== a.id))}
+                      <button
+                        type="button"
+                        onClick={() => toggleExpanded(a.id)}
+                        className="min-w-0 text-left"
+                        aria-expanded={open}
                       >
-                        <Trash2 className="size-4" strokeWidth={1.75} />
-                      </Button>
-                    </span>
+                        <span className="flex items-center gap-2">
+                          <span className="truncate text-sm font-[510]">{a.name}</span>
+                          {a.type === "quiz" && a.mandatory && (
+                            <span className="shrink-0 rounded-[4px] bg-cat-mandatory/12 px-1.5 py-0.5 text-[10px] font-[590] text-cat-mandatory">
+                              Mandatory
+                            </span>
+                          )}
+                          {a.draft && (
+                            <span className="shrink-0 rounded-[4px] border border-border px-1.5 py-0.5 text-[10px] font-[510] text-muted-foreground">
+                              Draft
+                            </span>
+                          )}
+                        </span>
+                        <span className="block truncate text-xs text-muted-foreground">
+                          <span className="capitalize">{a.type}</span> · {a.meta}
+                          {a.type === "quiz" &&
+                            ` · ${
+                              (a.completionCriteria ?? "pass") === "pass"
+                                ? `pass ≥ ${a.passingPct ?? 70}%`
+                                : "completion only"
+                            }`}
+                        </span>
+                      </button>
+                      <span className="flex shrink-0 items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 gap-1 px-2 text-xs text-muted-foreground"
+                          onClick={() => toggleExpanded(a.id)}
+                          aria-label={`${open ? "Collapse" : "Set up"} ${a.name}`}
+                        >
+                          {a.type === "quiz" ? "Set up" : "Edit"}
+                          <ChevronRight
+                            className={cn("size-4 transition-transform", open && "rotate-90")}
+                            strokeWidth={1.75}
+                          />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`Remove ${a.name}`}
+                          onClick={() => {
+                            setActivities(draft.activities.filter((x) => x.id !== a.id));
+                            setExpanded((prev) => {
+                              const next = new Set(prev);
+                              next.delete(a.id);
+                              return next;
+                            });
+                          }}
+                        >
+                          <Trash2 className="size-4" strokeWidth={1.75} />
+                        </Button>
+                      </span>
+                    </div>
+
+                    {open && (
+                      <ActivityPanel
+                        activity={a}
+                        quizTemplates={quizTemplates}
+                        onPatch={(patch) => patchActivity(a.id, patch)}
+                        onToggleMandatory={(v) => {
+                          patchActivity(a.id, { mandatory: v });
+                          void setQuizMandatory(a.id, v).then(() =>
+                            toast.success(v ? "Quiz marked mandatory" : "Quiz no longer mandatory"),
+                          );
+                        }}
+                      />
+                    )}
                   </li>
                 );
               })}
@@ -296,6 +331,59 @@ export function ContentFlowTab({
             onCheckedChange={(v) => onChange({ ...draft, orderLocked: v })}
             aria-label="Learner must follow order"
           />
+        </div>
+
+        {/* Module-level completion — captured separately from each quiz's own criteria */}
+        <div className="mt-3 rounded-lg border border-border px-3 py-3">
+          <p className="text-sm font-[510]">Module counts as complete when</p>
+          <RadioGroup
+            className="mt-2.5 grid gap-2 sm:grid-cols-2"
+            value={draft.settings.completionRule}
+            onValueChange={(v) =>
+              onChange({
+                ...draft,
+                settings: {
+                  ...draft.settings,
+                  completionRule: v as ModuleDraft["settings"]["completionRule"],
+                },
+              })
+            }
+          >
+            <label
+              htmlFor="mr-activities"
+              className={cn(
+                "flex cursor-pointer items-start gap-2.5 rounded-lg border p-3 text-sm",
+                draft.settings.completionRule === "complete-activities"
+                  ? "border-primary bg-primary/5"
+                  : "border-border",
+              )}
+            >
+              <RadioGroupItem value="complete-activities" id="mr-activities" className="mt-0.5" />
+              <span>
+                <span className="block font-[510]">All required activities done</span>
+                <span className="block text-xs text-muted-foreground">
+                  Finishing every required activity completes the module.
+                </span>
+              </span>
+            </label>
+            <label
+              htmlFor="mr-pass"
+              className={cn(
+                "flex cursor-pointer items-start gap-2.5 rounded-lg border p-3 text-sm",
+                draft.settings.completionRule === "pass-quizzes"
+                  ? "border-primary bg-primary/5"
+                  : "border-border",
+              )}
+            >
+              <RadioGroupItem value="pass-quizzes" id="mr-pass" className="mt-0.5" />
+              <span>
+                <span className="block font-[510]">…and all pass-criteria quizzes passed</span>
+                <span className="block text-xs text-muted-foreground">
+                  Quizzes set to “Must pass” have to be cleared too.
+                </span>
+              </span>
+            </label>
+          </RadioGroup>
         </div>
       </section>
 
@@ -380,6 +468,200 @@ export function ContentFlowTab({
           </div>
         </div>
       </section>
+    </div>
+  );
+}
+
+/** Inline editor for a single activity — rich quiz setup, light for other types. */
+function ActivityPanel({
+  activity: a,
+  quizTemplates,
+  onPatch,
+  onToggleMandatory,
+}: {
+  activity: DraftActivity;
+  quizTemplates: QuizTemplate[];
+  onPatch: (patch: Partial<DraftActivity>) => void;
+  onToggleMandatory: (value: boolean) => void;
+}) {
+  const template = quizTemplates.find((t) => t.id === a.templateId);
+  const criteria = a.completionCriteria ?? "pass";
+  return (
+    <div className="grid gap-4 border-t border-border bg-secondary/30 p-3 sm:p-4">
+      <div className="grid gap-1.5">
+        <Label htmlFor={`name-${a.id}`}>Name</Label>
+        <Input
+          id={`name-${a.id}`}
+          value={a.name}
+          onChange={(e) => onPatch({ name: e.target.value })}
+        />
+      </div>
+
+      {a.type === "quiz" ? (
+        <>
+          {/* Question source — built here, under the module, not in a separate builder */}
+          <div className="grid gap-1.5">
+            <Label>Questions</Label>
+            <div className="flex flex-wrap items-center gap-2">
+              <Select
+                value={a.templateId || "none"}
+                onValueChange={(v) =>
+                  onPatch({
+                    templateId: v === "none" ? "" : v,
+                    meta:
+                      v === "none"
+                        ? a.meta
+                        : `${quizTemplates.find((t) => t.id === v)?.questionCount ?? 10} questions · ${
+                            a.timeLimitMins ?? 15
+                          } min`,
+                  })
+                }
+              >
+                <SelectTrigger className="h-9 w-full sm:w-64" aria-label="Question template">
+                  <SelectValue placeholder="Pick a question template" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No template yet</SelectItem>
+                  {quizTemplates.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.name} · {t.questionCount} Qs
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => toast.success("Excel template imported — questions loaded")}
+              >
+                <Upload className="size-4" strokeWidth={1.75} />
+                Upload Excel
+              </Button>
+            </div>
+            {template && (
+              <p className="tnum text-xs text-muted-foreground">
+                {template.questionCount} questions · {template.mix.easy}E / {template.mix.medium}M /{" "}
+                {template.mix.hard}H
+              </p>
+            )}
+          </div>
+
+          {/* Completion criteria — either finishing or passing */}
+          <div className="grid gap-2">
+            <Label>Completion criteria</Label>
+            <RadioGroup
+              className="grid gap-2 sm:grid-cols-2"
+              value={criteria}
+              onValueChange={(v) => onPatch({ completionCriteria: v as "completion" | "pass" })}
+            >
+              <label
+                htmlFor={`cc-completion-${a.id}`}
+                className={cn(
+                  "flex cursor-pointer items-start gap-2.5 rounded-lg border p-3 text-sm",
+                  criteria === "completion" ? "border-primary bg-primary/5" : "border-border",
+                )}
+              >
+                <RadioGroupItem
+                  value="completion"
+                  id={`cc-completion-${a.id}`}
+                  className="mt-0.5"
+                />
+                <span>
+                  <span className="block font-[510]">Completion only</span>
+                  <span className="block text-xs text-muted-foreground">
+                    Counts as done once attempted — no score gate.
+                  </span>
+                </span>
+              </label>
+              <label
+                htmlFor={`cc-pass-${a.id}`}
+                className={cn(
+                  "flex cursor-pointer items-start gap-2.5 rounded-lg border p-3 text-sm",
+                  criteria === "pass" ? "border-primary bg-primary/5" : "border-border",
+                )}
+              >
+                <RadioGroupItem value="pass" id={`cc-pass-${a.id}`} className="mt-0.5" />
+                <span>
+                  <span className="block font-[510]">Must pass</span>
+                  <span className="block text-xs text-muted-foreground">
+                    Learner has to score at or above the pass mark.
+                  </span>
+                </span>
+              </label>
+            </RadioGroup>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-4">
+            {criteria === "pass" && (
+              <div className="grid gap-1.5">
+                <Label htmlFor={`pass-${a.id}`}>Pass mark %</Label>
+                <Input
+                  id={`pass-${a.id}`}
+                  type="number"
+                  min={0}
+                  max={100}
+                  className="tnum"
+                  value={a.passingPct ?? 70}
+                  onChange={(e) => onPatch({ passingPct: Number(e.target.value) })}
+                />
+              </div>
+            )}
+            <div className="grid gap-1.5">
+              <Label htmlFor={`time-${a.id}`}>Time limit (min)</Label>
+              <Input
+                id={`time-${a.id}`}
+                type="number"
+                min={1}
+                className="tnum"
+                value={a.timeLimitMins ?? 15}
+                onChange={(e) => onPatch({ timeLimitMins: Number(e.target.value) })}
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor={`retry-${a.id}`}>Max reattempts</Label>
+              <Input
+                id={`retry-${a.id}`}
+                type="number"
+                min={0}
+                className="tnum"
+                value={a.maxReattempts ?? 2}
+                onChange={(e) => onPatch({ maxReattempts: Number(e.target.value) })}
+              />
+            </div>
+            <div className="flex items-end justify-between gap-2 rounded-lg border border-border px-3 py-2 sm:flex-col sm:items-start sm:justify-center">
+              <Label htmlFor={`shuffle-${a.id}`} className="text-xs text-muted-foreground">
+                Shuffle
+              </Label>
+              <Switch
+                id={`shuffle-${a.id}`}
+                checked={a.shuffle ?? true}
+                onCheckedChange={(v) => onPatch({ shuffle: v })}
+              />
+            </div>
+          </div>
+        </>
+      ) : null}
+
+      {/* Shared toggles */}
+      <div className="grid gap-2 sm:grid-cols-3">
+        <label className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2 text-sm">
+          <span className="text-muted-foreground">Required to finish</span>
+          <Switch checked={a.required} onCheckedChange={(v) => onPatch({ required: v })} />
+        </label>
+        <label className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2 text-sm">
+          <span className="text-muted-foreground">Keep as draft</span>
+          <Switch checked={a.draft} onCheckedChange={(v) => onPatch({ draft: v })} />
+        </label>
+        {a.type === "quiz" && (
+          <label className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2 text-sm">
+            <span className="text-muted-foreground" title="Compliance-tracked across the org">
+              Mandatory (compliance)
+            </span>
+            <Switch checked={a.mandatory} onCheckedChange={onToggleMandatory} />
+          </label>
+        )}
+      </div>
     </div>
   );
 }
