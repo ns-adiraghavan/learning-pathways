@@ -4,10 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { BarChart3, CalendarClock, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 
-import { getMandatoryQuizzes, getReport } from "@/data/repositories";
+import { getReport } from "@/data/repositories";
 import {
   DEPARTMENTS,
   DESIGNATIONS,
+  ENTITIES_LIST,
   FUNCTIONS,
   LOCATIONS,
   MANAGERS,
@@ -18,8 +19,9 @@ import {
 import type { ReportFilters, ReportId, ReportTab } from "@/data/types";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { KpiRow, ReportChartCard } from "@/components/reports/report-charts";
+import { ModuleCompletionView } from "@/components/reports/module-completion";
+import { LearnerAttributesView } from "@/components/reports/attribute-filters";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -64,7 +66,6 @@ const PERIODS: { value: ReportFilters["period"]; label: string }[] = [
 function ReportDetailPage() {
   const { reportId } = Route.useParams();
   const [tab, setTab] = useState<ReportTab>("dashboard");
-  const [showMandatory, setShowMandatory] = useState(false);
   const [filters, setFilters] = useState<ReportFilters>({
     period: "90d",
     department: "all",
@@ -78,16 +79,17 @@ function ReportDetailPage() {
   });
 
   const isCompletion = reportId === "completion-ratio";
+  // The completion report drives these two tabs with dedicated, connected views:
+  // By Modules → per-module scores / pass-fail / certificates; By Learner
+  // Attributes → stacking dependent slicers over the learner directory.
+  const moduleView = isCompletion && tab === "by-modules";
+  const attrView = isCompletion && tab === "by-attributes";
+  const customView = moduleView || attrView;
 
   const { data: report, isPending } = useQuery({
     queryKey: ["admin-report", reportId, tab, filters],
     queryFn: () => getReport(reportId as ReportId, { ...filters, tab }),
-  });
-
-  const { data: mandatory = [] } = useQuery({
-    queryKey: ["mandatory-quizzes"],
-    queryFn: getMandatoryQuizzes,
-    enabled: isCompletion && showMandatory,
+    enabled: !customView,
   });
 
   const exportHeaders = report?.columns.map((c) => c.label) ?? [];
@@ -113,11 +115,13 @@ function ReportDetailPage() {
             <CalendarClock className="size-4" strokeWidth={1.75} />
             Schedule
           </Button>
-          <DownloadCsvButton
-            slug={`report-${reportId}-${tab}`}
-            headers={exportHeaders}
-            rows={exportRows}
-          />
+          {!customView && (
+            <DownloadCsvButton
+              slug={`report-${reportId}-${tab}`}
+              headers={exportHeaders}
+              rows={exportRows}
+            />
+          )}
         </div>
       </header>
 
@@ -143,198 +147,155 @@ function ReportDetailPage() {
         ))}
       </div>
 
-      {/* Completion report: optional mandatory-quiz compliance view */}
-      {isCompletion && (
-        <label className="mb-3 flex w-fit cursor-pointer items-center gap-2 rounded-full border border-border bg-secondary/60 px-3 py-1.5 text-sm">
-          <Checkbox
-            checked={showMandatory}
-            onCheckedChange={(v) => setShowMandatory(v === true)}
-            aria-label="Show mandatory quizzes"
+      {/* Completion → By Modules / By Learner Attributes carry their own filters. */}
+      {moduleView && <ModuleCompletionView />}
+      {attrView && <LearnerAttributesView />}
+
+      {/* Slicers (all other tabs / reports) */}
+      {!customView && (
+        <div className="surface mb-4 flex flex-wrap gap-2 p-3">
+          <SlicerSelect
+            value={filters.period}
+            onChange={(v) => setFilters({ ...filters, period: v as ReportFilters["period"] })}
+            label="Time period"
+            options={PERIODS}
           />
-          <span className="text-muted-foreground">Show mandatory quiz completion</span>
-        </label>
+          <SlicerSelect
+            value={filters.team ?? "all"}
+            onChange={(v) => setFilters({ ...filters, team: v })}
+            label="Team"
+            options={[
+              { value: "all", label: "All teams" },
+              ...TEAMS.map((t) => ({ value: t, label: t })),
+            ]}
+          />
+          <SlicerSelect
+            value={filters.program ?? "all"}
+            onChange={(v) => setFilters({ ...filters, program: v })}
+            label="Program"
+            options={[
+              { value: "all", label: "All programs" },
+              ...PROGRAMS.map((p) => ({ value: p, label: p })),
+            ]}
+          />
+          <SlicerSelect
+            value={filters.department}
+            onChange={(v) => setFilters({ ...filters, department: v })}
+            label="Department"
+            options={[
+              { value: "all", label: "All departments" },
+              ...DEPARTMENTS.map((d) => ({ value: d, label: d })),
+            ]}
+          />
+          <SlicerSelect
+            value={filters.location}
+            onChange={(v) => setFilters({ ...filters, location: v })}
+            label="Location"
+            options={[
+              { value: "all", label: "All locations" },
+              ...LOCATIONS.map((l) => ({ value: l, label: l })),
+            ]}
+          />
+          <SlicerSelect
+            value={filters.functionArea ?? "all"}
+            onChange={(v) => setFilters({ ...filters, functionArea: v })}
+            label="Function"
+            options={[
+              { value: "all", label: "All functions" },
+              ...FUNCTIONS.map((f) => ({ value: f, label: f })),
+            ]}
+          />
+          <SlicerSelect
+            value={filters.designation ?? "all"}
+            onChange={(v) => setFilters({ ...filters, designation: v })}
+            label="Designation"
+            options={[
+              { value: "all", label: "All designations" },
+              ...DESIGNATIONS.map((d) => ({ value: d, label: d })),
+            ]}
+          />
+          <SlicerSelect
+            value={filters.manager ?? "all"}
+            onChange={(v) => setFilters({ ...filters, manager: v })}
+            label="Manager"
+            options={[
+              { value: "all", label: "All managers" },
+              ...MANAGERS.map((m) => ({ value: m, label: m })),
+            ]}
+          />
+          <SlicerSelect
+            value={filters.entity ?? "all"}
+            onChange={(v) => setFilters({ ...filters, entity: v })}
+            label="Entity"
+            options={[
+              { value: "all", label: "All entities" },
+              ...ENTITIES_LIST.map((e) => ({ value: e, label: e })),
+            ]}
+          />
+        </div>
       )}
 
-      {/* Slicers */}
-      <div className="surface mb-4 flex flex-wrap gap-2 p-3">
-        <SlicerSelect
-          value={filters.period}
-          onChange={(v) => setFilters({ ...filters, period: v as ReportFilters["period"] })}
-          label="Time period"
-          options={PERIODS}
-        />
-        <SlicerSelect
-          value={filters.team ?? "all"}
-          onChange={(v) => setFilters({ ...filters, team: v })}
-          label="Team"
-          options={[
-            { value: "all", label: "All teams" },
-            ...TEAMS.map((t) => ({ value: t, label: t })),
-          ]}
-        />
-        <SlicerSelect
-          value={filters.program ?? "all"}
-          onChange={(v) => setFilters({ ...filters, program: v })}
-          label="Program"
-          options={[
-            { value: "all", label: "All programs" },
-            ...PROGRAMS.map((p) => ({ value: p, label: p })),
-          ]}
-        />
-        <SlicerSelect
-          value={filters.department}
-          onChange={(v) => setFilters({ ...filters, department: v })}
-          label="Department"
-          options={[
-            { value: "all", label: "All departments" },
-            ...DEPARTMENTS.map((d) => ({ value: d, label: d })),
-          ]}
-        />
-        <SlicerSelect
-          value={filters.location}
-          onChange={(v) => setFilters({ ...filters, location: v })}
-          label="Location"
-          options={[
-            { value: "all", label: "All locations" },
-            ...LOCATIONS.map((l) => ({ value: l, label: l })),
-          ]}
-        />
-        <SlicerSelect
-          value={filters.functionArea ?? "all"}
-          onChange={(v) => setFilters({ ...filters, functionArea: v })}
-          label="Function"
-          options={[
-            { value: "all", label: "All functions" },
-            ...FUNCTIONS.map((f) => ({ value: f, label: f })),
-          ]}
-        />
-        <SlicerSelect
-          value={filters.designation ?? "all"}
-          onChange={(v) => setFilters({ ...filters, designation: v })}
-          label="Designation"
-          options={[
-            { value: "all", label: "All designations" },
-            ...DESIGNATIONS.map((d) => ({ value: d, label: d })),
-          ]}
-        />
-        <SlicerSelect
-          value={filters.manager ?? "all"}
-          onChange={(v) => setFilters({ ...filters, manager: v })}
-          label="Manager"
-          options={[
-            { value: "all", label: "All managers" },
-            ...MANAGERS.map((m) => ({ value: m, label: m })),
-          ]}
-        />
-      </div>
+      {!customView &&
+        (isPending ? (
+          <div className="grid gap-4">
+            <Skeleton className="h-24 rounded-2xl" />
+            <Skeleton className="h-64 rounded-2xl" />
+          </div>
+        ) : !report ? (
+          <EmptyState
+            icon={BarChart3}
+            title="No results"
+            description="Nothing matches these filters. Widen the period or clear a filter."
+          />
+        ) : (
+          <div className="grid gap-4">
+            {report.kpis && report.kpis.length > 0 && <KpiRow kpis={report.kpis} />}
 
-      {isPending ? (
-        <div className="grid gap-4">
-          <Skeleton className="h-24 rounded-2xl" />
-          <Skeleton className="h-64 rounded-2xl" />
-        </div>
-      ) : !report ? (
-        <EmptyState
-          icon={BarChart3}
-          title="No results"
-          description="Nothing matches these filters. Widen the period or clear a filter."
-        />
-      ) : (
-        <div className="grid gap-4">
-          {report.kpis && report.kpis.length > 0 && <KpiRow kpis={report.kpis} />}
+            {report.charts && report.charts.length > 0 && (
+              <div className={cn("grid gap-4", report.charts.length > 1 && "lg:grid-cols-2")}>
+                {report.charts.map((chart) => (
+                  <ReportChartCard key={chart.title} chart={chart} />
+                ))}
+              </div>
+            )}
 
-          {report.charts && report.charts.length > 0 && (
-            <div className={cn("grid gap-4", report.charts.length > 1 && "lg:grid-cols-2")}>
-              {report.charts.map((chart) => (
-                <ReportChartCard key={chart.title} chart={chart} />
-              ))}
-            </div>
-          )}
-
-          {report.rows.length === 0 ? (
-            <EmptyState
-              icon={BarChart3}
-              title="No rows"
-              description="This slice has no data for the current filters."
-            />
-          ) : (
-            <section className="surface overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    {report.columns.map((c) => (
-                      <TableHead key={c.key} className={cn(c.numeric && "text-right")}>
-                        {c.label}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {report.rows.map((row, i) => (
-                    <TableRow key={i}>
+            {report.rows.length === 0 ? (
+              <EmptyState
+                icon={BarChart3}
+                title="No rows"
+                description="This slice has no data for the current filters."
+              />
+            ) : (
+              <section className="surface overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
                       {report.columns.map((c) => (
-                        <TableCell
-                          key={c.key}
-                          className={cn("text-sm", c.numeric && "tnum text-right")}
-                        >
-                          {row[c.key]}
-                        </TableCell>
+                        <TableHead key={c.key} className={cn(c.numeric && "text-right")}>
+                          {c.label}
+                        </TableHead>
                       ))}
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </section>
-          )}
-        </div>
-      )}
-
-      {isCompletion && showMandatory && (
-        <section className="surface mt-4 overflow-hidden">
-          <div className="border-b border-border px-4 py-3">
-            <h2 className="text-card-title">Mandatory quiz completion</h2>
-            <p className="text-xs text-muted-foreground">
-              Compliance-tracked quizzes and how far each has been completed.
-            </p>
+                  </TableHeader>
+                  <TableBody>
+                    {report.rows.map((row, i) => (
+                      <TableRow key={i}>
+                        {report.columns.map((c) => (
+                          <TableCell
+                            key={c.key}
+                            className={cn("text-sm", c.numeric && "tnum text-right")}
+                          >
+                            {row[c.key]}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </section>
+            )}
           </div>
-          {mandatory.length === 0 ? (
-            <EmptyState
-              icon={BarChart3}
-              title="No mandatory quizzes"
-              description="Flag a quiz as compliance-tracked to see completion here."
-            />
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Quiz</TableHead>
-                    <TableHead>Module</TableHead>
-                    <TableHead className="text-right">Completed</TableHead>
-                    <TableHead className="text-right">Enrolled</TableHead>
-                    <TableHead className="text-right">Completion %</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {mandatory.map((q) => (
-                    <TableRow key={q.id}>
-                      <TableCell className="text-sm font-[510]">{q.quizName}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {q.moduleTitle}
-                      </TableCell>
-                      <TableCell className="tnum text-right text-sm">{q.completed}</TableCell>
-                      <TableCell className="tnum text-right text-sm">{q.enrolled}</TableCell>
-                      <TableCell className="tnum text-right text-sm font-[510]">
-                        {q.completionPct}%
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </section>
-      )}
+        ))}
     </div>
   );
 }
