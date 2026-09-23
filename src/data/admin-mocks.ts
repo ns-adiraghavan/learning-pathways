@@ -17,7 +17,14 @@ import type {
 } from "./types";
 
 import { skills as trainerSkills, trainerModules } from "./trainer-mocks";
-import { DIVISIONS, FUNCTIONS as ORG_FUNCTIONS, functionForDivision } from "./org";
+import {
+  DIVISIONS,
+  ENTITIES,
+  FUNCTIONS as ORG_FUNCTIONS,
+  PROJECTS as ORG_PROJECTS,
+  functionForDivision,
+} from "./org";
+import type { ModuleCompletionDetail, ModuleCompletionRow, OrgEntity } from "./types";
 
 const FIRST = [
   "Ananya",
@@ -75,6 +82,8 @@ export const FUNCTIONS = [...ORG_FUNCTIONS];
 export const GRADES = ["G1", "G2", "G3", "G4", "G5"];
 export const EMPLOYEE_TYPES: AdminUser["employeeType"][] = ["full-time", "contract", "intern"];
 export const MANAGERS = ["Ananya Rao", "Vikram Iyer", "Farah Sheikh", "Suresh Babu"];
+export const ENTITIES_LIST = [...ENTITIES];
+export const PROJECTS = [...ORG_PROJECTS];
 
 export const users: AdminUser[] = NAMES.map((name, i): AdminUser => {
   const assigned = 4 + (i % 5);
@@ -104,6 +113,10 @@ export const users: AdminUser[] = NAMES.map((name, i): AdminUser => {
     functionArea: functionForDivision(TEAMS[i % TEAMS.length]!),
     grade: GRADES[i % GRADES.length]!,
     manager: i === 0 ? "—" : MANAGERS[i % MANAGERS.length]!,
+    // ~1 in 4 people sit under NAPL; the rest under NDIPL. NAPL shares the same
+    // structure but is tracked separately so compliance can be sliced per entity.
+    entity: (i % 4 === 2 ? "NAPL" : "NDIPL") as OrgEntity,
+    projectName: PROJECTS[i % PROJECTS.length]!,
     // Most people joined in past years; a handful are recent joiners so the
     // "New joiner" badge only shows when it actually applies.
     joiningDate:
@@ -415,12 +428,13 @@ function tabRows(
     return {
       columns: [
         { key: "name", label: "Learner" },
+        { key: "entity", label: "Entity" },
         { key: "division", label: "Division" },
         { key: "functionArea", label: "Function" },
+        { key: "department", label: "Department" },
         { key: "designation", label: "Designation" },
         { key: "manager", label: "Manager" },
         { key: "userStatus", label: "User status" },
-        { key: "enrolledOn", label: "Enrolled on" },
         ...(completion
           ? [
               { key: "status", label: "Status" },
@@ -428,14 +442,19 @@ function tabRows(
             ]
           : mc),
       ],
-      rows: users.slice(0, 16).map((u, i) => {
+      rows: users.slice(0, 24).map((u, i) => {
         const cells = metricCells(meta, id + u.id);
         const pct = completion ? (cells["value"] as number) : 0;
         const status = pct >= 100 ? "Completed" : pct === 0 ? "Not started" : "In progress";
         return {
           name: u.name,
+          entity: u.entity,
           division: u.team,
           functionArea: u.functionArea,
+          department: u.department,
+          location: u.location,
+          employeeType: u.employeeType,
+          projectName: u.projectName,
           designation: u.designation,
           manager: u.manager,
           userStatus: u.userStatus,
@@ -467,6 +486,16 @@ function tabRows(
         attribute: "Employee type",
         segment: t,
         learners: 20 + Math.round(seedNum(t) * 200),
+      })),
+      ...ENTITIES_LIST.map((e) => ({
+        attribute: "Entity",
+        segment: e,
+        learners: 40 + Math.round(seedNum(e) * 260),
+      })),
+      ...PROJECTS.map((p) => ({
+        attribute: "Project",
+        segment: p,
+        learners: 15 + Math.round(seedNum(p) * 120),
       })),
     ];
     return {
@@ -697,6 +726,90 @@ export function reportDetail(id: ReportId, tab: ReportTab = "dashboard"): Report
     return { ...base, kpis: extra.kpis, charts: extra.charts };
   }
   return base;
+}
+
+/* ============================================================
+ * MODULE COMPLETION DETAIL — Reports → Completion → By Modules.
+ * The scores / pass-fail / certificate view, keyed by module, so it lives
+ * inside the completion report rather than a separate section.
+ * ============================================================ */
+
+/** Which modules carry a compliance-tracked quiz + issue a certificate. */
+const MODULE_MANDATORY: Record<string, boolean> = {};
+function moduleFlags(moduleId: string): {
+  mandatory: boolean;
+  hasCertificate: boolean;
+  passMark: number;
+} {
+  const r = seedNum(moduleId);
+  const mandatory = MODULE_MANDATORY[moduleId] ?? r > 0.4;
+  return {
+    mandatory,
+    hasCertificate: mandatory || r > 0.6,
+    passMark: mandatory ? 70 + Math.round(seedNum(moduleId + "p") * 15) : 60,
+  };
+}
+
+const COMPLETED_DATES = ["2026-07-22", "2026-08-05", "2026-08-19", "2026-09-02", "2026-09-11"];
+
+export function moduleCompletionDetail(moduleId: string): ModuleCompletionDetail | null {
+  const mod = assignableModules.find((m) => m.id === moduleId);
+  if (!mod) return null;
+  const { mandatory, hasCertificate, passMark } = moduleFlags(moduleId);
+  const seed = seedNum(moduleId + "d");
+  // A stable per-module slice of the directory so the demo stays consistent.
+  const size = 14 + Math.round(seed * 10);
+  const start = Math.round(seed * 40);
+  const people = Array.from({ length: size }, (_, i) => users[(start + i) % users.length]!);
+
+  const rows: ModuleCompletionRow[] = people.map((u, i) => {
+    const n = (i * 7 + moduleId.length) % 10;
+    const status: ModuleCompletionRow["status"] =
+      n < 2 ? "not-started" : n < 5 ? "in-progress" : "complete";
+    const scorePct = status === "complete" ? 52 + ((i * 13 + moduleId.length) % 48) : null;
+    const outcome: ModuleCompletionRow["outcome"] =
+      scorePct === null ? null : scorePct >= passMark ? "pass" : "fail";
+    return {
+      learnerId: u.id,
+      userId: u.userId,
+      name: u.name,
+      email: u.email,
+      team: u.team,
+      entity: u.entity,
+      department: u.department,
+      location: u.location,
+      status,
+      scorePct,
+      outcome,
+      completedOn:
+        status === "complete"
+          ? COMPLETED_DATES[(i + moduleId.length) % COMPLETED_DATES.length]!
+          : null,
+      attempts: status === "not-started" ? 0 : 1 + (i % 3),
+      certificate: hasCertificate && outcome === "pass",
+    };
+  });
+
+  const completed = rows.filter((r) => r.status === "complete").length;
+  const passed = rows.filter((r) => r.outcome === "pass").length;
+  const scored = rows.filter((r) => r.scorePct !== null).length;
+  return {
+    meta: {
+      moduleId,
+      moduleTitle: mod.title,
+      programTitle: mod.programTitle,
+      skillTitle: mod.skillTitle,
+      mandatory,
+      passMarkPct: passMark,
+      hasCertificate,
+      enrolled: rows.length,
+      completed,
+      completionPct: rows.length ? Math.round((completed / rows.length) * 100) : 0,
+      passRatePct: scored ? Math.round((passed / scored) * 100) : 0,
+      dueDate: "2026-12-31",
+    },
+    rows,
+  };
 }
 
 /* ============================================================
