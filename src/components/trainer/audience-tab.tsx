@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { MoreHorizontal, Search, SlidersHorizontal, Users, X } from "lucide-react";
+import { MoreHorizontal, SlidersHorizontal, Users, X } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SearchBox } from "@/components/ui/search-box";
 import {
   Select,
   SelectContent,
@@ -196,19 +197,16 @@ export function AudienceTab({ moduleId }: { moduleId: string }) {
       {/* Advanced learner search — mirrors the admin directory */}
       <div className="grid gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <div className="relative min-w-0 flex-1 sm:max-w-sm">
-            <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setSelected([]);
-              }}
-              placeholder="Search name, user ID or email"
-              aria-label="Search learners"
-              className="h-9 pl-8"
-            />
-          </div>
+          <SearchBox
+            value={search}
+            onChange={(v) => {
+              setSearch(v);
+              setSelected([]);
+            }}
+            placeholder="Search name, user ID or email"
+            ariaLabel="Search learners"
+            className="min-w-0 flex-1 sm:max-w-sm"
+          />
           <Button
             size="sm"
             variant={showFilters ? "secondary" : "outline"}
@@ -328,9 +326,14 @@ export function AudienceTab({ moduleId }: { moduleId: string }) {
               headers={[
                 "Name",
                 "Email",
-                "Team",
+                "Division",
+                "Designation",
+                "Manager",
                 "Status",
+                "Result",
                 "Progress %",
+                "Enrolled on",
+                "Started on",
                 "Due date",
                 "Last activity",
               ]}
@@ -338,8 +341,13 @@ export function AudienceTab({ moduleId }: { moduleId: string }) {
                 row.name,
                 row.email,
                 row.team,
+                row.designation,
+                row.manager,
                 row.status,
+                row.outcome ?? "—",
                 row.progressPct,
+                row.enrolledOn,
+                row.startedOn || "—",
                 row.dueDate,
                 row.lastActivity,
               ])}
@@ -390,6 +398,7 @@ export function AudienceTab({ moduleId }: { moduleId: string }) {
                   <TableHead className="hidden sm:table-cell">Team</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Progress</TableHead>
+                  <TableHead className="hidden text-right lg:table-cell">Enrolled</TableHead>
                   <TableHead className="hidden text-right sm:table-cell">Last activity</TableHead>
                   <TableHead className="w-10" />
                 </TableRow>
@@ -423,9 +432,24 @@ export function AudienceTab({ moduleId }: { moduleId: string }) {
                           className={cn("size-1.5 shrink-0 rounded-full", STATUS_DOT[l.status])}
                         />
                         {STATUS_LABEL[l.status]}
+                        {l.outcome && (
+                          <span
+                            className={cn(
+                              "rounded-[4px] px-1.5 py-0.5 text-[10px] font-[590]",
+                              l.outcome === "pass"
+                                ? "bg-status-complete/12 text-status-complete"
+                                : "bg-status-overdue/12 text-status-overdue",
+                            )}
+                          >
+                            {l.outcome === "pass" ? "Pass" : "Fail"}
+                          </span>
+                        )}
                       </span>
                     </TableCell>
                     <TableCell className="tnum text-right text-sm">{l.progressPct}%</TableCell>
+                    <TableCell className="tnum hidden text-right text-xs text-muted-foreground lg:table-cell">
+                      {l.enrolledOn}
+                    </TableCell>
                     <TableCell className="hidden text-right text-xs text-muted-foreground sm:table-cell">
                       {l.lastActivity}
                     </TableCell>
