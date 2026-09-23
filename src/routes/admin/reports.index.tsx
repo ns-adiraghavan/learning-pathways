@@ -1,15 +1,12 @@
-import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { BarChart3, ChevronRight, ShieldCheck } from "lucide-react";
 
-import { getMandatoryQuizzes, getReports } from "@/data/repositories";
+import { getReports } from "@/data/repositories";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { CustomReportBuilder } from "@/components/reports/custom-report-builder";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
 
 const REPORT_TINTS = [
   "var(--chart-1)",
@@ -38,15 +35,9 @@ export const Route = createFileRoute("/admin/reports/")({
 });
 
 function ReportsPage() {
-  const [mandatoryOpen, setMandatoryOpen] = useState(false);
   const { data: reports = [], isPending } = useQuery({
     queryKey: ["admin-reports"],
     queryFn: getReports,
-  });
-  const { data: mandatory = [] } = useQuery({
-    queryKey: ["mandatory-quizzes"],
-    queryFn: getMandatoryQuizzes,
-    enabled: mandatoryOpen,
   });
 
   return (
@@ -100,73 +91,24 @@ function ReportsPage() {
         </div>
       )}
 
-      {/* Mandatory compliance — collapsed by default, lives under Reports */}
-      <section className="surface mt-4 overflow-hidden">
-        <button
-          type="button"
-          onClick={() => setMandatoryOpen((v) => !v)}
-          aria-expanded={mandatoryOpen}
-          className="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-accent/40"
-        >
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-cat-mandatory/12 text-cat-mandatory">
-            <ShieldCheck className="size-4" strokeWidth={1.75} />
+      {/* Mandatory compliance now lives inside the Completion report */}
+      <Link
+        to="/admin/reports/$reportId"
+        params={{ reportId: "completion-ratio" }}
+        className="surface card-hover mt-4 flex items-center gap-3 p-4"
+      >
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-cat-mandatory/12 text-cat-mandatory">
+          <ShieldCheck className="size-4" strokeWidth={1.75} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-card-title">Mandatory quiz compliance</span>
+          <span className="block text-xs text-muted-foreground">
+            Now inside the Completion report — open it, go to By Modules, and switch on “Mandatory
+            only” for scores, pass/fail and certificates.
           </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-card-title">Mandatory quiz compliance</span>
-            <span className="block text-xs text-muted-foreground">
-              Compliance-tracked quiz completion. Expand to view, or open the full tracker.
-            </span>
-          </span>
-          <Link
-            to="/admin/mandatory-quizzes"
-            onClick={(e) => e.stopPropagation()}
-            className="hidden text-sm font-[510] text-primary hover:underline sm:inline"
-          >
-            Open tracker
-          </Link>
-          <ChevronRight
-            className={cn(
-              "size-5 shrink-0 text-muted-foreground transition-transform",
-              mandatoryOpen && "rotate-90",
-            )}
-            strokeWidth={1.75}
-          />
-        </button>
-        {mandatoryOpen && (
-          <div className="grid gap-2 border-t border-border p-3 sm:p-4">
-            {mandatory.length === 0 ? (
-              <p className="px-1 py-4 text-center text-sm text-muted-foreground">
-                No mandatory quizzes flagged yet.
-              </p>
-            ) : (
-              mandatory.map((q) => (
-                <Link
-                  key={q.id}
-                  to="/admin/mandatory-quizzes/$quizId"
-                  params={{ quizId: q.quizId }}
-                  className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-border bg-card px-3 py-2.5 transition-colors hover:bg-accent/40"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-[510]">{q.quizName}</p>
-                    <p className="truncate text-xs text-muted-foreground">{q.moduleTitle}</p>
-                    <Progress
-                      value={q.completionPct}
-                      className="mt-2 h-1.5 max-w-64"
-                      indicatorClassName="bg-cat-mandatory"
-                    />
-                  </div>
-                  <span className="tnum shrink-0 text-sm font-[510]">
-                    {q.completionPct}%
-                    <span className="block text-xs font-normal text-muted-foreground">
-                      {q.completed}/{q.enrolled}
-                    </span>
-                  </span>
-                </Link>
-              ))
-            )}
-          </div>
-        )}
-      </section>
+        </span>
+        <ChevronRight className="size-5 shrink-0 text-muted-foreground" strokeWidth={1.75} />
+      </Link>
     </div>
   );
 }
