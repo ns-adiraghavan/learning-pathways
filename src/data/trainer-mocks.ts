@@ -2,7 +2,8 @@ import posterOnboarding from "@/assets/poster-onboarding.jpg";
 import posterMandatory from "@/assets/poster-mandatory.jpg";
 import posterTeam from "@/assets/poster-team.jpg";
 
-import { functionForDivision } from "./org";
+import { functionForDivision, PROJECTS as ORG_PROJECTS } from "./org";
+import type { OrgEntity } from "./types";
 
 import type {
   BuilderQuestion,
@@ -392,6 +393,8 @@ export function learnersFor(moduleId: string): EnrolledLearner[] {
       grade: L_GRADES[i % L_GRADES.length]!,
       manager: L_MANAGERS[i % L_MANAGERS.length]!,
       joiningDate: `202${(i % 4) + 1}-${String((i % 12) + 1).padStart(2, "0")}-${String((i % 27) + 1).padStart(2, "0")}`,
+      entity: (i % 4 === 2 ? "NAPL" : "NDIPL") as OrgEntity,
+      projectName: ORG_PROJECTS[i % ORG_PROJECTS.length]!,
     };
   });
 }
