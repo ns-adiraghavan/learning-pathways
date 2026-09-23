@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { LogIn } from "lucide-react";
 import { toast } from "sonner";
 
 import { updateUser } from "@/data/repositories";
@@ -33,18 +32,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-
 const STATUSES: UserStatus[] = ["active", "invited", "inactive"];
 const ROLES: AdminUser["role"][] = ["Learner", "Trainer", "Administrator"];
 
@@ -227,37 +214,7 @@ export function EditUserDrawer({ user, onClose }: { user: AdminUser | null; onCl
         )}
 
         <SheetFooter className="flex-row items-center gap-2 border-t border-border">
-          {user && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="mr-auto text-primary">
-                  <LogIn className="size-4" strokeWidth={1.75} />
-                  Login as
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Log in as {user.name}?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    You'll see Lessons exactly as this person does, for support. The session is
-                    recorded in the audit log. This is a placeholder — impersonation is wired once
-                    the backend session-assumption lands.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() =>
-                      toast.info(`Impersonation stub — would open a session as ${user.name}`)
-                    }
-                  >
-                    Continue
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
-          <Button variant="outline" size="sm" onClick={onClose}>
+          <Button variant="outline" size="sm" className="ml-auto" onClick={onClose}>
             Cancel
           </Button>
           <Button
