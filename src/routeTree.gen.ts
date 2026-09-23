@@ -10,19 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BrowseRouteImport } from './routes/browse'
 import { Route as CertificatesRouteImport } from './routes/certificates'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
-import { Route as BrowseRouteImport } from './routes/browse'
-import { Route as SearchRouteImport } from './routes/search'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MyLearningRouteImport } from './routes/my-learning'
 import { Route as ProgressRouteImport } from './routes/progress'
+import { Route as SearchRouteImport } from './routes/search'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminAssignmentsRouteImport } from './routes/admin/assignments'
 import { Route as AdminCustomizationRouteImport } from './routes/admin/customization'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
-import { Route as TrainerQuizzesRouteImport } from './routes/trainer/quizzes'
 import { Route as AdminMandatoryQuizzesIndexRouteImport } from './routes/admin/mandatory-quizzes.index'
 import { Route as AdminMandatoryQuizzesQuizIdRouteImport } from './routes/admin/mandatory-quizzes.$quizId'
 import { Route as AdminReportsIndexRouteImport } from './routes/admin/reports.index'
@@ -37,6 +36,11 @@ import { Route as TrainerSkillsSkillIdRouteImport } from './routes/trainer/skill
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BrowseRoute = BrowseRouteImport.update({
+  id: '/browse',
+  path: '/browse',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CertificatesRoute = CertificatesRouteImport.update({
@@ -54,16 +58,6 @@ const LeaderboardRoute = LeaderboardRouteImport.update({
   path: '/leaderboard',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BrowseRoute = BrowseRouteImport.update({
-  id: '/browse',
-  path: '/browse',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SearchRoute = SearchRouteImport.update({
-  id: '/search',
-  path: '/search',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -77,6 +71,11 @@ const MyLearningRoute = MyLearningRouteImport.update({
 const ProgressRoute = ProgressRouteImport.update({
   id: '/progress',
   path: '/progress',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -97,11 +96,6 @@ const AdminCustomizationRoute = AdminCustomizationRouteImport.update({
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/admin/users',
   path: '/admin/users',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TrainerQuizzesRoute = TrainerQuizzesRouteImport.update({
-  id: '/trainer/quizzes',
-  path: '/trainer/quizzes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminMandatoryQuizzesIndexRoute =
@@ -160,18 +154,17 @@ const TrainerSkillsSkillIdRoute = TrainerSkillsSkillIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/browse': typeof BrowseRoute
   '/certificates': typeof CertificatesRoute
   '/home': typeof HomeRoute
   '/leaderboard': typeof LeaderboardRoute
-  '/browse': typeof BrowseRoute
-  '/search': typeof SearchRoute
   '/login': typeof LoginRoute
   '/my-learning': typeof MyLearningRoute
   '/progress': typeof ProgressRoute
+  '/search': typeof SearchRoute
   '/admin/assignments': typeof AdminAssignmentsRoute
   '/admin/customization': typeof AdminCustomizationRoute
   '/admin/users': typeof AdminUsersRoute
-  '/trainer/quizzes': typeof TrainerQuizzesRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/mandatory-quizzes/$quizId': typeof AdminMandatoryQuizzesQuizIdRoute
   '/admin/reports/$reportId': typeof AdminReportsReportIdRoute
@@ -186,18 +179,17 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/browse': typeof BrowseRoute
   '/certificates': typeof CertificatesRoute
   '/home': typeof HomeRoute
   '/leaderboard': typeof LeaderboardRoute
-  '/browse': typeof BrowseRoute
-  '/search': typeof SearchRoute
   '/login': typeof LoginRoute
   '/my-learning': typeof MyLearningRoute
   '/progress': typeof ProgressRoute
+  '/search': typeof SearchRoute
   '/admin/assignments': typeof AdminAssignmentsRoute
   '/admin/customization': typeof AdminCustomizationRoute
   '/admin/users': typeof AdminUsersRoute
-  '/trainer/quizzes': typeof TrainerQuizzesRoute
   '/admin': typeof AdminIndexRoute
   '/admin/mandatory-quizzes/$quizId': typeof AdminMandatoryQuizzesQuizIdRoute
   '/admin/reports/$reportId': typeof AdminReportsReportIdRoute
@@ -213,18 +205,17 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/browse': typeof BrowseRoute
   '/certificates': typeof CertificatesRoute
   '/home': typeof HomeRoute
   '/leaderboard': typeof LeaderboardRoute
-  '/browse': typeof BrowseRoute
-  '/search': typeof SearchRoute
   '/login': typeof LoginRoute
   '/my-learning': typeof MyLearningRoute
   '/progress': typeof ProgressRoute
+  '/search': typeof SearchRoute
   '/admin/assignments': typeof AdminAssignmentsRoute
   '/admin/customization': typeof AdminCustomizationRoute
   '/admin/users': typeof AdminUsersRoute
-  '/trainer/quizzes': typeof TrainerQuizzesRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/mandatory-quizzes/$quizId': typeof AdminMandatoryQuizzesQuizIdRoute
   '/admin/reports/$reportId': typeof AdminReportsReportIdRoute
@@ -241,18 +232,17 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/browse'
     | '/certificates'
     | '/home'
     | '/leaderboard'
-    | '/browse'
-    | '/search'
     | '/login'
     | '/my-learning'
     | '/progress'
+    | '/search'
     | '/admin/assignments'
     | '/admin/customization'
     | '/admin/users'
-    | '/trainer/quizzes'
     | '/admin/'
     | '/admin/mandatory-quizzes/$quizId'
     | '/admin/reports/$reportId'
@@ -267,18 +257,17 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/browse'
     | '/certificates'
     | '/home'
     | '/leaderboard'
-    | '/browse'
-    | '/search'
     | '/login'
     | '/my-learning'
     | '/progress'
+    | '/search'
     | '/admin/assignments'
     | '/admin/customization'
     | '/admin/users'
-    | '/trainer/quizzes'
     | '/admin'
     | '/admin/mandatory-quizzes/$quizId'
     | '/admin/reports/$reportId'
@@ -293,18 +282,17 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/browse'
     | '/certificates'
     | '/home'
     | '/leaderboard'
-    | '/browse'
-    | '/search'
     | '/login'
     | '/my-learning'
     | '/progress'
+    | '/search'
     | '/admin/assignments'
     | '/admin/customization'
     | '/admin/users'
-    | '/trainer/quizzes'
     | '/admin/'
     | '/admin/mandatory-quizzes/$quizId'
     | '/admin/reports/$reportId'
@@ -320,18 +308,17 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BrowseRoute: typeof BrowseRoute
   CertificatesRoute: typeof CertificatesRoute
   HomeRoute: typeof HomeRoute
   LeaderboardRoute: typeof LeaderboardRoute
-  BrowseRoute: typeof BrowseRoute
-  SearchRoute: typeof SearchRoute
   LoginRoute: typeof LoginRoute
   MyLearningRoute: typeof MyLearningRoute
   ProgressRoute: typeof ProgressRoute
+  SearchRoute: typeof SearchRoute
   AdminAssignmentsRoute: typeof AdminAssignmentsRoute
   AdminCustomizationRoute: typeof AdminCustomizationRoute
   AdminUsersRoute: typeof AdminUsersRoute
-  TrainerQuizzesRoute: typeof TrainerQuizzesRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminMandatoryQuizzesQuizIdRoute: typeof AdminMandatoryQuizzesQuizIdRoute
   AdminReportsReportIdRoute: typeof AdminReportsReportIdRoute
@@ -352,6 +339,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/browse': {
+      id: '/browse'
+      path: '/browse'
+      fullPath: '/browse'
+      preLoaderRoute: typeof BrowseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/certificates': {
@@ -375,20 +369,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LeaderboardRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/browse': {
-      id: '/browse'
-      path: '/browse'
-      fullPath: '/browse'
-      preLoaderRoute: typeof BrowseRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/search': {
-      id: '/search'
-      path: '/search'
-      fullPath: '/search'
-      preLoaderRoute: typeof SearchRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -408,6 +388,13 @@ declare module '@tanstack/react-router' {
       path: '/progress'
       fullPath: '/progress'
       preLoaderRoute: typeof ProgressRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -436,13 +423,6 @@ declare module '@tanstack/react-router' {
       path: '/admin/users'
       fullPath: '/admin/users'
       preLoaderRoute: typeof AdminUsersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/trainer/quizzes': {
-      id: '/trainer/quizzes'
-      path: '/trainer/quizzes'
-      fullPath: '/trainer/quizzes'
-      preLoaderRoute: typeof TrainerQuizzesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/mandatory-quizzes/': {
@@ -520,18 +500,17 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BrowseRoute: BrowseRoute,
   CertificatesRoute: CertificatesRoute,
   HomeRoute: HomeRoute,
   LeaderboardRoute: LeaderboardRoute,
-  BrowseRoute: BrowseRoute,
-  SearchRoute: SearchRoute,
   LoginRoute: LoginRoute,
   MyLearningRoute: MyLearningRoute,
   ProgressRoute: ProgressRoute,
+  SearchRoute: SearchRoute,
   AdminAssignmentsRoute: AdminAssignmentsRoute,
   AdminCustomizationRoute: AdminCustomizationRoute,
   AdminUsersRoute: AdminUsersRoute,
-  TrainerQuizzesRoute: TrainerQuizzesRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminMandatoryQuizzesQuizIdRoute: AdminMandatoryQuizzesQuizIdRoute,
   AdminReportsReportIdRoute: AdminReportsReportIdRoute,
