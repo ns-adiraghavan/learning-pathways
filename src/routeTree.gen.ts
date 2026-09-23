@@ -22,6 +22,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminAssignmentsRouteImport } from './routes/admin/assignments'
 import { Route as AdminCustomizationRouteImport } from './routes/admin/customization'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
+import { Route as TrainerQuizzesRouteImport } from './routes/trainer/quizzes'
 import { Route as AdminMandatoryQuizzesIndexRouteImport } from './routes/admin/mandatory-quizzes.index'
 import { Route as AdminMandatoryQuizzesQuizIdRouteImport } from './routes/admin/mandatory-quizzes.$quizId'
 import { Route as AdminReportsIndexRouteImport } from './routes/admin/reports.index'
@@ -98,6 +99,11 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
   path: '/admin/users',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TrainerQuizzesRoute = TrainerQuizzesRouteImport.update({
+  id: '/trainer/quizzes',
+  path: '/trainer/quizzes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminMandatoryQuizzesIndexRoute =
   AdminMandatoryQuizzesIndexRouteImport.update({
     id: '/admin/mandatory-quizzes/',
@@ -165,6 +171,7 @@ export interface FileRoutesByFullPath {
   '/admin/assignments': typeof AdminAssignmentsRoute
   '/admin/customization': typeof AdminCustomizationRoute
   '/admin/users': typeof AdminUsersRoute
+  '/trainer/quizzes': typeof TrainerQuizzesRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/mandatory-quizzes/$quizId': typeof AdminMandatoryQuizzesQuizIdRoute
   '/admin/reports/$reportId': typeof AdminReportsReportIdRoute
@@ -190,6 +197,7 @@ export interface FileRoutesByTo {
   '/admin/assignments': typeof AdminAssignmentsRoute
   '/admin/customization': typeof AdminCustomizationRoute
   '/admin/users': typeof AdminUsersRoute
+  '/trainer/quizzes': typeof TrainerQuizzesRoute
   '/admin': typeof AdminIndexRoute
   '/admin/mandatory-quizzes/$quizId': typeof AdminMandatoryQuizzesQuizIdRoute
   '/admin/reports/$reportId': typeof AdminReportsReportIdRoute
@@ -216,6 +224,7 @@ export interface FileRoutesById {
   '/admin/assignments': typeof AdminAssignmentsRoute
   '/admin/customization': typeof AdminCustomizationRoute
   '/admin/users': typeof AdminUsersRoute
+  '/trainer/quizzes': typeof TrainerQuizzesRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/mandatory-quizzes/$quizId': typeof AdminMandatoryQuizzesQuizIdRoute
   '/admin/reports/$reportId': typeof AdminReportsReportIdRoute
@@ -243,6 +252,7 @@ export interface FileRouteTypes {
     | '/admin/assignments'
     | '/admin/customization'
     | '/admin/users'
+    | '/trainer/quizzes'
     | '/admin/'
     | '/admin/mandatory-quizzes/$quizId'
     | '/admin/reports/$reportId'
@@ -268,6 +278,7 @@ export interface FileRouteTypes {
     | '/admin/assignments'
     | '/admin/customization'
     | '/admin/users'
+    | '/trainer/quizzes'
     | '/admin'
     | '/admin/mandatory-quizzes/$quizId'
     | '/admin/reports/$reportId'
@@ -293,6 +304,7 @@ export interface FileRouteTypes {
     | '/admin/assignments'
     | '/admin/customization'
     | '/admin/users'
+    | '/trainer/quizzes'
     | '/admin/'
     | '/admin/mandatory-quizzes/$quizId'
     | '/admin/reports/$reportId'
@@ -319,6 +331,7 @@ export interface RootRouteChildren {
   AdminAssignmentsRoute: typeof AdminAssignmentsRoute
   AdminCustomizationRoute: typeof AdminCustomizationRoute
   AdminUsersRoute: typeof AdminUsersRoute
+  TrainerQuizzesRoute: typeof TrainerQuizzesRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminMandatoryQuizzesQuizIdRoute: typeof AdminMandatoryQuizzesQuizIdRoute
   AdminReportsReportIdRoute: typeof AdminReportsReportIdRoute
@@ -425,6 +438,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/trainer/quizzes': {
+      id: '/trainer/quizzes'
+      path: '/trainer/quizzes'
+      fullPath: '/trainer/quizzes'
+      preLoaderRoute: typeof TrainerQuizzesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/mandatory-quizzes/': {
       id: '/admin/mandatory-quizzes/'
       path: '/admin/mandatory-quizzes'
@@ -511,6 +531,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminAssignmentsRoute: AdminAssignmentsRoute,
   AdminCustomizationRoute: AdminCustomizationRoute,
   AdminUsersRoute: AdminUsersRoute,
+  TrainerQuizzesRoute: TrainerQuizzesRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminMandatoryQuizzesQuizIdRoute: AdminMandatoryQuizzesQuizIdRoute,
   AdminReportsReportIdRoute: AdminReportsReportIdRoute,
