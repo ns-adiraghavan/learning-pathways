@@ -10,6 +10,7 @@ import { AudienceTab } from "@/components/trainer/audience-tab";
 import { ContentFlowTab } from "@/components/trainer/content-flow-tab";
 import { SettingsTab } from "@/components/trainer/settings-tab";
 import { StateBadge } from "@/components/trainer/state-badge";
+import { PublishControl } from "@/components/trainer/publish-control";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -95,9 +96,12 @@ function ModuleEditorPage() {
           <Button size="sm" variant="outline" onClick={save}>
             Save draft
           </Button>
-          <Button size="sm" onClick={() => toast.success("Module published")}>
-            Publish
-          </Button>
+          <PublishControl
+            id={draft.id}
+            state={draft.state}
+            kind="module"
+            invalidateKeys={[["module-draft", moduleId]]}
+          />
         </div>
       </header>
 
