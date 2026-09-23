@@ -9,6 +9,13 @@ export type ModuleStatus = "not-started" | "in-progress" | "complete" | "overdue
 
 export type Difficulty = "easy" | "medium" | "hard";
 
+/**
+ * How a quiz counts as "done": `completion` = simply attempting/finishing it,
+ * `pass` = scoring at or above the pass mark. Captured per quiz, and separately
+ * rolled up to the module (see ModuleSettings.completionRule).
+ */
+export type CompletionCriteria = "completion" | "pass";
+
 export interface User {
   id: string;
   name: string;
@@ -72,6 +79,8 @@ export interface QuizActivity {
   shuffle: boolean;
   /** Trainer-set pass mark (% of questions correct). Defaults to 70 if unset. */
   passingPct?: number;
+  /** Whether finishing or passing counts as completing this quiz. Defaults to "pass". */
+  completionCriteria?: CompletionCriteria;
 }
 
 export type Activity = VideoActivity | DeckActivity | WeblinkActivity | QuizActivity;
@@ -195,6 +204,7 @@ export interface Skill {
   description: string;
   moduleCount: number;
   learnerCount: number;
+  state: PublishState;
 }
 
 /** A module as the trainer sees it inside a skill. */
@@ -221,6 +231,16 @@ export interface DraftActivity {
   mandatory: boolean;
   /** Quiz only: trainer-set pass mark (% correct). Flows through to scoring. */
   passingPct?: number;
+  /** Quiz only: whether finishing or passing counts as done. Defaults to "pass". */
+  completionCriteria?: CompletionCriteria;
+  /** Quiz only: source template the questions were loaded from. */
+  templateId?: string;
+  /** Quiz only: time limit in minutes. */
+  timeLimitMins?: number;
+  /** Quiz only: how many times a learner may retake. */
+  maxReattempts?: number;
+  /** Quiz only: shuffle the question order per attempt. */
+  shuffle?: boolean;
 }
 
 export type PushEnrollment = "all-skill" | "audience" | "manual";
@@ -239,6 +259,18 @@ export interface ModuleSettings {
   tags: string[];
   keywords: string[];
   leaderboardPoints: number;
+  /**
+   * How the MODULE is marked complete (captured separately from each quiz's own
+   * criteria): "complete-activities" = finish every required activity;
+   * "pass-quizzes" = additionally pass all pass-criteria quizzes in the module.
+   */
+  completionRule: "complete-activities" | "pass-quizzes";
+  /** Who can see the module once published. */
+  visibility: "everyone" | "audience" | "restricted";
+  /** Teams/divisions with access when visibility is "restricted". */
+  accessTeams: string[];
+  /** People or teams explicitly excluded from seeing the module. */
+  excluded: string[];
 }
 
 export interface ModuleDraft {
@@ -259,6 +291,9 @@ export interface ModuleDraft {
 
 export type EnrolledStatus = "not-started" | "in-progress" | "complete";
 
+/** Pass/fail outcome once a module's pass-criteria quiz is attempted. */
+export type LearnerOutcome = "pass" | "fail" | null;
+
 export interface EnrolledLearner {
   id: string;
   /** Human-facing employee id (matches the admin directory). */
@@ -267,7 +302,13 @@ export interface EnrolledLearner {
   email: string;
   team: string;
   status: EnrolledStatus;
+  /** Pass/fail once the pass-criteria quiz is taken; null until then. */
+  outcome: LearnerOutcome;
   progressPct: number;
+  /** When the learner was enrolled/assigned. */
+  enrolledOn: string;
+  /** When the learner first started; empty if not started. */
+  startedOn: string;
   dueDate: string;
   lastActivity: string;
   /** Org attributes so the trainer's Audience search mirrors the admin directory. */
@@ -483,6 +524,10 @@ export interface ReportFilters {
   location: string;
   team?: string;
   program?: string;
+  functionArea?: string;
+  designation?: string;
+  manager?: string;
+  status?: string;
   tab?: ReportTab;
 }
 
