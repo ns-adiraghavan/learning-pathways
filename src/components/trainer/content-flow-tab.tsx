@@ -1,8 +1,10 @@
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
+  Check,
   ChevronRight,
   Download,
+  Eye,
   FileText,
   GripVertical,
   Link2,
@@ -15,11 +17,18 @@ import {
 
 import { toast } from "sonner";
 
-import type { ActivityType, DraftActivity, ModuleDraft, QuizTemplate } from "@/data/types";
+import type {
+  ActivityType,
+  BuilderQuestion,
+  DraftActivity,
+  ModuleDraft,
+  QuizTemplate,
+} from "@/data/types";
 import {
   getCertificateTemplates,
   getFeedbackSurveys,
   getQuizTemplates,
+  getTemplateQuestions,
   setQuizMandatory,
 } from "@/data/repositories";
 import { Button } from "@/components/ui/button";
@@ -579,6 +588,8 @@ function ActivityPanel({
                 {template.mix.hard}H
               </p>
             )}
+            {/* Preview the actual questions in-line so a trainer can see/verify them here */}
+            <QuestionsPreview templateId={a.templateId} />
           </div>
 
           {/* Completion criteria — either finishing or passing */}
@@ -696,6 +707,126 @@ function ActivityPanel({
           </label>
         )}
       </div>
+    </div>
+  );
+}
+
+const DIFF_BADGE: Record<BuilderQuestion["difficulty"], string> = {
+  easy: "bg-status-complete/12 text-status-complete",
+  medium: "bg-cat-bank/15 text-cat-bank",
+  hard: "bg-status-overdue/12 text-status-overdue",
+};
+
+/**
+ * In-line question preview for the trainer. Shows the actual questions loaded for
+ * this quiz — prompt, options (correct one marked) and explanation — so a trainer
+ * can see and verify the assessment right in the module editor.
+ */
+function QuestionsPreview({ templateId }: { templateId?: string | undefined }) {
+  const [open, setOpen] = useState(false);
+  const { data: questions = [], isPending } = useQuery({
+    queryKey: ["template-questions", templateId],
+    queryFn: () => getTemplateQuestions(templateId!),
+    enabled: open && !!templateId,
+  });
+
+  if (!templateId) {
+    return (
+      <p className="text-xs text-muted-foreground">
+        Pick a template or upload a sheet to preview its questions here.
+      </p>
+    );
+  }
+
+  return (
+    <div className="rounded-lg border border-border">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm"
+      >
+        <Eye className="size-4 text-muted-foreground" strokeWidth={1.75} />
+        <span className="font-[510]">Preview questions</span>
+        <ChevronRight
+          className={cn(
+            "ml-auto size-4 text-muted-foreground transition-transform",
+            open && "rotate-90",
+          )}
+          strokeWidth={1.75}
+        />
+      </button>
+      {open && (
+        <div className="border-t border-border p-3">
+          {isPending ? (
+            <p className="text-xs text-muted-foreground">Loading questions…</p>
+          ) : questions.length === 0 ? (
+            <p className="text-xs text-muted-foreground">No questions found for this template.</p>
+          ) : (
+            <ol className="grid gap-3">
+              {questions.map((q, i) => (
+                <li key={q.id} className="rounded-lg bg-secondary/40 p-3">
+                  <div className="flex items-start gap-2">
+                    <span className="tnum mt-0.5 text-xs font-[590] text-muted-foreground">
+                      {i + 1}.
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm font-[510]">{q.prompt}</p>
+                        <span
+                          className={cn(
+                            "shrink-0 rounded-[4px] px-1.5 py-0.5 text-[10px] font-[590] capitalize",
+                            DIFF_BADGE[q.difficulty],
+                          )}
+                        >
+                          {q.difficulty}
+                        </span>
+                      </div>
+                      <ul className="mt-2 grid gap-1">
+                        {q.options.map((opt, oi) => {
+                          const correct = oi === q.correctIndex;
+                          return (
+                            <li
+                              key={oi}
+                              className={cn(
+                                "flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-sm",
+                                correct
+                                  ? "border-status-complete/40 bg-status-complete/8 text-foreground"
+                                  : "border-border text-muted-foreground",
+                              )}
+                            >
+                              <span
+                                className={cn(
+                                  "flex size-4 shrink-0 items-center justify-center rounded-full text-[10px] font-[590]",
+                                  correct
+                                    ? "bg-status-complete text-white"
+                                    : "bg-secondary text-muted-foreground",
+                                )}
+                              >
+                                {correct ? (
+                                  <Check className="size-3" strokeWidth={2.5} />
+                                ) : (
+                                  String.fromCharCode(65 + oi)
+                                )}
+                              </span>
+                              {opt}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                      {q.explanation && (
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          <span className="font-[510] text-foreground">Why:</span> {q.explanation}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
+      )}
     </div>
   );
 }
