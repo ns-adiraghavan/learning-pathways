@@ -9,6 +9,7 @@ import { CATEGORY_LABEL, formatMinutes, moduleMinutes } from "@/lib/format";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { PageFade, ShimmerBlock } from "@/components/motion/motion";
 import { SearchBox } from "@/components/ui/search-box";
+import { COVERS } from "@/lib/covers";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/browse")({
@@ -41,6 +42,16 @@ const STATUS_DOT: Record<LearningModule["status"], string> = {
 };
 
 const PROGRAM_TINTS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-4)", "var(--chart-3)"];
+
+/** Deterministic cover art per program title, so tiles look consistent across visits. */
+function programCover(title: string): string {
+  let h = 2166136261;
+  for (let i = 0; i < title.length; i += 1) {
+    h ^= title.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return COVERS[(h >>> 0) % COVERS.length]!.dataUri;
+}
 
 interface SkillNode {
   skill: string;
@@ -181,35 +192,62 @@ function BrowsePage() {
                   type="button"
                   onClick={() => toggleProgram(p.program)}
                   aria-expanded={open}
-                  className="relative flex w-full items-center gap-3 p-4 pl-5 text-left transition-colors hover:bg-accent/40"
+                  className="group block w-full text-left"
                 >
+                  {/* Cover banner — taller when collapsed (a real tile), a slim strip when open. */}
                   <span
-                    aria-hidden
-                    className="absolute inset-y-0 left-0 w-[3px] bg-(--tile-tint)"
-                  />
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    <Layers className="size-4" strokeWidth={1.75} />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-card-title">{p.program}</span>
-                    <span className="tnum mt-0.5 block text-xs text-muted-foreground">
-                      {p.skills.length} skill{p.skills.length === 1 ? "" : "s"} · {p.moduleCount}{" "}
-                      module{p.moduleCount === 1 ? "" : "s"} · {pct}% complete
-                    </span>
-                    <span className="mt-2 block h-1.5 w-full max-w-48 overflow-hidden rounded-full bg-secondary">
-                      <span
-                        className="block h-1.5 rounded-full bg-(--tile-tint)"
-                        style={{ width: `${Math.max(3, pct)}%` }}
+                    className={cn(
+                      "relative block w-full overflow-hidden transition-[height]",
+                      open ? "h-16" : "h-28",
+                    )}
+                  >
+                    <img
+                      src={programCover(p.program)}
+                      alt=""
+                      loading="lazy"
+                      className="absolute inset-0 size-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                    />
+                    <span
+                      aria-hidden
+                      className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-black/10"
+                    />
+                    <span className="absolute inset-x-3 bottom-2.5 flex items-end justify-between gap-2">
+                      <span className="min-w-0">
+                        <span className="flex items-center gap-1.5">
+                          <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-white/20 text-white backdrop-blur-sm">
+                            <Layers className="size-3.5" strokeWidth={2} />
+                          </span>
+                          <span className="truncate text-sm font-[610] text-white drop-shadow-sm">
+                            {p.program}
+                          </span>
+                        </span>
+                        {!open && (
+                          <span className="tnum mt-1 block truncate text-[11px] text-white/85">
+                            {p.skills.length} skill{p.skills.length === 1 ? "" : "s"} ·{" "}
+                            {p.moduleCount} module{p.moduleCount === 1 ? "" : "s"} · {pct}% complete
+                          </span>
+                        )}
+                      </span>
+                      <ChevronRight
+                        className={cn(
+                          "size-5 shrink-0 text-white transition-transform",
+                          open && "rotate-90",
+                        )}
+                        strokeWidth={2}
                       />
                     </span>
                   </span>
-                  <ChevronRight
-                    className={cn(
-                      "size-5 shrink-0 text-muted-foreground transition-transform",
-                      open && "rotate-90",
-                    )}
-                    strokeWidth={1.75}
-                  />
+                  {/* Progress rail below the cover, only when collapsed. */}
+                  {!open && (
+                    <span className="block px-4 pb-3 pt-2.5">
+                      <span className="block h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+                        <span
+                          className="block h-1.5 rounded-full bg-(--tile-tint)"
+                          style={{ width: `${Math.max(3, pct)}%` }}
+                        />
+                      </span>
+                    </span>
+                  )}
                 </button>
 
                 {open && (
