@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { type ReactNode, useMemo, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { BookOpen, ChevronLeft, Pencil, Plus, Search } from "lucide-react";
+import { toast } from "sonner";
 
-import { getSkill } from "@/data/repositories";
+import { createModuleDraft, getSkill } from "@/data/repositories";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { StateBadge } from "@/components/trainer/state-badge";
 import { PublishControl } from "@/components/trainer/publish-control";
@@ -11,6 +12,17 @@ import { StateFilterPills, type StateFilterValue } from "@/components/trainer/st
 import { SearchBox } from "@/components/ui/search-box";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { formatDate } from "@/lib/format";
 
 export const Route = createFileRoute("/trainer/skills/$skillId")({
@@ -86,10 +98,15 @@ function SkillPage() {
                 kind="skill"
                 invalidateKeys={[["skill", skillId]]}
               />
-              <Button size="sm">
-                <Plus className="size-4" strokeWidth={2} />
-                Add module
-              </Button>
+              <AddModuleDialog
+                skillId={skillId}
+                trigger={
+                  <Button size="sm">
+                    <Plus className="size-4" strokeWidth={2} />
+                    Add module
+                  </Button>
+                }
+              />
             </div>
           </header>
 
@@ -110,7 +127,12 @@ function SkillPage() {
               icon={BookOpen}
               title="No modules yet"
               description="Add this year's module to start building its content flow."
-              action={<Button size="sm">Add module</Button>}
+              action={
+                <AddModuleDialog
+                  skillId={skillId}
+                  trigger={<Button size="sm">Add module</Button>}
+                />
+              }
             />
           ) : modules.length === 0 ? (
             <EmptyState
@@ -161,5 +183,57 @@ function SkillPage() {
         </>
       )}
     </div>
+  );
+}
+
+function AddModuleDialog({ skillId, trigger }: { skillId: string; trigger: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const navigate = useNavigate();
+
+  const mutation = useMutation({
+    mutationFn: () => createModuleDraft(skillId, { title: title.trim() }),
+    onSuccess: (draft) => {
+      toast.success("Fresh module created — build its content flow");
+      setOpen(false);
+      setTitle("");
+      void navigate({ to: "/trainer/modules/$moduleId", params: { moduleId: draft.id } });
+    },
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Add module</DialogTitle>
+          <DialogDescription>
+            Give it a name and we'll open a fresh module setup — content flow, settings and
+            audience, all empty and ready to build.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-1.5">
+          <Label htmlFor="am-title">Module title</Label>
+          <Input
+            id="am-title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g. Information Security 2027"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && title.trim() && !mutation.isPending) mutation.mutate();
+            }}
+          />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button disabled={!title.trim() || mutation.isPending} onClick={() => mutation.mutate()}>
+            Create &amp; open
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
