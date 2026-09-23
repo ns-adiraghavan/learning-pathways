@@ -1,11 +1,15 @@
+import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Layers, Plus } from "lucide-react";
+import { ChevronRight, Layers, Plus, Search } from "lucide-react";
 
 import { getPrograms } from "@/data/repositories";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { StatTile } from "@/components/lessons/count-up";
 import { StateBadge } from "@/components/trainer/state-badge";
+import { PublishControl } from "@/components/trainer/publish-control";
+import { StateFilterPills, type StateFilterValue } from "@/components/trainer/state-filter";
+import { SearchBox } from "@/components/ui/search-box";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -31,7 +35,10 @@ export const Route = createFileRoute("/trainer/programs/")({
 
 function ProgramsPage() {
   const { data, isPending } = useQuery({ queryKey: ["programs"], queryFn: getPrograms });
-  const programs = data ?? [];
+  const [q, setQ] = useState("");
+  const [stateFilter, setStateFilter] = useState<StateFilterValue>("all");
+
+  const programs = useMemo(() => data ?? [], [data]);
   const totals = programs.reduce(
     (sum, program) => ({
       skills: sum.skills + program.skillCount,
@@ -40,6 +47,18 @@ function ProgramsPage() {
     }),
     { skills: 0, modules: 0, learners: 0 },
   );
+
+  const filtered = useMemo(() => {
+    const query = q.trim().toLowerCase();
+    return programs.filter(
+      (p) =>
+        (stateFilter === "all" || p.state === stateFilter) &&
+        (!query ||
+          p.title.toLowerCase().includes(query) ||
+          p.description.toLowerCase().includes(query) ||
+          p.owner.toLowerCase().includes(query)),
+    );
+  }, [programs, q, stateFilter]);
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">
@@ -57,12 +76,28 @@ function ProgramsPage() {
       </header>
 
       {!isPending && programs.length > 0 && (
-        <section className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Program summary">
+        <section
+          className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4"
+          aria-label="Program summary"
+        >
           <StatTile label="Programs" value={programs.length} tint="var(--chart-1)" tone="solid" />
           <StatTile label="Skills" value={totals.skills} tint="var(--chart-2)" tone="solid" />
           <StatTile label="Modules" value={totals.modules} tint="var(--chart-3)" tone="soft" />
           <StatTile label="Learners" value={totals.learners} tint="var(--chart-4)" tone="soft" />
         </section>
+      )}
+
+      {/* Search + state filter — the shared pattern used across programs, skills and modules */}
+      {!isPending && programs.length > 0 && (
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <SearchBox
+            value={q}
+            onChange={setQ}
+            placeholder="Search programs or owners"
+            className="min-w-0 flex-1 sm:max-w-xs"
+          />
+          <StateFilterPills value={stateFilter} onChange={setStateFilter} />
+        </div>
       )}
 
       {isPending ? (
@@ -78,12 +113,20 @@ function ProgramsPage() {
           description="Create a program to group skills and their yearly modules."
           action={<Button size="sm">Create program</Button>}
         />
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          icon={Search}
+          title="No programs match"
+          description="Nothing matches this search or filter. Clear it to see everything."
+        />
       ) : (
         <div className="grid gap-3">
-          {programs.map((p, index) => (
-            <article
+          {filtered.map((p, index) => (
+            <Link
               key={p.id}
-              className="surface tinted-surface surface-hover relative overflow-hidden p-4 pl-5 sm:p-5 sm:pl-6"
+              to="/trainer/programs/$programId"
+              params={{ programId: p.id }}
+              className="surface tinted-surface surface-hover relative block overflow-hidden p-4 pl-5 sm:p-5 sm:pl-6"
               style={{ ["--tile-tint" as string]: PROGRAM_TINTS[index % PROGRAM_TINTS.length] }}
             >
               <span aria-hidden className="absolute inset-y-0 left-0 w-[3px] bg-(--tile-tint)" />
@@ -93,23 +136,26 @@ function ProgramsPage() {
                     <h2 className="truncate text-card-title">{p.title}</h2>
                     <StateBadge state={p.state} />
                   </div>
-                  <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                    {p.description}
-                  </p>
+                  <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{p.description}</p>
                   <p className="tnum mt-3 text-xs text-muted-foreground">
                     {p.skillCount} skills · {p.moduleCount} modules · {p.learnerCount} learners ·
                     Owner {p.owner}
                   </p>
                 </div>
-                <div className="flex shrink-0 flex-wrap justify-end gap-2">
-                  <Button asChild size="sm" variant="outline">
-                    <Link to="/trainer/programs/$programId" params={{ programId: p.id }}>
-                      View
-                    </Link>
-                  </Button>
+                <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+                  <PublishControl
+                    id={p.id}
+                    state={p.state}
+                    kind="program"
+                    invalidateKeys={[["programs"]]}
+                  />
+                  <span className="inline-flex items-center gap-1 text-sm font-[510] text-primary">
+                    Open
+                    <ChevronRight className="size-4" strokeWidth={1.75} />
+                  </span>
                 </div>
               </div>
-            </article>
+            </Link>
           ))}
         </div>
       )}
