@@ -36,7 +36,9 @@ import {
   reportDetail,
   reports as mockReports,
   users as mockUsers,
+  moduleCompletionDetail,
 } from "./admin-mocks";
+import { coverDataUri } from "@/lib/covers";
 import { completionFor, mandatoryQuizzes as mockMandatoryQuizzes } from "./compliance-mocks";
 import { functionForDivision } from "./org";
 import type {
@@ -81,6 +83,7 @@ import type {
   PointsRule,
   MandatoryQuiz,
   QuizCompletionRow,
+  ModuleCompletionDetail,
 } from "./types";
 
 function delay<T>(value: T): Promise<T> {
@@ -309,10 +312,19 @@ export async function setPublishState(
   return delay({ id, state });
 }
 
+/** Programs/skills/modules created by hand in this session (see create* below). */
+const addedPrograms: Program[] = [];
+const addedSkills: Skill[] = [];
+const addedModuleSummaries: TrainerModuleSummary[] = [];
+
+const allPrograms = () => [...mockPrograms, ...addedPrograms];
+const allSkills = () => [...mockSkills, ...addedSkills];
+const allTrainerModules = () => [...mockTrainerModules, ...addedModuleSummaries];
+
 // CONNECT: replace with real API call to GET /api/trainer/programs
 export async function getPrograms(): Promise<Program[]> {
   if (EMPTY_STATE) return delay([]);
-  return delay(mockPrograms.map(withState));
+  return delay(allPrograms().map(withState));
 }
 
 // CONNECT: replace with real API call to GET /api/trainer/programs/:id
@@ -320,11 +332,13 @@ export async function getProgram(
   id: string,
 ): Promise<{ program: Program; skills: Skill[] } | null> {
   if (EMPTY_STATE) return delay(null);
-  const program = mockPrograms.find((p) => p.id === id);
+  const program = allPrograms().find((p) => p.id === id);
   if (!program) return delay(null);
   return delay({
     program: withState(program),
-    skills: mockSkills.filter((s) => s.programId === id).map(withState),
+    skills: allSkills()
+      .filter((s) => s.programId === id)
+      .map(withState),
   });
 }
 
@@ -333,12 +347,114 @@ export async function getSkill(
   id: string,
 ): Promise<{ skill: Skill; modules: TrainerModuleSummary[] } | null> {
   if (EMPTY_STATE) return delay(null);
-  const skill = mockSkills.find((s) => s.id === id);
+  const skill = allSkills().find((s) => s.id === id);
   if (!skill) return delay(null);
   return delay({
     skill: withState(skill),
-    modules: mockTrainerModules.filter((m) => m.skillId === id).map(withState),
+    modules: allTrainerModules()
+      .filter((m) => m.skillId === id)
+      .map(withState),
   });
+}
+
+/* ------------------------------------------------------------
+ * Create flows — a fresh program / skill / module, stored in-session
+ * so the "New program", "Add skill" and "Add module" buttons open a
+ * real blank setup before the authoring API lands.
+ * ------------------------------------------------------------ */
+
+// CONNECT: replace with real API call to POST /api/trainer/programs
+export async function createProgram(input: {
+  title: string;
+  description: string;
+  owner: string;
+}): Promise<Program> {
+  const program: Program = {
+    id: `p-new-${addedPrograms.length + 1}-${Date.now().toString(36)}`,
+    title: input.title,
+    description: input.description,
+    owner: input.owner || "You",
+    skillCount: 0,
+    moduleCount: 0,
+    learnerCount: 0,
+    state: "draft",
+  };
+  addedPrograms.push(program);
+  return delay(program);
+}
+
+// CONNECT: replace with real API call to POST /api/trainer/programs/:id/skills
+export async function createSkill(
+  programId: string,
+  input: { title: string; description: string },
+): Promise<Skill> {
+  const program = allPrograms().find((p) => p.id === programId);
+  const skill: Skill = {
+    id: `s-new-${addedSkills.length + 1}-${Date.now().toString(36)}`,
+    programId,
+    programTitle: program?.title ?? "—",
+    title: input.title,
+    description: input.description,
+    moduleCount: 0,
+    learnerCount: 0,
+    state: "draft",
+  };
+  addedSkills.push(skill);
+  return delay(skill);
+}
+
+// CONNECT: replace with real API call to POST /api/trainer/skills/:id/modules
+export async function createModuleDraft(
+  skillId: string,
+  input?: { title?: string },
+): Promise<ModuleDraft> {
+  const skill = allSkills().find((s) => s.id === skillId);
+  const id = `d-new-${addedModuleSummaries.length + 1}-${Date.now().toString(36)}`;
+  const title = input?.title?.trim() || "Untitled module";
+  const draft: ModuleDraft = {
+    id,
+    skillId,
+    skillTitle: skill?.title ?? "—",
+    programTitle: skill?.programTitle ?? "—",
+    title,
+    description: "",
+    posterImage: coverDataUri("sky-analytics"),
+    state: "draft",
+    orderLocked: true,
+    certificateTemplateId: null,
+    feedbackSurveyId: null,
+    activities: [],
+    settings: {
+      pushEnrollment: "all-skill",
+      targetAudience: "",
+      selfEnrollment: "criteria",
+      criteria: "",
+      dueMode: "fixed",
+      dueDate: "2026-12-31",
+      dueWithinDays: 30,
+      esignature: false,
+      tags: [],
+      keywords: [],
+      leaderboardPoints: 50,
+      completionRule: "complete-activities",
+      visibility: "audience",
+      accessTeams: [],
+      excluded: [],
+    },
+  };
+  draftStore.set(id, draft);
+  addedModuleSummaries.push({
+    id,
+    skillId,
+    title,
+    year: new Date().getFullYear(),
+    state: "draft",
+    activityCount: 0,
+    enrolled: 0,
+    completionPct: 0,
+    updatedOn: new Date().toISOString().slice(0, 10),
+  });
+  return delay(draft);
 }
 
 /** In-session draft overrides so the editor feels live before a real API exists. */
@@ -480,6 +596,8 @@ export async function getUsers(query = "", filters: UserFilters = {}): Promise<A
         eq(u.employeeType, filters.employeeType) &&
         eq(u.functionArea, filters.functionArea) &&
         eq(u.grade, filters.grade) &&
+        eq(u.entity, filters.entity) &&
+        eq(u.projectName, filters.projectName) &&
         eq(u.role, filters.role),
     ),
   );
@@ -533,6 +651,8 @@ export async function addUser(input: {
     functionArea: input.functionArea ?? functionForDivision(input.team),
     grade: input.grade ?? "G1",
     manager: input.manager ?? "—",
+    entity: "NDIPL",
+    projectName: "Internal / Bench",
     joiningDate: new Date().toISOString().slice(0, 10),
     assignedCount: 0,
     completeCount: 0,
@@ -613,6 +733,9 @@ export async function getReport(
       active(filters.functionArea) ||
       active(filters.designation) ||
       active(filters.manager) ||
+      active(filters.employeeType) ||
+      active(filters.entity) ||
+      active(filters.projectName) ||
       active(filters.status));
   if (!anyFilter) return delay(detail);
 
@@ -633,6 +756,9 @@ export async function getReport(
       eq(filters!.functionArea, ["functionArea", "function"]) &&
       eq(filters!.designation, ["designation"]) &&
       eq(filters!.manager, ["manager"]) &&
+      eq(filters!.employeeType, ["employeeType"]) &&
+      eq(filters!.entity, ["entity"]) &&
+      eq(filters!.projectName, ["projectName", "project"]) &&
       eq(filters!.status, ["userStatus", "status"])
     );
   };
@@ -776,4 +902,14 @@ export async function sendQuizReminder(
   learnerIds.forEach((id) => map.set(id, today));
   remindedStore.set(quizId, map);
   return delay({ sent: learnerIds.length });
+}
+
+// CONNECT: replace with real API call to GET /api/admin/modules/:id/completion
+// Per-learner scores / pass-fail / certificate for a single module — surfaced
+// inside the completion report (Reports → Completion → By Modules).
+export async function getModuleCompletion(
+  moduleId: string,
+): Promise<ModuleCompletionDetail | null> {
+  if (EMPTY_STATE) return delay(null);
+  return delay(moduleCompletionDetail(moduleId));
 }
