@@ -24,7 +24,18 @@ import {
   PROJECTS as ORG_PROJECTS,
   functionForDivision,
 } from "./org";
-import type { ModuleCompletionDetail, ModuleCompletionRow, OrgEntity } from "./types";
+import type {
+  CompletionRecord,
+  CompletionRecords,
+  CompletionScope,
+  EnrolledStatus,
+  LearnerOutcome,
+  ModuleCompletionDetail,
+  ModuleCompletionRow,
+  OrgEntity,
+  UserLearningDetail,
+  UserLearningRow,
+} from "./types";
 
 const FIRST = [
   "Ananya",
@@ -808,6 +819,110 @@ export function moduleCompletionDetail(moduleId: string): ModuleCompletionDetail
       passRatePct: scored ? Math.round((passed / scored) * 100) : 0,
       dueDate: "2026-12-31",
     },
+    rows,
+  };
+}
+
+/** One person's full learning record — every assigned module with score/cert. */
+export function userLearningDetail(userId: string): UserLearningDetail {
+  const seed = seedNum(userId);
+  const count = Math.min(assignableModules.length, 4 + Math.round(seed * 5));
+  const start = Math.round(seed * assignableModules.length);
+  const rows: UserLearningRow[] = Array.from({ length: count }, (_, i) => {
+    const mod = assignableModules[(start + i * 3) % assignableModules.length]!;
+    const { mandatory, hasCertificate, passMark } = moduleFlags(mod.id + userId);
+    const n = (Math.round(seed * 100) + i * 7) % 10;
+    const status: EnrolledStatus = n < 3 ? "not-started" : n < 6 ? "in-progress" : "complete";
+    const progressPct = status === "complete" ? 100 : status === "in-progress" ? 20 + n * 8 : 0;
+    const scorePct = status === "complete" ? 52 + ((Math.round(seed * 90) + i * 11) % 48) : null;
+    const outcome: LearnerOutcome =
+      scorePct === null ? null : scorePct >= passMark ? "pass" : "fail";
+    return {
+      moduleId: mod.id,
+      title: mod.title,
+      programTitle: mod.programTitle,
+      skillTitle: mod.skillTitle,
+      status,
+      progressPct,
+      scorePct,
+      outcome,
+      certificate: hasCertificate && outcome === "pass",
+      mandatory,
+      dueDate: "2026-12-31",
+    };
+  });
+  const completed = rows.filter((r) => r.status === "complete").length;
+  const inProgress = rows.filter((r) => r.status === "in-progress").length;
+  return {
+    assigned: rows.length,
+    completed,
+    inProgress,
+    notStarted: rows.length - completed - inProgress,
+    certificates: rows.filter((r) => r.certificate).length,
+    pending: rows.filter((r) => r.status !== "complete").length,
+    rows,
+  };
+}
+
+/* ============================================================
+ * COMPLETION RECORDS — records for any scope (program / skill / module).
+ * Aggregates per-module completion so an admin can drill to any level.
+ * ============================================================ */
+
+export function completionRecords(scope: CompletionScope): CompletionRecords {
+  const mods = assignableModules.filter((m) => {
+    if (scope.moduleId) return m.id === scope.moduleId;
+    if (scope.skillTitle && m.skillTitle !== scope.skillTitle) return false;
+    if (scope.programTitle && m.programTitle !== scope.programTitle) return false;
+    return true;
+  });
+
+  const rows: CompletionRecord[] = [];
+  for (const m of mods) {
+    const detail = moduleCompletionDetail(m.id);
+    if (!detail) continue;
+    if (scope.mandatoryOnly && !detail.meta.mandatory) continue;
+    for (const r of detail.rows) {
+      rows.push({
+        learnerId: r.learnerId,
+        userId: r.userId,
+        name: r.name,
+        email: r.email,
+        team: r.team,
+        entity: r.entity,
+        moduleId: m.id,
+        moduleTitle: m.title,
+        programTitle: m.programTitle,
+        skillTitle: m.skillTitle,
+        mandatory: detail.meta.mandatory,
+        status: r.status,
+        scorePct: r.scorePct,
+        outcome: r.outcome,
+        completedOn: r.completedOn,
+        certificate: r.certificate,
+      });
+    }
+  }
+
+  const completed = rows.filter((r) => r.status === "complete").length;
+  const passed = rows.filter((r) => r.outcome === "pass").length;
+  const scored = rows.filter((r) => r.scorePct !== null).length;
+  const moduleCount = new Set(rows.map((r) => r.moduleId)).size;
+  const label = scope.moduleId
+    ? (mods[0]?.title ?? "Module")
+    : scope.skillTitle
+      ? scope.skillTitle
+      : scope.programTitle
+        ? scope.programTitle
+        : "All programs";
+  return {
+    scopeLabel: label,
+    moduleCount,
+    enrolled: rows.length,
+    completed,
+    completionPct: rows.length ? Math.round((completed / rows.length) * 100) : 0,
+    passRatePct: scored ? Math.round((passed / scored) * 100) : 0,
+    certificates: rows.filter((r) => r.certificate).length,
     rows,
   };
 }
