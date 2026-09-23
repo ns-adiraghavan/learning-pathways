@@ -5,12 +5,8 @@ import {
   ChevronRight,
   ClipboardCheck,
   Clock,
-  Flame,
-  Lock,
   PartyPopper,
   Play,
-  Quote,
-  Timer,
   Trophy,
 } from "lucide-react";
 
@@ -120,25 +116,6 @@ function HomePage() {
   const overallPct = total ? Math.round((done / total) * 100) : 0;
   const mandatoryLeft = summary ? summary.mandatoryTotal - summary.mandatoryComplete : 0;
 
-  // Roadmap along the primary module's program.
-  const program = primary?.programTitle ?? all[0]?.programTitle;
-  const path = all.filter((m) => m.programTitle === program);
-  const activeIdx = path.findIndex((m) => m.status !== "complete");
-  const pathDone = path.filter((m) => m.status === "complete").length;
-
-  // Upcoming quizzes across assigned modules.
-  const quizzes = all
-    .flatMap((m) =>
-      m.activities
-        .filter(
-          (a): a is Extract<LearningModule["activities"][number], { type: "quiz" }> =>
-            a.type === "quiz",
-        )
-        .map((a) => ({ module: m, quiz: a })),
-    )
-    .sort((a, b) => a.module.dueDate.localeCompare(b.module.dueDate))
-    .slice(0, 2);
-
   return (
     <PageFade className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
       {/* HERO */}
@@ -146,15 +123,9 @@ function HomePage() {
         <DoodlePanel />
         <div className="relative flex flex-col gap-6 lg:flex-row lg:items-stretch lg:justify-between">
           <div className="flex max-w-2xl flex-1 flex-col gap-3">
-            <span className="chip-blue inline-flex w-fit items-center gap-2 rounded-full px-3 py-1 text-xs">
-              <Flame className="size-3.5" strokeWidth={1.75} />
-              <span className="font-[560]">Active learning session</span>
-              <span className="text-muted-foreground">· you're on a roll</span>
-            </span>
             <div>
               <h1 className="text-[30px] font-[590] tracking-tight sm:text-[34px]">
-                {user ? `Hello, ${user.name.split(" ")[0]} ` : "Hello "}
-                <span className="inline-block">☀️</span>
+                {user ? `Hello, ${user.name.split(" ")[0]}` : "Hello"}
               </h1>
               <p className="mt-1 text-sm text-muted-foreground">
                 Here's where your learning stands today — pick up right where you left off.
@@ -255,77 +226,6 @@ function HomePage() {
               </div>
             </section>
 
-            {path.length > 1 && (
-              <section
-                className="sky-panel p-5 sm:p-6"
-                style={{
-                  background: "color-mix(in oklab, var(--color-primary) 4%, var(--color-card))",
-                }}
-              >
-                <div className="mb-2 flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-label uppercase tracking-wider text-primary">
-                      Curriculum roadmap
-                    </p>
-                    <h3 className="text-card-title">{program}</h3>
-                  </div>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-status-complete/12 px-2.5 py-1 text-xs font-[510] text-status-complete">
-                    {pathDone} of {path.length} done
-                  </span>
-                </div>
-                <div className="relative flex items-start justify-between px-1 py-3">
-                  <div className="absolute inset-x-6 top-9 h-1 rounded-full bg-border">
-                    <div
-                      className="h-1 rounded-full bg-primary"
-                      style={{
-                        width: `${path.length > 1 ? (pathDone / (path.length - 1)) * 100 : 0}%`,
-                      }}
-                    />
-                  </div>
-                  {path.map((m, i) => {
-                    const state =
-                      m.status === "complete" ? "done" : i === activeIdx ? "active" : "locked";
-                    return (
-                      <div
-                        key={m.id}
-                        className="relative z-10 flex w-1/4 flex-col items-center gap-2 text-center"
-                      >
-                        <span
-                          className={cn(
-                            "flex size-12 items-center justify-center rounded-full",
-                            state === "done" && "bg-status-complete text-white shadow-sm",
-                            state === "active" &&
-                              "bg-primary text-white shadow-sm ring-4 ring-primary/25",
-                            state === "locked" && "bg-secondary text-muted-foreground",
-                          )}
-                        >
-                          {state === "done" ? (
-                            <ClipboardCheck className="size-5" strokeWidth={2} />
-                          ) : state === "active" ? (
-                            <Play className="size-5" strokeWidth={2} />
-                          ) : (
-                            <Lock className="size-4" strokeWidth={1.75} />
-                          )}
-                        </span>
-                        <span
-                          className={cn(
-                            "text-xs",
-                            state === "active"
-                              ? "font-[590] text-primary"
-                              : state === "locked"
-                                ? "text-muted-foreground"
-                                : "font-[510]",
-                          )}
-                        >
-                          {m.skillTitle}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-            )}
-
             <PendingCallout count={actions.length} />
           </div>
 
@@ -352,45 +252,6 @@ function HomePage() {
                 </div>
               </div>
             </section>
-
-            {quizzes.length > 0 && (
-              <section className="surface p-5">
-                <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-card-title">Upcoming quizzes</h3>
-                  <Timer className="size-5 text-muted-foreground" strokeWidth={1.75} />
-                </div>
-                <div className="grid gap-2.5">
-                  {quizzes.map(({ module, quiz }) => (
-                    <Link
-                      key={quiz.id}
-                      to="/modules/$moduleId"
-                      params={{ moduleId: module.id }}
-                      className="block rounded-xl bg-secondary/60 p-3 transition-colors hover:bg-secondary"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span
-                          className={cn(
-                            "rounded-full px-2 py-0.5 text-xs font-[510]",
-                            module.status === "overdue"
-                              ? "bg-status-overdue/12 text-status-overdue"
-                              : "chip-blue",
-                          )}
-                        >
-                          Due {module.dueDate}
-                        </span>
-                        <span className="tnum text-xs text-muted-foreground">
-                          {quiz.timeLimitMins} min
-                        </span>
-                      </div>
-                      <p className="mt-1.5 text-sm font-[590] leading-tight">{quiz.name}</p>
-                      <p className="tnum text-xs text-muted-foreground">
-                        {quiz.questions.length} questions · {module.title}
-                      </p>
-                    </Link>
-                  ))}
-                </div>
-              </section>
-            )}
 
             {leaderboard.length > 0 && (
               <section className="surface p-5">
@@ -476,13 +337,6 @@ function HomePage() {
                 </ul>
               </section>
             )}
-
-            <div className="flex items-center gap-3 rounded-2xl bg-secondary/60 p-4">
-              <Quote className="size-6 shrink-0 text-primary" strokeWidth={1.75} />
-              <p className="text-sm italic text-foreground">
-                Knowledge isn't acquired in leaps, but through steady, daily curiosity.
-              </p>
-            </div>
           </div>
         </div>
       )}
