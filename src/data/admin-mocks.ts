@@ -74,7 +74,7 @@ export const DESIGNATIONS = [
 export const FUNCTIONS = [...ORG_FUNCTIONS];
 export const GRADES = ["G1", "G2", "G3", "G4", "G5"];
 export const EMPLOYEE_TYPES: AdminUser["employeeType"][] = ["full-time", "contract", "intern"];
-const MANAGERS = ["Ananya Rao", "Vikram Iyer", "Farah Sheikh", "Suresh Babu"];
+export const MANAGERS = ["Ananya Rao", "Vikram Iyer", "Farah Sheikh", "Suresh Babu"];
 
 export const users: AdminUser[] = NAMES.map((name, i): AdminUser => {
   const assigned = 4 + (i % 5);
@@ -104,7 +104,12 @@ export const users: AdminUser[] = NAMES.map((name, i): AdminUser => {
     functionArea: functionForDivision(TEAMS[i % TEAMS.length]!),
     grade: GRADES[i % GRADES.length]!,
     manager: i === 0 ? "—" : MANAGERS[i % MANAGERS.length]!,
-    joiningDate: `202${(i % 4) + 1}-${String((i % 12) + 1).padStart(2, "0")}-${String((i % 27) + 1).padStart(2, "0")}`,
+    // Most people joined in past years; a handful are recent joiners so the
+    // "New joiner" badge only shows when it actually applies.
+    joiningDate:
+      i % 8 === 3
+        ? `2026-0${(i % 3) + 7}-${String((i % 27) + 1).padStart(2, "0")}`
+        : `202${(i % 4) + 1}-${String((i % 12) + 1).padStart(2, "0")}-${String((i % 27) + 1).padStart(2, "0")}`,
     assignedCount: assigned,
     completeCount: complete,
     lastActive: ["Today", "Yesterday", "2 days ago", "Last week", "3 weeks ago"][i % 5]!,
@@ -404,19 +409,45 @@ function tabRows(
   }
 
   if (tab === "by-learner") {
+    // Consistent learner attributes across every report: enrolled-on, status,
+    // %, user status, manager, designation, division and function.
+    const completion = id === "completion-ratio";
     return {
       columns: [
         { key: "name", label: "Learner" },
-        { key: "team", label: "Team" },
-        { key: "modules", label: "Modules", numeric: true },
-        ...mc,
+        { key: "division", label: "Division" },
+        { key: "functionArea", label: "Function" },
+        { key: "designation", label: "Designation" },
+        { key: "manager", label: "Manager" },
+        { key: "userStatus", label: "User status" },
+        { key: "enrolledOn", label: "Enrolled on" },
+        ...(completion
+          ? [
+              { key: "status", label: "Status" },
+              { key: "pct", label: "%", numeric: true as const },
+            ]
+          : mc),
       ],
-      rows: users.slice(0, 14).map((u) => ({
-        name: u.name,
-        team: u.team,
-        modules: u.assignedCount,
-        ...metricCells(meta, id + u.id),
-      })),
+      rows: users.slice(0, 16).map((u, i) => {
+        const cells = metricCells(meta, id + u.id);
+        const pct = completion ? (cells["value"] as number) : 0;
+        const status = pct >= 100 ? "Completed" : pct === 0 ? "Not started" : "In progress";
+        return {
+          name: u.name,
+          division: u.team,
+          functionArea: u.functionArea,
+          designation: u.designation,
+          manager: u.manager,
+          userStatus: u.userStatus,
+          enrolledOn: u.joiningDate,
+          ...(completion
+            ? {
+                status: pct >= 100 ? (i % 6 === 0 ? "Failed" : "Passed") : status,
+                pct: Math.min(100, pct),
+              }
+            : cells),
+        };
+      }),
     };
   }
 
