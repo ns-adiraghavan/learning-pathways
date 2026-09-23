@@ -4,12 +4,22 @@ import { useQuery } from "@tanstack/react-query";
 import { BarChart3, CalendarClock, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 
-import { getReport } from "@/data/repositories";
-import { DEPARTMENTS, LOCATIONS, PROGRAMS, REPORT_TABS, TEAMS } from "@/data/admin-mocks";
+import { getMandatoryQuizzes, getReport } from "@/data/repositories";
+import {
+  DEPARTMENTS,
+  DESIGNATIONS,
+  FUNCTIONS,
+  LOCATIONS,
+  MANAGERS,
+  PROGRAMS,
+  REPORT_TABS,
+  TEAMS,
+} from "@/data/admin-mocks";
 import type { ReportFilters, ReportId, ReportTab } from "@/data/types";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { KpiRow, ReportChartCard } from "@/components/reports/report-charts";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -54,17 +64,30 @@ const PERIODS: { value: ReportFilters["period"]; label: string }[] = [
 function ReportDetailPage() {
   const { reportId } = Route.useParams();
   const [tab, setTab] = useState<ReportTab>("dashboard");
+  const [showMandatory, setShowMandatory] = useState(false);
   const [filters, setFilters] = useState<ReportFilters>({
     period: "90d",
     department: "all",
     location: "all",
     team: "all",
     program: "all",
+    functionArea: "all",
+    designation: "all",
+    manager: "all",
+    status: "all",
   });
+
+  const isCompletion = reportId === "completion-ratio";
 
   const { data: report, isPending } = useQuery({
     queryKey: ["admin-report", reportId, tab, filters],
     queryFn: () => getReport(reportId as ReportId, { ...filters, tab }),
+  });
+
+  const { data: mandatory = [] } = useQuery({
+    queryKey: ["mandatory-quizzes"],
+    queryFn: getMandatoryQuizzes,
+    enabled: isCompletion && showMandatory,
   });
 
   const exportHeaders = report?.columns.map((c) => c.label) ?? [];
@@ -120,6 +143,18 @@ function ReportDetailPage() {
         ))}
       </div>
 
+      {/* Completion report: optional mandatory-quiz compliance view */}
+      {isCompletion && (
+        <label className="mb-3 flex w-fit cursor-pointer items-center gap-2 rounded-full border border-border bg-secondary/60 px-3 py-1.5 text-sm">
+          <Checkbox
+            checked={showMandatory}
+            onCheckedChange={(v) => setShowMandatory(v === true)}
+            aria-label="Show mandatory quizzes"
+          />
+          <span className="text-muted-foreground">Show mandatory quiz completion</span>
+        </label>
+      )}
+
       {/* Slicers */}
       <div className="surface mb-4 flex flex-wrap gap-2 p-3">
         <SlicerSelect
@@ -162,6 +197,33 @@ function ReportDetailPage() {
           options={[
             { value: "all", label: "All locations" },
             ...LOCATIONS.map((l) => ({ value: l, label: l })),
+          ]}
+        />
+        <SlicerSelect
+          value={filters.functionArea ?? "all"}
+          onChange={(v) => setFilters({ ...filters, functionArea: v })}
+          label="Function"
+          options={[
+            { value: "all", label: "All functions" },
+            ...FUNCTIONS.map((f) => ({ value: f, label: f })),
+          ]}
+        />
+        <SlicerSelect
+          value={filters.designation ?? "all"}
+          onChange={(v) => setFilters({ ...filters, designation: v })}
+          label="Designation"
+          options={[
+            { value: "all", label: "All designations" },
+            ...DESIGNATIONS.map((d) => ({ value: d, label: d })),
+          ]}
+        />
+        <SlicerSelect
+          value={filters.manager ?? "all"}
+          onChange={(v) => setFilters({ ...filters, manager: v })}
+          label="Manager"
+          options={[
+            { value: "all", label: "All managers" },
+            ...MANAGERS.map((m) => ({ value: m, label: m })),
           ]}
         />
       </div>
@@ -225,6 +287,53 @@ function ReportDetailPage() {
             </section>
           )}
         </div>
+      )}
+
+      {isCompletion && showMandatory && (
+        <section className="surface mt-4 overflow-hidden">
+          <div className="border-b border-border px-4 py-3">
+            <h2 className="text-card-title">Mandatory quiz completion</h2>
+            <p className="text-xs text-muted-foreground">
+              Compliance-tracked quizzes and how far each has been completed.
+            </p>
+          </div>
+          {mandatory.length === 0 ? (
+            <EmptyState
+              icon={BarChart3}
+              title="No mandatory quizzes"
+              description="Flag a quiz as compliance-tracked to see completion here."
+            />
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Quiz</TableHead>
+                    <TableHead>Module</TableHead>
+                    <TableHead className="text-right">Completed</TableHead>
+                    <TableHead className="text-right">Enrolled</TableHead>
+                    <TableHead className="text-right">Completion %</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {mandatory.map((q) => (
+                    <TableRow key={q.id}>
+                      <TableCell className="text-sm font-[510]">{q.quizName}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {q.moduleTitle}
+                      </TableCell>
+                      <TableCell className="tnum text-right text-sm">{q.completed}</TableCell>
+                      <TableCell className="tnum text-right text-sm">{q.enrolled}</TableCell>
+                      <TableCell className="tnum text-right text-sm font-[510]">
+                        {q.completionPct}%
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </section>
       )}
     </div>
   );
