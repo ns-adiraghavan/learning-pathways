@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { BarChart3, ClipboardList, Settings2, ShieldCheck, Users } from "lucide-react";
+import { BarChart3, ClipboardList, Settings2, Users } from "lucide-react";
 
 import { getAssignableModules, getMandatoryQuizzes, getUsers } from "@/data/repositories";
 import { StatTile } from "@/components/lessons/count-up";
@@ -42,17 +42,11 @@ const cards = [
   },
   {
     title: "Reports",
-    description: "Completion ratio, time spent, leaderboard points and the audit log.",
+    description:
+      "Completion (with per-module scores, pass/fail and certificates), time spent, points and the audit log.",
     to: "/admin/reports",
     icon: BarChart3,
     tint: "var(--chart-3)",
-  },
-  {
-    title: "Mandatory Quizzes",
-    description: "See who has and hasn't completed each compliance-tracked quiz.",
-    to: "/admin/mandatory-quizzes",
-    icon: ShieldCheck,
-    tint: "var(--chart-5)",
   },
   {
     title: "Customization",
@@ -68,8 +62,14 @@ function AdminKpis() {
     queryKey: ["mandatory-quizzes"],
     queryFn: getMandatoryQuizzes,
   });
-  const { data: users = [] } = useQuery({ queryKey: ["admin-users", ""], queryFn: () => getUsers() });
-  const { data: modules = [] } = useQuery({ queryKey: ["assignable-modules"], queryFn: getAssignableModules });
+  const { data: users = [] } = useQuery({
+    queryKey: ["admin-users", ""],
+    queryFn: () => getUsers(),
+  });
+  const { data: modules = [] } = useQuery({
+    queryKey: ["assignable-modules"],
+    queryFn: getAssignableModules,
+  });
 
   const enrolled = quizzes.reduce((sum, q) => sum + q.enrolled, 0);
   const completed = quizzes.reduce((sum, q) => sum + q.completed, 0);
@@ -80,10 +80,23 @@ function AdminKpis() {
   const overdue = quizzes.reduce((sum, quiz) => sum + quiz.notCompleted, 0);
 
   return (
-    <section className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Administration summary">
+    <section
+      className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4"
+      aria-label="Administration summary"
+    >
       <StatTile label="Active learners" value={active} tint="var(--chart-1)" tone="solid" />
-      <Link to="/admin/mandatory-quizzes" aria-label="View mandatory completion">
-        <StatTile label="Mandatory completion" value={pct} suffix="%" tint="var(--chart-2)" tone="solid" />
+      <Link
+        to="/admin/reports/$reportId"
+        params={{ reportId: "completion-ratio" }}
+        aria-label="View mandatory completion in reports"
+      >
+        <StatTile
+          label="Mandatory completion"
+          value={pct}
+          suffix="%"
+          tint="var(--chart-2)"
+          tone="solid"
+        />
       </Link>
       <StatTile label="Modules live" value={modules.length} tint="var(--chart-3)" tone="soft" />
       <StatTile label="Overdue" value={overdue} tint="var(--chart-5)" tone="soft" />
