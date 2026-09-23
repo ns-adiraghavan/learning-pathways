@@ -1,7 +1,17 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Bell, ChevronRight, LogOut, Moon, Search, Shield, Sun, UserCog } from "lucide-react";
+import {
+  Bell,
+  ChevronRight,
+  GraduationCap,
+  LogOut,
+  Moon,
+  Search,
+  Shield,
+  Sun,
+  UserCog,
+} from "lucide-react";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Input } from "@/components/ui/input";
@@ -39,6 +49,14 @@ export function TopBar() {
     if (q) void navigate({ to: "/search", search: { q } });
   };
 
+  const switchView = (next: "learner" | "trainer" | "admin") => {
+    if (next === mode) return;
+    setViewMode(next);
+    void navigate({
+      to: next === "trainer" ? "/trainer/programs" : next === "admin" ? "/admin" : "/home",
+    });
+  };
+
   const initials = (user?.name ?? "NS")
     .split(" ")
     .map((p) => p[0])
@@ -68,6 +86,8 @@ export function TopBar() {
       </form>
 
       <div className="ml-auto flex items-center gap-1">
+        <ViewToggle mode={mode} onChange={switchView} />
+
         <Popover open={notifOpen} onOpenChange={setNotifOpen}>
           <PopoverTrigger asChild>
             <Button variant="ghost" size="icon" className="relative" aria-label="Notifications">
@@ -143,39 +163,6 @@ export function TopBar() {
             <DropdownMenuSeparator />
             <DropdownMenuItem>Profile</DropdownMenuItem>
             <DropdownMenuItem>Completed Modules</DropdownMenuItem>
-            {mode !== "learner" && (
-              <DropdownMenuItem
-                onSelect={() => {
-                  setViewMode("learner");
-                  navigate({ to: "/home" });
-                }}
-              >
-                <UserCog className="size-4" />
-                Switch to Learner View
-              </DropdownMenuItem>
-            )}
-            {mode !== "trainer" && (
-              <DropdownMenuItem
-                onSelect={() => {
-                  setViewMode("trainer");
-                  navigate({ to: "/trainer/programs" });
-                }}
-              >
-                <UserCog className="size-4" />
-                Switch to Trainer View
-              </DropdownMenuItem>
-            )}
-            {mode !== "admin" && (
-              <DropdownMenuItem
-                onSelect={() => {
-                  setViewMode("admin");
-                  navigate({ to: "/admin" });
-                }}
-              >
-                <Shield className="size-4" />
-                Switch to Administrator View
-              </DropdownMenuItem>
-            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={() => navigate({ to: "/login" })}>
               <LogOut className="size-4" />
@@ -185,5 +172,50 @@ export function TopBar() {
         </DropdownMenu>
       </div>
     </header>
+  );
+}
+
+const VIEW_OPTIONS = [
+  { value: "learner", label: "Learner", short: "Learn", icon: GraduationCap },
+  { value: "trainer", label: "Trainer", short: "Train", icon: UserCog },
+  { value: "admin", label: "Admin", short: "Admin", icon: Shield },
+] as const;
+
+/** Clearly-marked segmented control to move between the app's sections. */
+function ViewToggle({
+  mode,
+  onChange,
+}: {
+  mode: "learner" | "trainer" | "admin";
+  onChange: (next: "learner" | "trainer" | "admin") => void;
+}) {
+  return (
+    <div
+      role="tablist"
+      aria-label="Switch section"
+      className="mr-1 hidden items-center gap-0.5 rounded-full border border-border bg-secondary/60 p-0.5 sm:flex"
+    >
+      {VIEW_OPTIONS.map((o) => {
+        const active = mode === o.value;
+        return (
+          <button
+            key={o.value}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            onClick={() => onChange(o.value)}
+            className={
+              active
+                ? "inline-flex items-center gap-1.5 rounded-full bg-card px-2.5 py-1 text-xs font-[590] text-primary shadow-sm ring-1 ring-border"
+                : "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-[510] text-muted-foreground transition-colors hover:text-foreground"
+            }
+          >
+            <o.icon className="size-3.5" strokeWidth={1.75} />
+            <span className="hidden md:inline">{o.label}</span>
+            <span className="md:hidden">{o.short}</span>
+          </button>
+        );
+      })}
+    </div>
   );
 }
