@@ -37,6 +37,8 @@ import {
   reports as mockReports,
   users as mockUsers,
   moduleCompletionDetail,
+  userLearningDetail,
+  completionRecords,
 } from "./admin-mocks";
 import { coverDataUri } from "@/lib/covers";
 import { completionFor, mandatoryQuizzes as mockMandatoryQuizzes } from "./compliance-mocks";
@@ -84,6 +86,10 @@ import type {
   MandatoryQuiz,
   QuizCompletionRow,
   ModuleCompletionDetail,
+  UserLearningDetail,
+  EnrolledStatus,
+  CompletionScope,
+  CompletionRecords,
 } from "./types";
 
 function delay<T>(value: T): Promise<T> {
@@ -912,4 +918,76 @@ export async function getModuleCompletion(
 ): Promise<ModuleCompletionDetail | null> {
   if (EMPTY_STATE) return delay(null);
   return delay(moduleCompletionDetail(moduleId));
+}
+
+// CONNECT: replace with real API call to GET /api/admin/completion?program=&skill=&module=&mandatory=
+// Completion records for any scope (a whole program, a skill, or one module) —
+// one row per (learner × module), with scores, pass/fail and certificates.
+export async function getCompletionRecords(scope: CompletionScope): Promise<CompletionRecords> {
+  if (EMPTY_STATE) {
+    return delay({
+      scopeLabel: "",
+      moduleCount: 0,
+      enrolled: 0,
+      completed: 0,
+      completionPct: 0,
+      passRatePct: 0,
+      certificates: 0,
+      rows: [],
+    });
+  }
+  return delay(completionRecords(scope));
+}
+
+/** In-session overrides for a learner's per-module status (activity status edits). */
+const userModuleStatusStore = new Map<string, EnrolledStatus>();
+
+// CONNECT: replace with real API call to GET /api/admin/users/:id/learning
+// One person's full learning record — every assigned module with its status,
+// score, pass/fail and certificate. Shared by the Users directory and Reports.
+export async function getUserLearningDetail(userId: string): Promise<UserLearningDetail> {
+  if (EMPTY_STATE) {
+    return delay({
+      assigned: 0,
+      completed: 0,
+      inProgress: 0,
+      notStarted: 0,
+      certificates: 0,
+      pending: 0,
+      rows: [],
+    });
+  }
+  const base = userLearningDetail(userId);
+  const rows = base.rows.map((r) => {
+    const override = userModuleStatusStore.get(`${userId}:${r.moduleId}`);
+    if (!override || override === r.status) return r;
+    return {
+      ...r,
+      status: override,
+      progressPct:
+        override === "complete" ? 100 : override === "not-started" ? 0 : r.progressPct || 20,
+    };
+  });
+  const completed = rows.filter((r) => r.status === "complete").length;
+  const inProgress = rows.filter((r) => r.status === "in-progress").length;
+  return delay({
+    assigned: rows.length,
+    completed,
+    inProgress,
+    notStarted: rows.length - completed - inProgress,
+    certificates: rows.filter((r) => r.certificate).length,
+    pending: rows.filter((r) => r.status !== "complete").length,
+    rows,
+  });
+}
+
+// CONNECT: replace with real API call to PUT /api/admin/users/:id/modules/:moduleId/status
+// Admin override of a learner's activity/module status.
+export async function setUserModuleStatus(
+  userId: string,
+  moduleId: string,
+  status: EnrolledStatus,
+): Promise<{ userId: string; moduleId: string; status: EnrolledStatus }> {
+  userModuleStatusStore.set(`${userId}:${moduleId}`, status);
+  return delay({ userId, moduleId, status });
 }
