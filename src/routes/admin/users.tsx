@@ -92,9 +92,11 @@ const EXPORT_HEADERS = [
   "Name",
   "Email",
   "Status",
+  "Entity",
   "Team",
   "Department",
   "Location",
+  "Project",
   "Designation",
   "Employee type",
   "Function",
@@ -111,9 +113,11 @@ function toExportRow(u: AdminUser): (string | number)[] {
     u.name,
     u.email,
     u.userStatus,
+    u.entity,
     u.team,
     u.department,
     u.location,
+    u.projectName,
     u.designation,
     u.employeeType,
     u.functionArea,
@@ -135,6 +139,8 @@ const EMPTY_FILTERS: UserFilters = {
   functionArea: "all",
   grade: "all",
   role: "all",
+  entity: "all",
+  projectName: "all",
 };
 
 function UsersPage() {
@@ -167,6 +173,8 @@ function UsersPage() {
       location: uniq((u) => u.location),
       functionArea: uniq((u) => u.functionArea),
       grade: uniq((u) => u.grade),
+      entity: uniq((u) => u.entity),
+      projectName: uniq((u) => u.projectName),
     };
   }, [allUsers]);
 
@@ -363,6 +371,18 @@ function UsersPage() {
             onChange={(v) => set("grade", v)}
             options={facetOptions("All grades", facet.grade)}
           />
+          <Slicer
+            label="Entity"
+            value={filters.entity ?? "all"}
+            onChange={(v) => set("entity", v as UserFilters["entity"])}
+            options={facetOptions("All entities", facet.entity)}
+          />
+          <Slicer
+            label="Project"
+            value={filters.projectName ?? "all"}
+            onChange={(v) => set("projectName", v)}
+            options={facetOptions("All projects", facet.projectName)}
+          />
           <div className="flex items-end">
             <Button
               variant="ghost"
@@ -480,6 +500,7 @@ function UsersPage() {
                   <TableHead>User Status</TableHead>
                   <TableHead className="tnum hidden xl:table-cell">Mobile Number</TableHead>
                   <TableHead className="hidden lg:table-cell">Department</TableHead>
+                  <TableHead className="hidden md:table-cell">Entity</TableHead>
                   <TableHead className="w-10" />
                 </TableRow>
               </TableHeader>
@@ -554,6 +575,18 @@ function UsersPage() {
                     </TableCell>
                     <TableCell className="hidden text-sm text-muted-foreground lg:table-cell">
                       {u.department}
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <span
+                        className={cn(
+                          "inline-flex items-center rounded-[4px] px-1.5 py-0.5 text-[10px] font-[590]",
+                          u.entity === "NAPL"
+                            ? "bg-cat-team/12 text-cat-team"
+                            : "bg-secondary text-muted-foreground",
+                        )}
+                      >
+                        {u.entity}
+                      </span>
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
