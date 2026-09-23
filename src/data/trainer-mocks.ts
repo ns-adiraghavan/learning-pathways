@@ -63,6 +63,7 @@ export const skills: Skill[] = [
     description: "ISO 9001 principles, process controls and internal audit basics.",
     moduleCount: 2,
     learnerCount: 512,
+    state: "published",
   },
   {
     id: "s-infosec",
@@ -72,6 +73,7 @@ export const skills: Skill[] = [
     description: "ISO 27001 controls, data handling and incident reporting.",
     moduleCount: 2,
     learnerCount: 498,
+    state: "published",
   },
   {
     id: "s-company",
@@ -81,6 +83,7 @@ export const skills: Skill[] = [
     description: "Who we are, how we work and the rituals that keep delivery moving.",
     moduleCount: 2,
     learnerCount: 186,
+    state: "published",
   },
   {
     id: "s-policies",
@@ -90,6 +93,7 @@ export const skills: Skill[] = [
     description: "Leave, payroll, code of conduct and the people policies that matter early.",
     moduleCount: 1,
     learnerCount: 186,
+    state: "published",
   },
   {
     id: "s-methods",
@@ -99,6 +103,7 @@ export const skills: Skill[] = [
     description: "Primary vs secondary design, sampling and sourcing discipline.",
     moduleCount: 2,
     learnerCount: 274,
+    state: "draft",
   },
   {
     id: "s-client",
@@ -108,6 +113,7 @@ export const skills: Skill[] = [
     description: "Writing for clients, review etiquette and difficult conversations.",
     moduleCount: 1,
     learnerCount: 152,
+    state: "draft",
   },
 ];
 
@@ -286,6 +292,11 @@ export function draftFor(summary: TrainerModuleSummary): ModuleDraft {
           draft: summary.state === "draft",
           mandatory: true,
           passingPct: 70,
+          completionCriteria: "pass",
+          templateId: "qt-iso-annual",
+          timeLimitMins: 15,
+          maxReattempts: 2,
+          shuffle: true,
         },
       ] as DraftActivity[]
     ).slice(0, Math.max(2, summary.activityCount)),
@@ -301,6 +312,10 @@ export function draftFor(summary: TrainerModuleSummary): ModuleDraft {
       tags: ["iso", "annual", "compliance"],
       keywords: ["audit", "standard", "controls"],
       leaderboardPoints: 50,
+      completionRule: "pass-quizzes",
+      visibility: "audience",
+      accessTeams: ["Research", "Data Analytics and Engineering"],
+      excluded: [],
     },
   };
 }
@@ -350,6 +365,9 @@ export function learnersFor(moduleId: string): EnrolledLearner[] {
     const progressPct =
       status === "complete" ? 100 : status === "in-progress" ? 25 + ((i * 7) % 60) : 0;
     const team = TEAMS[i % TEAMS.length]!;
+    const outcome: EnrolledLearner["outcome"] =
+      status === "complete" ? (i % 6 === 0 ? "fail" : "pass") : null;
+    const enrolledOn = `2026-0${(i % 8) + 1}-${String((i % 27) + 1).padStart(2, "0")}`;
     return {
       id: `${moduleId}-l${i}`,
       userId: `NS-${String(20480 + i * 11)}`,
@@ -357,7 +375,13 @@ export function learnersFor(moduleId: string): EnrolledLearner[] {
       email: `${name.toLowerCase().replace(" ", ".")}@netscribes.com`,
       team,
       status: status as EnrolledLearner["status"],
+      outcome,
       progressPct,
+      enrolledOn,
+      startedOn:
+        status === "not-started"
+          ? ""
+          : `2026-0${(i % 8) + 2}-${String((i % 20) + 1).padStart(2, "0")}`,
       dueDate: "2026-12-31",
       lastActivity: status === "not-started" ? "—" : `${1 + (i % 14)} days ago`,
       designation: L_DESIGNATIONS[i % L_DESIGNATIONS.length]!,
