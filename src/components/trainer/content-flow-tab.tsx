@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   ChevronRight,
+  Download,
   FileText,
   GripVertical,
   Link2,
@@ -29,6 +30,7 @@ import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { CoverPicker } from "@/components/trainer/cover-picker";
+import { downloadQuizTemplate, QUIZ_TEMPLATE_COLUMNS } from "@/lib/quiz-template";
 import {
   Select,
   SelectContent,
@@ -486,6 +488,7 @@ function ActivityPanel({
 }) {
   const template = quizTemplates.find((t) => t.id === a.templateId);
   const criteria = a.completionCriteria ?? "pass";
+  const templateInputRef = useRef<HTMLInputElement>(null);
   return (
     <div className="grid gap-4 border-t border-border bg-secondary/30 p-3 sm:p-4">
       <div className="grid gap-1.5">
@@ -533,11 +536,42 @@ function ActivityPanel({
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => toast.success("Excel template imported — questions loaded")}
+                onClick={() => templateInputRef.current?.click()}
               >
                 <Upload className="size-4" strokeWidth={1.75} />
                 Upload Excel
               </Button>
+              <input
+                ref={templateInputRef}
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    onPatch({ meta: `Imported from ${file.name}` });
+                    toast.success(`Imported “${file.name}” — questions loaded`);
+                  }
+                  e.target.value = "";
+                }}
+              />
+            </div>
+            {/* The template a trainer fills in and uploads — always one click away. */}
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-dashed border-border bg-secondary/40 px-3 py-2">
+              <span className="text-xs text-muted-foreground">
+                Need the format? Columns:{" "}
+                <span className="font-[510] text-foreground">
+                  {QUIZ_TEMPLATE_COLUMNS.slice(0, 2).join(", ")}, …
+                </span>
+              </span>
+              <button
+                type="button"
+                onClick={downloadQuizTemplate}
+                className="inline-flex items-center gap-1 text-xs font-[510] text-primary hover:underline"
+              >
+                <Download className="size-3.5" strokeWidth={1.75} />
+                Download Excel template
+              </button>
             </div>
             {template && (
               <p className="tnum text-xs text-muted-foreground">
