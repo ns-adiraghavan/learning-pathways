@@ -59,6 +59,7 @@ import type {
   ModuleAnalytics,
   ModuleDraft,
   Program,
+  PublishState,
   QuizResultRow,
   QuizTemplate,
   Skill,
@@ -286,10 +287,32 @@ export async function searchModules(query: string): Promise<LearningModule[]> {
  * TRAINER repositories — Program → Skill → Module.
  * ============================================================ */
 
+/**
+ * In-session publish state for programs, skills and modules, keyed by id.
+ * Overlaid on every read so publish/unpublish feels live before the API lands.
+ */
+const publishStore = new Map<string, PublishState>();
+
+function withState<T extends { id: string; state: PublishState }>(entity: T): T {
+  const override = publishStore.get(entity.id);
+  return override ? { ...entity, state: override } : entity;
+}
+
+// CONNECT: replace with real API call to PUT /api/trainer/:kind/:id/state
+export async function setPublishState(
+  id: string,
+  state: PublishState,
+): Promise<{ id: string; state: PublishState }> {
+  publishStore.set(id, state);
+  const stored = draftStore.get(id);
+  if (stored) draftStore.set(id, { ...stored, state });
+  return delay({ id, state });
+}
+
 // CONNECT: replace with real API call to GET /api/trainer/programs
 export async function getPrograms(): Promise<Program[]> {
   if (EMPTY_STATE) return delay([]);
-  return delay(mockPrograms);
+  return delay(mockPrograms.map(withState));
 }
 
 // CONNECT: replace with real API call to GET /api/trainer/programs/:id
@@ -299,7 +322,10 @@ export async function getProgram(
   if (EMPTY_STATE) return delay(null);
   const program = mockPrograms.find((p) => p.id === id);
   if (!program) return delay(null);
-  return delay({ program, skills: mockSkills.filter((s) => s.programId === id) });
+  return delay({
+    program: withState(program),
+    skills: mockSkills.filter((s) => s.programId === id).map(withState),
+  });
 }
 
 // CONNECT: replace with real API call to GET /api/trainer/skills/:id
@@ -309,7 +335,10 @@ export async function getSkill(
   if (EMPTY_STATE) return delay(null);
   const skill = mockSkills.find((s) => s.id === id);
   if (!skill) return delay(null);
-  return delay({ skill, modules: mockTrainerModules.filter((m) => m.skillId === id) });
+  return delay({
+    skill: withState(skill),
+    modules: mockTrainerModules.filter((m) => m.skillId === id).map(withState),
+  });
 }
 
 /** In-session draft overrides so the editor feels live before a real API exists. */
@@ -321,7 +350,10 @@ export async function getModuleDraft(id: string): Promise<ModuleDraft | null> {
   const stored = draftStore.get(id);
   if (stored) return delay(stored);
   const summary = mockTrainerModules.find((m) => m.id === id);
-  return delay(summary ? draftFor(summary) : null);
+  if (!summary) return delay(null);
+  const built = draftFor(summary);
+  const override = publishStore.get(id);
+  return delay(override ? { ...built, state: override } : built);
 }
 
 // CONNECT: replace with real API call to PUT /api/trainer/modules/:id/draft
@@ -571,16 +603,46 @@ export async function getReport(
   if (EMPTY_STATE) return delay(null);
   const detail = reportDetail(id, filters?.tab ?? "dashboard");
   if (!detail) return delay(null);
-  const noFilters =
-    !filters ||
-    ((filters.department === "all" || !filters.department) &&
-      (filters.location === "all" || !filters.location) &&
-      (!filters.team || filters.team === "all") &&
-      (!filters.program || filters.program === "all"));
-  if (noFilters) return delay(detail);
-  // Mocked filtering: narrow the row set so filters visibly do something.
-  // The dashboard KPIs/charts stay (they are org-wide summaries).
-  const rows = detail.rows.filter((_, i) => i % 2 === 0);
+  const active = (v?: string) => v && v !== "all";
+  const anyFilter =
+    !!filters &&
+    (active(filters.department) ||
+      active(filters.location) ||
+      active(filters.team) ||
+      active(filters.program) ||
+      active(filters.functionArea) ||
+      active(filters.designation) ||
+      active(filters.manager) ||
+      active(filters.status));
+  if (!anyFilter) return delay(detail);
+
+  // Attribute-aware narrowing: match against whatever columns the row carries,
+  // so the same filter set works consistently across every report and tab.
+  const match = (row: Record<string, string | number>) => {
+    const eq = (val: string | undefined, keys: string[]) => {
+      if (!active(val)) return true;
+      const present = keys.find((k) => k in row);
+      if (!present) return true; // this tab doesn't expose the attribute
+      return String(row[present]) === val;
+    };
+    return (
+      eq(filters!.team, ["division", "team"]) &&
+      eq(filters!.program, ["program"]) &&
+      eq(filters!.department, ["department"]) &&
+      eq(filters!.location, ["location"]) &&
+      eq(filters!.functionArea, ["functionArea", "function"]) &&
+      eq(filters!.designation, ["designation"]) &&
+      eq(filters!.manager, ["manager"]) &&
+      eq(filters!.status, ["userStatus", "status"])
+    );
+  };
+  const filteredRows = detail.rows.filter(match);
+  // If no row carried any of the filtered attributes, fall back to a visible
+  // narrowing so the control still does something.
+  const rows =
+    filteredRows.length === detail.rows.length
+      ? detail.rows.filter((_, i) => i % 2 === 0)
+      : filteredRows;
   return delay({ ...detail, rows });
 }
 
