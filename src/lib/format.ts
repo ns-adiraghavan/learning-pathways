@@ -21,6 +21,17 @@ export const STATUS_DOT: Record<ModuleStatus, string> = {
   overdue: "bg-status-overdue",
 };
 
+/**
+ * A "new joiner" is someone who joined within the last 120 days. Used to show a
+ * badge ONLY when it actually applies, rather than labelling everyone.
+ */
+export function isNewJoiner(joiningDate: string, asOf: Date = new Date()): boolean {
+  const joined = new Date(joiningDate);
+  if (Number.isNaN(joined.getTime())) return false;
+  const days = (asOf.getTime() - joined.getTime()) / 86_400_000;
+  return days >= 0 && days <= 120;
+}
+
 export function formatDate(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
