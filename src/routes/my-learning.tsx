@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, ChevronRight } from "lucide-react";
+import { BookOpen, ChevronRight, Layers } from "lucide-react";
 
 import { getAssignedModules } from "@/data/repositories";
 import type { Activity, ActivityType, LearningModule, ModuleCategory } from "@/data/types";
@@ -95,6 +95,13 @@ function contents(activities: Activity[]): string {
     .join(" · ");
 }
 
+interface ProgramGroup {
+  program: string;
+  modules: LearningModule[];
+  done: number;
+  skills: { skill: string; modules: LearningModule[] }[];
+}
+
 function matchesStatus(m: LearningModule, f: StatusFilter): boolean {
   if (f === "all") return true;
   if (f === "completed") return m.status === "complete";
@@ -154,6 +161,33 @@ function MyLearningPage() {
       ),
     [all],
   );
+
+  // Group the filtered modules by program → skill. Programs with more than one
+  // module in view render as a titled section; a lone module renders on its own.
+  const groups = useMemo<ProgramGroup[]>(() => {
+    const byProgram = new Map<string, LearningModule[]>();
+    for (const m of rows) {
+      const list = byProgram.get(m.programTitle) ?? [];
+      list.push(m);
+      byProgram.set(m.programTitle, list);
+    }
+    return Array.from(byProgram.entries())
+      .map(([program, mods]) => {
+        const bySkill = new Map<string, LearningModule[]>();
+        for (const m of mods) {
+          const list = bySkill.get(m.skillTitle) ?? [];
+          list.push(m);
+          bySkill.set(m.skillTitle, list);
+        }
+        return {
+          program,
+          modules: mods,
+          done: mods.filter((m) => m.status === "complete").length,
+          skills: Array.from(bySkill.entries()).map(([skill, modules]) => ({ skill, modules })),
+        };
+      })
+      .sort((a, b) => b.modules.length - a.modules.length || a.program.localeCompare(b.program));
+  }, [rows]);
 
   return (
     <PageFade className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">
@@ -256,84 +290,120 @@ function MyLearningPage() {
           description="No modules match this filter. Clear it, or check another status tab."
         />
       ) : (
-        <ul className="grid gap-3">
-          {rows.map((m) => {
-            const s = STATUS_DOT[m.status];
+        <div className="grid gap-5">
+          {groups.map((g) => {
+            // A single module in a program: render it on its own, no section chrome.
+            if (g.modules.length === 1) {
+              return <ModuleCard key={g.modules[0]!.id} m={g.modules[0]!} />;
+            }
+            const pct = g.modules.length ? Math.round((g.done / g.modules.length) * 100) : 0;
+            const multiSkill = g.skills.length > 1;
             return (
-              <li
-                key={m.id}
-                className="surface card-hover flex items-center gap-4 p-4"
-                style={{ ["--cat-tint" as string]: CAT_TINT[m.category] }}
-              >
-                <img
-                  src={m.posterImage}
-                  alt=""
-                  loading="lazy"
-                  width={192}
-                  height={128}
-                  className="hidden h-16 w-24 shrink-0 rounded-xl border border-border object-cover sm:block"
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span
-                      className={cn(
-                        "rounded-full px-2.5 py-0.5 text-xs font-[590]",
-                        CAT_CHIP[m.category],
-                      )}
-                    >
-                      {CATEGORY_LABEL[m.category]}
+              <section key={g.program} className="grid gap-2.5">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-0.5">
+                  <span className="flex items-center gap-2">
+                    <span className="flex size-6 items-center justify-center rounded-md bg-primary/10 text-primary">
+                      <Layers className="size-3.5" strokeWidth={2} />
                     </span>
-                    <span
-                      className={cn(
-                        "inline-flex items-center gap-1.5 text-xs text-muted-foreground",
-                        s.text,
-                      )}
-                    >
-                      <span className={cn("size-1.5 rounded-full", s.dot)} />
-                      {s.label}
-                    </span>
-                  </div>
-                  <h3 className="mt-1 truncate text-card-title">
-                    <Link
-                      to="/modules/$moduleId"
-                      params={{ moduleId: m.id }}
-                      className="hover:text-primary"
-                    >
-                      {m.title}
-                    </Link>
-                  </h3>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {m.programTitle} › {m.skillTitle}
-                  </p>
-                  <p className="tnum mt-0.5 text-xs text-muted-foreground">
-                    {contents(m.activities)} · {formatMinutes(moduleMinutes(m.activities))} · due{" "}
-                    {formatDate(m.dueDate)}
-                  </p>
-                  <div className="mt-2 flex items-center gap-3">
-                    <div className="h-1.5 w-full max-w-56 overflow-hidden rounded-full bg-secondary">
-                      <div
-                        className="h-1.5 rounded-full"
-                        style={{
-                          width: `${Math.max(2, m.progressPct)}%`,
-                          background: "var(--cat-tint)",
-                        }}
+                    <h2 className="text-card-title">{g.program}</h2>
+                  </span>
+                  <span className="tnum text-xs text-muted-foreground">
+                    {g.modules.length} modules · {g.done}/{g.modules.length} done
+                  </span>
+                  <span className="ml-auto flex items-center gap-2">
+                    <span className="h-1.5 w-24 overflow-hidden rounded-full bg-secondary">
+                      <span
+                        className="block h-1.5 rounded-full bg-primary"
+                        style={{ width: `${Math.max(3, pct)}%` }}
                       />
-                    </div>
-                    <span className="tnum text-xs text-muted-foreground">{m.progressPct}%</span>
-                  </div>
+                    </span>
+                    <span className="tnum text-xs text-muted-foreground">{pct}%</span>
+                  </span>
                 </div>
-                <Link
-                  to="/modules/$moduleId"
-                  params={{ moduleId: m.id }}
-                  className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[color:var(--brand-blue-soft)] bg-secondary px-4 py-1.5 text-sm font-[510] text-primary transition-colors hover:bg-accent"
-                >
-                  Open <ChevronRight className="size-4" strokeWidth={1.75} />
-                </Link>
-              </li>
+                <div className="grid gap-2.5 border-l-2 border-border pl-3 sm:pl-4">
+                  {g.skills.map((s) => (
+                    <div key={s.skill} className="grid gap-2.5">
+                      {multiSkill && (
+                        <p className="text-label px-0.5 pt-1 text-muted-foreground">
+                          {s.skill}
+                          <span className="tnum ml-1.5 font-normal normal-case">
+                            · {s.modules.length} module{s.modules.length === 1 ? "" : "s"}
+                          </span>
+                        </p>
+                      )}
+                      {s.modules.map((m) => (
+                        <ModuleCard key={m.id} m={m} />
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </section>
             );
           })}
-        </ul>
+        </div>
       )}
     </PageFade>
+  );
+}
+
+function ModuleCard({ m }: { m: LearningModule }) {
+  const s = STATUS_DOT[m.status];
+  return (
+    <div
+      className="surface card-hover flex items-center gap-4 p-4"
+      style={{ ["--cat-tint" as string]: CAT_TINT[m.category] }}
+    >
+      <img
+        src={m.posterImage}
+        alt=""
+        loading="lazy"
+        width={192}
+        height={128}
+        className="hidden h-16 w-24 shrink-0 rounded-xl border border-border object-cover sm:block"
+      />
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            className={cn("rounded-full px-2.5 py-0.5 text-xs font-[590]", CAT_CHIP[m.category])}
+          >
+            {CATEGORY_LABEL[m.category]}
+          </span>
+          <span
+            className={cn("inline-flex items-center gap-1.5 text-xs text-muted-foreground", s.text)}
+          >
+            <span className={cn("size-1.5 rounded-full", s.dot)} />
+            {s.label}
+          </span>
+        </div>
+        <h3 className="mt-1 truncate text-card-title">
+          <Link to="/modules/$moduleId" params={{ moduleId: m.id }} className="hover:text-primary">
+            {m.title}
+          </Link>
+        </h3>
+        <p className="truncate text-xs text-muted-foreground">
+          {m.programTitle} › {m.skillTitle}
+        </p>
+        <p className="tnum mt-0.5 text-xs text-muted-foreground">
+          {contents(m.activities)} · {formatMinutes(moduleMinutes(m.activities))} · due{" "}
+          {formatDate(m.dueDate)}
+        </p>
+        <div className="mt-2 flex items-center gap-3">
+          <div className="h-1.5 w-full max-w-56 overflow-hidden rounded-full bg-secondary">
+            <div
+              className="h-1.5 rounded-full"
+              style={{ width: `${Math.max(2, m.progressPct)}%`, background: "var(--cat-tint)" }}
+            />
+          </div>
+          <span className="tnum text-xs text-muted-foreground">{m.progressPct}%</span>
+        </div>
+      </div>
+      <Link
+        to="/modules/$moduleId"
+        params={{ moduleId: m.id }}
+        className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[color:var(--brand-blue-soft)] bg-secondary px-4 py-1.5 text-sm font-[510] text-primary transition-colors hover:bg-accent"
+      >
+        Open <ChevronRight className="size-4" strokeWidth={1.75} />
+      </Link>
+    </div>
   );
 }
