@@ -20,10 +20,11 @@ import { toast } from "sonner";
 
 import { downloadCsv, toCsv } from "@/lib/csv";
 import { datedCsvFilename } from "@/components/download-csv-button";
-import { addUser, getUser, getUserProgress, getUsers, updateUser } from "@/data/repositories";
+import { addUser, getUsers, updateUser } from "@/data/repositories";
 import type { AdminRole, AdminUser, UserFilters } from "@/data/types";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { EditUserDrawer } from "@/components/admin/edit-user-drawer";
+import { UserDetailDrawer } from "@/components/admin/user-detail-drawer";
 import { ImportUsersDialog } from "@/components/admin/import-users-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -45,7 +46,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -54,7 +54,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SearchBox } from "@/components/ui/search-box";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -64,7 +63,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { isNewJoiner, STATUS_DOT, STATUS_LABEL } from "@/lib/format";
+import { isNewJoiner } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/users")({
@@ -667,10 +666,10 @@ function UsersPage() {
         </section>
       )}
 
-      <UserPanel
+      <UserDetailDrawer
         userId={progressUserId}
         onClose={() => setProgressUserId(null)}
-        onEdit={(u) => {
+        onEditDetails={(u) => {
           setProgressUserId(null);
           setEditUser(u);
         }}
@@ -784,107 +783,5 @@ function AddUserDialog() {
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function UserPanel({
-  userId,
-  onClose,
-  onEdit,
-}: {
-  userId: string | null;
-  onClose: () => void;
-  onEdit: (user: AdminUser) => void;
-}) {
-  const { data: user } = useQuery({
-    queryKey: ["admin-user", userId],
-    queryFn: () => getUser(userId!),
-    enabled: !!userId,
-  });
-  const { data: progress = [], isPending } = useQuery({
-    queryKey: ["admin-user-progress", userId],
-    queryFn: () => getUserProgress(userId!),
-    enabled: !!userId,
-  });
-
-  const counts = {
-    assigned: progress.length,
-    inProgress: progress.filter((p) => p.status === "in-progress").length,
-    complete: progress.filter((p) => p.status === "complete").length,
-  };
-
-  return (
-    <Sheet open={!!userId} onOpenChange={(v) => !v && onClose()}>
-      <SheetContent className="w-full overflow-y-auto sm:max-w-md">
-        <SheetHeader>
-          <SheetTitle>{user?.name ?? "User"}</SheetTitle>
-        </SheetHeader>
-        <div className="grid gap-5 px-4 pb-6">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-sm text-muted-foreground">{user?.email}</p>
-              <p className="mt-0.5 text-sm text-muted-foreground">
-                {user?.team} · {user?.location} · {user?.role}
-              </p>
-              <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-                {user?.provisioned === "manual" ? "Added manually" : "Auto-provisioned"}
-                {user && isNewJoiner(user.joiningDate) && (
-                  <span className="rounded-[4px] bg-cat-onboarding/12 px-1.5 py-0.5 text-[10px] font-[590] text-cat-onboarding">
-                    New joiner
-                  </span>
-                )}
-              </p>
-            </div>
-            {user && (
-              <Button size="sm" variant="outline" className="shrink-0" onClick={() => onEdit(user)}>
-                <Pencil className="size-3.5" strokeWidth={1.75} />
-                Edit
-              </Button>
-            )}
-          </div>
-
-          <div className="grid grid-cols-3 gap-2">
-            {[
-              { label: "Assigned", value: counts.assigned },
-              { label: "In progress", value: counts.inProgress },
-              { label: "Complete", value: counts.complete },
-            ].map((s) => (
-              <div key={s.label} className="surface px-3 py-2.5">
-                <p className="text-label text-muted-foreground">{s.label}</p>
-                <p className="tnum mt-0.5 text-xl font-[510]">{s.value}</p>
-              </div>
-            ))}
-          </div>
-
-          {isPending ? (
-            <Skeleton className="h-48 rounded-xl" />
-          ) : progress.length === 0 ? (
-            <EmptyState
-              icon={Users}
-              title="Nothing assigned"
-              description="This person has no modules yet."
-            />
-          ) : (
-            <ul className="grid gap-3">
-              {progress.map((p) => (
-                <li key={p.moduleId} className="surface p-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <p className="min-w-0 truncate text-sm font-[510]">{p.title}</p>
-                    <span className="inline-flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
-                      <span className={cn("size-1.5 rounded-full", STATUS_DOT[p.status])} />
-                      {STATUS_LABEL[p.status]}
-                    </span>
-                  </div>
-                  <Progress value={p.progressPct} className="mt-2.5 h-1.5" />
-                  <p className="tnum mt-1.5 text-xs text-muted-foreground">
-                    {p.progressPct}% · due {p.dueDate}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </SheetContent>
-    </Sheet>
   );
 }
