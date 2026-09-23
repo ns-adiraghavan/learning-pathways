@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Layers, Search } from "lucide-react";
+import { type ReactNode, useMemo, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ChevronLeft, ChevronRight, Layers, Plus, Search } from "lucide-react";
+import { toast } from "sonner";
 
-import { getProgram } from "@/data/repositories";
+import { createSkill, getProgram } from "@/data/repositories";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { StateBadge } from "@/components/trainer/state-badge";
 import { PublishControl } from "@/components/trainer/publish-control";
@@ -11,6 +12,18 @@ import { StateFilterPills, type StateFilterValue } from "@/components/trainer/st
 import { SearchBox } from "@/components/ui/search-box";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 export const Route = createFileRoute("/trainer/programs/$programId")({
   head: () => ({
@@ -84,12 +97,23 @@ function ProgramPage() {
                 {data.program.description}
               </p>
             </div>
-            <PublishControl
-              id={data.program.id}
-              state={data.program.state}
-              kind="program"
-              invalidateKeys={[["program", programId], ["programs"]]}
-            />
+            <div className="flex shrink-0 items-center gap-2">
+              <PublishControl
+                id={data.program.id}
+                state={data.program.state}
+                kind="program"
+                invalidateKeys={[["program", programId], ["programs"]]}
+              />
+              <AddSkillDialog
+                programId={programId}
+                trigger={
+                  <Button size="sm">
+                    <Plus className="size-4" strokeWidth={2} />
+                    Add skill
+                  </Button>
+                }
+              />
+            </div>
           </header>
 
           {data.skills.length > 0 && (
@@ -109,7 +133,12 @@ function ProgramPage() {
               icon={Layers}
               title="No skills yet"
               description="Add a skill to start grouping this program's modules."
-              action={<Button size="sm">Add skill</Button>}
+              action={
+                <AddSkillDialog
+                  programId={programId}
+                  trigger={<Button size="sm">Add skill</Button>}
+                />
+              }
             />
           ) : skills.length === 0 ? (
             <EmptyState
@@ -150,5 +179,70 @@ function ProgramPage() {
         </>
       )}
     </div>
+  );
+}
+
+function AddSkillDialog({ programId, trigger }: { programId: string; trigger: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: () =>
+      createSkill(programId, { title: title.trim(), description: description.trim() }),
+    onSuccess: (skill) => {
+      toast.success("Skill added — add its first module");
+      setOpen(false);
+      setTitle("");
+      setDescription("");
+      void queryClient.invalidateQueries({ queryKey: ["program", programId] });
+      void navigate({ to: "/trainer/skills/$skillId", params: { skillId: skill.id } });
+    },
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Add skill</DialogTitle>
+          <DialogDescription>
+            A skill groups the yearly modules that teach it. It starts as a draft.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-3">
+          <div className="grid gap-1.5">
+            <Label htmlFor="as-title">Skill title</Label>
+            <Input
+              id="as-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Information Security"
+              autoFocus
+            />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="as-desc">Description</Label>
+            <Textarea
+              id="as-desc"
+              rows={3}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="What this skill covers."
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button disabled={!title.trim() || mutation.isPending} onClick={() => mutation.mutate()}>
+            Add skill
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
