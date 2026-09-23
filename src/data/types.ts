@@ -689,3 +689,79 @@ export interface ModuleCompletionDetail {
   meta: ModuleCompletionMeta;
   rows: ModuleCompletionRow[];
 }
+
+/* ============================================================
+ * INDIVIDUAL LEARNER DETAIL (shared drawer — Users & Reports)
+ * One person's full learning record: every assigned module with its
+ * status, score, pass/fail, certificate and whether it's pending.
+ * ============================================================ */
+
+export interface UserLearningRow {
+  moduleId: string;
+  title: string;
+  programTitle: string;
+  skillTitle: string;
+  status: EnrolledStatus;
+  progressPct: number;
+  scorePct: number | null;
+  outcome: LearnerOutcome;
+  certificate: boolean;
+  /** Carries a compliance-tracked (mandatory) quiz. */
+  mandatory: boolean;
+  dueDate: string;
+}
+
+export interface UserLearningDetail {
+  assigned: number;
+  completed: number;
+  inProgress: number;
+  notStarted: number;
+  certificates: number;
+  /** Assigned but not yet complete (in-progress or not-started). */
+  pending: number;
+  rows: UserLearningRow[];
+}
+
+/* ============================================================
+ * COMPLETION RECORDS (Reports → Completion → By Modules, any scope)
+ * One row per (learner × module) across a chosen program / skill / module,
+ * so an admin can drill to any level and see everyone's status, scores,
+ * pass/fail and certificates in one list.
+ * ============================================================ */
+
+export interface CompletionRecord {
+  learnerId: string;
+  userId: string;
+  name: string;
+  email: string;
+  team: string;
+  entity: OrgEntity;
+  moduleId: string;
+  moduleTitle: string;
+  programTitle: string;
+  skillTitle: string;
+  mandatory: boolean;
+  status: EnrolledStatus;
+  scorePct: number | null;
+  outcome: LearnerOutcome;
+  completedOn: string | null;
+  certificate: boolean;
+}
+
+export interface CompletionScope {
+  programTitle?: string | undefined;
+  skillTitle?: string | undefined;
+  moduleId?: string | undefined;
+  mandatoryOnly?: boolean | undefined;
+}
+
+export interface CompletionRecords {
+  scopeLabel: string;
+  moduleCount: number;
+  enrolled: number;
+  completed: number;
+  completionPct: number;
+  passRatePct: number;
+  certificates: number;
+  rows: CompletionRecord[];
+}
