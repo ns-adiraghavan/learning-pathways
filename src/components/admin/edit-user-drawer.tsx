@@ -4,14 +4,16 @@ import { LogIn } from "lucide-react";
 import { toast } from "sonner";
 
 import { updateUser } from "@/data/repositories";
-import type { AdminUser, EmployeeType, UserStatus } from "@/data/types";
+import type { AdminUser, EmployeeType, OrgEntity, UserStatus } from "@/data/types";
 import {
   DEPARTMENTS,
   DESIGNATIONS,
   EMPLOYEE_TYPES,
+  ENTITIES_LIST,
   FUNCTIONS,
   GRADES,
   LOCATIONS,
+  PROJECTS,
 } from "@/data/admin-mocks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,6 +63,8 @@ type Draft = Pick<
   | "manager"
   | "userStatus"
   | "role"
+  | "entity"
+  | "projectName"
 >;
 
 function toDraft(u: AdminUser): Draft {
@@ -78,6 +82,8 @@ function toDraft(u: AdminUser): Draft {
     manager: u.manager,
     userStatus: u.userStatus,
     role: u.role,
+    entity: u.entity,
+    projectName: u.projectName,
   };
 }
 
@@ -196,6 +202,20 @@ export function EditUserDrawer({ user, onClose }: { user: AdminUser | null; onCl
                 </Field>
                 <Field label="Grade">
                   <PickOne value={draft.grade} onChange={(v) => set("grade", v)} options={GRADES} />
+                </Field>
+                <Field label="Entity">
+                  <PickOne
+                    value={draft.entity}
+                    onChange={(v) => set("entity", v as OrgEntity)}
+                    options={ENTITIES_LIST}
+                  />
+                </Field>
+                <Field label="Project">
+                  <PickOne
+                    value={draft.projectName}
+                    onChange={(v) => set("projectName", v)}
+                    options={PROJECTS}
+                  />
                 </Field>
               </div>
 
