@@ -320,6 +320,10 @@ export interface EnrolledLearner {
   grade: string;
   manager: string;
   joiningDate: string;
+  /** Legal entity — NDIPL or NAPL. */
+  entity: OrgEntity;
+  /** Client/delivery project the person is staffed on. */
+  projectName: string;
 }
 
 export interface ModuleAnalytics {
@@ -393,6 +397,9 @@ export type UserStatus = "active" | "inactive" | "invited";
 
 export type EmployeeType = "full-time" | "contract" | "intern";
 
+/** Legal entity the person is employed under (see org.ts). */
+export type OrgEntity = "NDIPL" | "NAPL";
+
 export interface AdminUser {
   id: string;
   /** Human-facing employee id, distinct from the internal record id. */
@@ -415,6 +422,10 @@ export interface AdminUser {
   grade: string;
   manager: string;
   joiningDate: string;
+  /** Legal entity — NDIPL or NAPL. Used for compliance slicing. */
+  entity: OrgEntity;
+  /** Client/delivery project the person is staffed on. */
+  projectName: string;
   assignedCount: number;
   completeCount: number;
   lastActive: string;
@@ -436,6 +447,8 @@ export interface UserFilters {
   functionArea?: string;
   grade?: string;
   role?: AdminRole | "all";
+  entity?: OrgEntity | "all";
+  projectName?: string;
 }
 
 export interface UserProgressItem {
@@ -528,6 +541,9 @@ export interface ReportFilters {
   designation?: string;
   manager?: string;
   status?: string;
+  employeeType?: string;
+  entity?: string;
+  projectName?: string;
   tab?: ReportTab;
 }
 
@@ -626,4 +642,50 @@ export interface QuizCompletionRow {
   scorePct: number | null;
   attempts: number;
   lastRemindedOn: string | null;
+}
+
+/* ============================================================
+ * MODULE COMPLETION DETAIL (Reports → Completion → By Modules)
+ * Pulls the scores / pass-fail / certificate view that used to live
+ * only under Mandatory Quizzes into the completion report, keyed by module.
+ * ============================================================ */
+
+export interface ModuleCompletionMeta {
+  moduleId: string;
+  moduleTitle: string;
+  programTitle: string;
+  skillTitle: string;
+  /** Whether this module carries a compliance-tracked (mandatory) quiz. */
+  mandatory: boolean;
+  passMarkPct: number;
+  hasCertificate: boolean;
+  enrolled: number;
+  completed: number;
+  completionPct: number;
+  passRatePct: number;
+  dueDate: string;
+}
+
+export interface ModuleCompletionRow {
+  learnerId: string;
+  userId: string;
+  name: string;
+  email: string;
+  team: string;
+  entity: OrgEntity;
+  department: string;
+  location: string;
+  status: EnrolledStatus;
+  /** Score on the module's graded quiz; null if not yet attempted. */
+  scorePct: number | null;
+  outcome: LearnerOutcome;
+  completedOn: string | null;
+  attempts: number;
+  /** Whether a certificate has been earned (completed + passed + module issues one). */
+  certificate: boolean;
+}
+
+export interface ModuleCompletionDetail {
+  meta: ModuleCompletionMeta;
+  rows: ModuleCompletionRow[];
 }
