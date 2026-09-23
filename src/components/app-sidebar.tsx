@@ -5,7 +5,6 @@ import {
   BookOpen,
   ClipboardList,
   Compass,
-  FileQuestion,
   Home,
   Layers,
   Settings2,
@@ -41,7 +40,6 @@ const learnerItems = [
 
 const trainerItems = [
   { title: "Programs", url: "/trainer/programs", icon: Layers },
-  { title: "Quiz Builder", url: "/trainer/quizzes", icon: FileQuestion },
   { title: "Certificates", url: "/certificates", icon: Award },
 ] as const;
 
