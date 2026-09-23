@@ -8,7 +8,6 @@ import {
   Home,
   Layers,
   Settings2,
-  ShieldCheck,
   Trophy,
   Users,
 } from "lucide-react";
@@ -47,7 +46,6 @@ const adminItems = [
   { title: "Overview", url: "/admin", icon: Home },
   { title: "Users & Progress", url: "/admin/users", icon: Users },
   { title: "Assignments", url: "/admin/assignments", icon: ClipboardList },
-  { title: "Mandatory Quizzes", url: "/admin/mandatory-quizzes", icon: ShieldCheck },
   { title: "Reports", url: "/admin/reports", icon: BarChart3 },
   { title: "Customization", url: "/admin/customization", icon: Settings2 },
 ] as const;
@@ -62,10 +60,12 @@ export function AppSidebar() {
   const trainer = !admin && (mode === "trainer" || pathname.startsWith("/trainer"));
   const items = admin ? adminItems : trainer ? trainerItems : learnerItems;
   const groupLabel = admin ? "Administration" : trainer ? "Authoring" : "Learning";
+  // The logo returns to the home of whichever view you're in.
+  const homeUrl = admin ? "/admin" : trainer ? "/trainer/programs" : "/home";
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="h-14 justify-center border-b border-sidebar-border px-3">
-        <Link to="/home" className="min-w-0" aria-label="NS Lessons by Netscribes">
+        <Link to={homeUrl} className="min-w-0" aria-label="NS Lessons by Netscribes — home">
           <BrandLockup markOnly={collapsed} compact size="sm" />
         </Link>
       </SidebarHeader>
