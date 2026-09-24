@@ -64,9 +64,41 @@ const rawModules: Omit<LearningModule, "programTitle" | "skillTitle" | "enrolled
         name: "A tour of Netscribes",
         type: "video",
         src: SAMPLE_VIDEO,
+        provider: "upload",
         durationMins: 8,
         required: true,
         enforceFocus: true,
+        checkpoints: [
+          {
+            id: "a-welcome-1-cp1",
+            atSeconds: 5,
+            question: {
+              id: "a-welcome-1-cp1-q",
+              prompt: "Which service line was highlighted first in the tour?",
+              difficulty: "easy",
+              options: ["Research & analytics", "Facilities", "Payroll", "Legal"],
+              correctIndex: 0,
+              explanation: "Research & analytics leads the Netscribes service lineup.",
+            },
+          },
+          {
+            id: "a-welcome-1-cpend",
+            atSeconds: null,
+            question: {
+              id: "a-welcome-1-cpend-q",
+              prompt: "Netscribes is best described as a…",
+              difficulty: "easy",
+              options: [
+                "Technology & research services firm",
+                "Retail chain",
+                "Logistics company",
+                "Bank",
+              ],
+              correctIndex: 0,
+              explanation: "Netscribes is a technology and research services firm.",
+            },
+          },
+        ],
       },
       {
         id: "a-welcome-2",
