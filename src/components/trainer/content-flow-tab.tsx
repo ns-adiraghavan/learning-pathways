@@ -2,7 +2,6 @@ import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   ChevronRight,
-  Clock,
   Download,
   FileText,
   GripVertical,
@@ -21,11 +20,10 @@ import { toast } from "sonner";
 
 import type {
   ActivityType,
-  BuilderQuestion,
   DraftActivity,
   ModuleDraft,
+  QuizSection,
   QuizTemplate,
-  VideoCheckpoint,
   VideoProvider,
 } from "@/data/types";
 import {
@@ -43,10 +41,9 @@ import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { CoverPicker } from "@/components/trainer/cover-picker";
-import { QuizEditorDialog } from "@/components/trainer/quiz-editor-dialog";
-import { QuestionEditor, makeBlankQuestion } from "@/components/trainer/question-editor";
+import { QuizEditorDialog, makeSection } from "@/components/trainer/quiz-editor-dialog";
 import { downloadQuizTemplate, parseQuizTemplateCsv } from "@/lib/quiz-template";
-import { isValidVideoLink, parseClock, toClock } from "@/lib/video-source";
+import { isValidVideoLink, toClock } from "@/lib/video-source";
 import {
   Select,
   SelectContent,
@@ -142,7 +139,6 @@ export function ContentFlowTab({
               uploadName: "",
               durationMins: 0,
               enforceFocus: true,
-              checkpoints: [],
             }
           : {}),
         ...(type === "deck" ? { docName: "", pages: 0 } : {}),
@@ -154,7 +150,7 @@ export function ContentFlowTab({
               timeLimitMins: 15,
               maxReattempts: 2,
               shuffle: true,
-              questions: [],
+              sections: [],
             }
           : {}),
       },
@@ -574,27 +570,9 @@ function VideoPanel({
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const provider = a.provider ?? "upload";
-  const checkpoints = a.checkpoints ?? [];
 
   const linkOk =
     provider === "upload" || !a.sourceUrl || isValidVideoLink(provider, a.sourceUrl);
-
-  const addCheckpoint = () => {
-    const cp: VideoCheckpoint = {
-      id: `cp-${Date.now()}`,
-      atSeconds: checkpoints.length === 0 ? 60 : null,
-      question: makeBlankQuestion(),
-    };
-    onPatch({ checkpoints: [...checkpoints, cp] });
-  };
-
-  const patchCheckpoint = (id: string, patch: Partial<VideoCheckpoint>) =>
-    onPatch({
-      checkpoints: checkpoints.map((c) => (c.id === id ? { ...c, ...patch } : c)),
-    });
-
-  const removeCheckpoint = (id: string) =>
-    onPatch({ checkpoints: checkpoints.filter((c) => c.id !== id) });
 
   return (
     <>
@@ -698,86 +676,15 @@ function VideoPanel({
         </label>
       </div>
 
-      {/* In-video question checkpoints — section the video */}
-      <div className="grid gap-2 rounded-lg border border-dashed border-border bg-secondary/40 p-3">
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <p className="text-sm font-[510]">In-video questions</p>
-            <p className="text-xs text-muted-foreground">
-              Pop a question at a point in the video, or at the end.
-            </p>
-          </div>
-          <Button type="button" variant="outline" size="sm" onClick={addCheckpoint}>
-            <Plus className="size-4" strokeWidth={2} />
-            Add
-          </Button>
-        </div>
-
-        {checkpoints.length > 0 && (
-          <div className="grid gap-3">
-            {checkpoints.map((cp) => (
-              <CheckpointRow
-                key={cp.id}
-                checkpoint={cp}
-                onChange={(patch) => patchCheckpoint(cp.id, patch)}
-                onDelete={() => removeCheckpoint(cp.id)}
-              />
-            ))}
-          </div>
-        )}
+      {/* In-video questions now live in the quiz — pointer for trainers */}
+      <div className="flex items-start gap-2 rounded-lg border border-dashed border-border bg-secondary/40 px-3 py-2.5 text-xs text-muted-foreground">
+        <ListChecks className="mt-0.5 size-4 shrink-0" strokeWidth={1.75} />
+        <span>
+          To pop questions <span className="font-[510] text-foreground">during</span> this video,
+          add a Quiz activity and give a section the timing “At a video point” or “At video end.”
+        </span>
       </div>
     </>
-  );
-}
-
-function CheckpointRow({
-  checkpoint: cp,
-  onChange,
-  onDelete,
-}: {
-  checkpoint: VideoCheckpoint;
-  onChange: (patch: Partial<VideoCheckpoint>) => void;
-  onDelete: () => void;
-}) {
-  const atEnd = cp.atSeconds === null;
-  return (
-    <div className="rounded-lg border border-border bg-card p-3">
-      <div className="mb-3 flex flex-wrap items-center gap-3">
-        <Clock className="size-4 text-muted-foreground" strokeWidth={1.75} />
-        <label className="flex items-center gap-2 text-sm">
-          <Switch
-            checked={atEnd}
-            onCheckedChange={(v) => onChange({ atSeconds: v ? null : 60 })}
-            aria-label="Ask at the end of the video"
-          />
-          <span className="text-muted-foreground">At the end</span>
-        </label>
-        {!atEnd && (
-          <div className="flex items-center gap-1.5">
-            <span className="text-sm text-muted-foreground">at</span>
-            <Input
-              className="tnum h-8 w-20"
-              placeholder="mm:ss"
-              defaultValue={toClock(cp.atSeconds ?? 0)}
-              onBlur={(e) => {
-                const secs = parseClock(e.target.value);
-                if (secs !== null) onChange({ atSeconds: secs });
-              }}
-            />
-          </div>
-        )}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="ml-auto size-8 text-muted-foreground"
-          onClick={onDelete}
-          aria-label="Remove checkpoint"
-        >
-          <Trash2 className="size-4" strokeWidth={1.75} />
-        </Button>
-      </div>
-      <QuestionEditor question={cp.question} onChange={(q) => onChange({ question: q })} />
-    </div>
   );
 }
 
@@ -875,14 +782,21 @@ function QuizPanel({
 }) {
   const [editorOpen, setEditorOpen] = useState(false);
   const uploadRef = useRef<HTMLInputElement>(null);
-  const questions = a.questions ?? [];
+  const sections = a.sections ?? [];
   const criteria = a.completionCriteria ?? "pass";
 
-  const applyQuestions = (next: BuilderQuestion[]) => {
-    const mins = a.timeLimitMins ?? 15;
+  const allQuestions = sections.flatMap((s) => s.questions);
+  const totalQuestions = allQuestions.length;
+  const videoSections = sections.filter((s) => s.timing !== "quiz").length;
+
+  const applySections = (next: QuizSection[]) => {
+    const total = next.reduce((n, s) => n + s.questions.length, 0);
     onPatch({
-      questions: next,
-      meta: `${next.length} question${next.length === 1 ? "" : "s"} · ${mins} min`,
+      sections: next,
+      questions: next.flatMap((s) => s.questions),
+      meta: `${next.length} section${next.length === 1 ? "" : "s"} · ${total} question${
+        total === 1 ? "" : "s"
+      }`,
     });
   };
 
@@ -892,12 +806,17 @@ function QuizPanel({
       return;
     }
     const loaded = await getTemplateQuestions(id);
-    onPatch({
-      templateId: id,
+    const name = quizTemplates.find((t) => t.id === id)?.name ?? "Template";
+    const section: QuizSection = {
+      id: `sec-${Date.now()}`,
+      title: name,
+      timing: "quiz",
+      atSeconds: null,
       questions: loaded,
-      meta: `${loaded.length} question${loaded.length === 1 ? "" : "s"} · ${a.timeLimitMins ?? 15} min`,
-    });
-    toast.success(`Loaded ${loaded.length} questions — edit them any time`);
+    };
+    applySections([...sections, section]);
+    onPatch({ templateId: id });
+    toast.success(`Added “${name}” as a section — edit it any time`);
   };
 
   const importCsv = async (file: File) => {
@@ -910,45 +829,82 @@ function QuizPanel({
       toast.error("No questions found — check the sheet matches the template columns.");
       return;
     }
-    applyQuestions([...questions, ...parsed]);
+    const section: QuizSection = {
+      id: `sec-${Date.now()}`,
+      title: "Imported questions",
+      timing: "quiz",
+      atSeconds: null,
+      questions: parsed,
+    };
+    applySections([...sections, section]);
     setEditorOpen(true); // land the trainer straight in the editable view
-    toast.success(`Imported ${parsed.length} — opening the editor`);
+    toast.success(`Imported ${parsed.length} into a new section — opening the editor`);
   };
 
-  const diffMix = questions.reduce(
+  const diffMix = allQuestions.reduce(
     (m, q) => ({ ...m, [q.difficulty]: (m[q.difficulty] ?? 0) + 1 }),
     {} as Record<string, number>,
   );
 
+  const openEditor = () => {
+    if (sections.length === 0) applySections([makeSection("Section 1")]);
+    setEditorOpen(true);
+  };
+
   return (
     <>
-      {/* Questions — build here, edit each one in the full editor */}
+      {/* Sections & questions — built and edited in the full quiz editor */}
       <div className="grid gap-2">
-        <Label>Questions</Label>
+        <Label>Sections &amp; questions</Label>
         <div className="rounded-lg border border-border bg-card p-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="min-w-0">
               <p className="text-sm font-[510]">
-                {questions.length === 0
-                  ? "No questions yet"
-                  : `${questions.length} question${questions.length === 1 ? "" : "s"}`}
+                {sections.length === 0
+                  ? "No sections yet"
+                  : `${sections.length} section${sections.length === 1 ? "" : "s"} · ${totalQuestions} question${
+                      totalQuestions === 1 ? "" : "s"
+                    }`}
               </p>
-              {questions.length > 0 && (
+              {totalQuestions > 0 && (
                 <p className="tnum text-xs text-muted-foreground">
                   {diffMix["easy"] ?? 0}E / {diffMix["medium"] ?? 0}M / {diffMix["hard"] ?? 0}H
+                  {videoSections > 0 &&
+                    ` · ${videoSections} timed to the video`}
                 </p>
               )}
             </div>
-            <Button type="button" size="sm" onClick={() => setEditorOpen(true)}>
+            <Button type="button" size="sm" onClick={openEditor}>
               <Pencil className="size-4" strokeWidth={1.75} />
-              {questions.length === 0 ? "Build questions" : "Edit questions"}
+              {sections.length === 0 ? "Build sections" : "Edit sections"}
             </Button>
           </div>
+
+          {sections.length > 0 && (
+            <ul className="mt-3 grid gap-1.5 border-t border-border pt-3">
+              {sections.map((s) => (
+                <li
+                  key={s.id}
+                  className="flex items-center justify-between gap-2 text-xs text-muted-foreground"
+                >
+                  <span className="truncate font-[510] text-foreground">{s.title}</span>
+                  <span className="tnum shrink-0">
+                    {s.questions.length} Q ·{" "}
+                    {s.timing === "video-point"
+                      ? `@${toClock(s.atSeconds ?? 0)}`
+                      : s.timing === "video-end"
+                        ? "video end"
+                        : "quiz"}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
 
           <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3">
             <Select value={a.templateId || "none"} onValueChange={(v) => void loadTemplate(v)}>
               <SelectTrigger className="h-9 w-full sm:w-56" aria-label="Question template">
-                <SelectValue placeholder="Start from a template" />
+                <SelectValue placeholder="Add a template as a section" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">No template</SelectItem>
@@ -1085,8 +1041,8 @@ function QuizPanel({
         open={editorOpen}
         onOpenChange={setEditorOpen}
         quizName={a.name}
-        initialQuestions={questions}
-        onSave={applyQuestions}
+        initialSections={sections}
+        onSave={applySections}
       />
     </>
   );
