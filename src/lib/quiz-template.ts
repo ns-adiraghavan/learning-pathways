@@ -8,6 +8,7 @@
  */
 
 import { downloadCsv, toCsv } from "@/lib/csv";
+import type { BuilderQuestion, Difficulty } from "@/data/types";
 
 /** Columns the importer reads, in order. */
 export const QUIZ_TEMPLATE_COLUMNS = [
@@ -52,4 +53,85 @@ export function quizTemplateCsv(): string {
 /** Trigger a download of the question template. */
 export function downloadQuizTemplate(): void {
   downloadCsv("quiz-question-template.csv", quizTemplateCsv());
+}
+
+/** Parse one CSV line into cells, honouring quoted fields and escaped quotes. */
+function parseCsvLine(line: string): string[] {
+  const cells: string[] = [];
+  let cur = "";
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (line[i + 1] === '"') {
+          cur += '"';
+          i++;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        cur += ch;
+      }
+    } else if (ch === '"') {
+      inQuotes = true;
+    } else if (ch === ",") {
+      cells.push(cur);
+      cur = "";
+    } else {
+      cur += ch;
+    }
+  }
+  cells.push(cur);
+  return cells.map((c) => c.trim());
+}
+
+function toDifficulty(value: string): Difficulty {
+  const v = value.toLowerCase();
+  if (v.startsWith("e")) return "easy";
+  if (v.startsWith("h")) return "hard";
+  return "medium";
+}
+
+/** Letter (A/B/C/D…) or 1-based number → 0-based option index. */
+function toCorrectIndex(value: string, optionCount: number): number {
+  const v = value.trim().toUpperCase();
+  if (/^[A-Z]$/.test(v)) return Math.min(v.charCodeAt(0) - 65, optionCount - 1);
+  const n = Number(v);
+  if (Number.isFinite(n) && n >= 1) return Math.min(n - 1, optionCount - 1);
+  return 0;
+}
+
+/**
+ * Parse the uploaded template CSV into editable questions. Matches the column
+ * layout of QUIZ_TEMPLATE_COLUMNS. Blank/malformed lines are skipped. This is
+ * how an Excel/CSV import lands the trainer in the full editor, populated.
+ */
+export function parseQuizTemplateCsv(csv: string): BuilderQuestion[] {
+  const lines = csv
+    .replace(/^﻿/, "")
+    .split(/\r?\n/)
+    .filter((l) => l.trim().length > 0);
+  if (lines.length <= 1) return [];
+
+  const out: BuilderQuestion[] = [];
+  // Skip the header row.
+  for (let i = 1; i < lines.length; i++) {
+    const c = parseCsvLine(lines[i]!);
+    const prompt = c[0] ?? "";
+    if (!prompt) continue;
+    const options = [c[2] ?? "", c[3] ?? "", c[4] ?? "", c[5] ?? ""].filter(
+      (o) => o.length > 0,
+    );
+    if (options.length < 2) continue;
+    out.push({
+      id: `imp-${Date.now()}-${i}`,
+      prompt,
+      difficulty: toDifficulty(c[1] ?? "medium"),
+      options,
+      correctIndex: toCorrectIndex(c[6] ?? "A", options.length),
+      explanation: c[7] ?? "",
+    });
+  }
+  return out;
 }
