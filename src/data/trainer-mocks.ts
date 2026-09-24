@@ -288,7 +288,7 @@ export function draftFor(summary: TrainerModuleSummary): ModuleDraft {
           id: `${summary.id}-a4`,
           name: "Assessment",
           type: "quiz",
-          meta: "10 questions · 15 min",
+          meta: "2 sections · 3 questions",
           required: true,
           draft: summary.state === "draft",
           mandatory: true,
@@ -298,6 +298,58 @@ export function draftFor(summary: TrainerModuleSummary): ModuleDraft {
           timeLimitMins: 15,
           maxReattempts: 2,
           shuffle: true,
+          sections: [
+            {
+              id: `${summary.id}-a4-s1`,
+              title: "Mid-video check",
+              timing: "video-point",
+              atSeconds: 150,
+              questions: [
+                {
+                  id: `${summary.id}-a4-s1-q1`,
+                  prompt: "Which document governs how a nonconformity is closed?",
+                  difficulty: "easy",
+                  options: [
+                    "Corrective action procedure",
+                    "Client SOW",
+                    "Team charter",
+                    "Release note",
+                  ],
+                  correctIndex: 0,
+                  explanation: "Nonconformities follow the corrective action procedure end to end.",
+                },
+              ],
+            },
+            {
+              id: `${summary.id}-a4-s2`,
+              title: "Final assessment",
+              timing: "quiz",
+              atSeconds: null,
+              questions: [
+                {
+                  id: `${summary.id}-a4-s2-q1`,
+                  prompt: "A vendor requests client data over personal email. You should:",
+                  difficulty: "hard",
+                  options: [
+                    "Refuse and raise a security incident",
+                    "Send it password-protected",
+                    "Ask a manager to send it",
+                    "Share a read-only link",
+                  ],
+                  correctIndex: 0,
+                  explanation: "Any off-channel data request is an incident, regardless of intent.",
+                },
+                {
+                  id: `${summary.id}-a4-s2-q2`,
+                  prompt: "How often is the ISO annual refresher required?",
+                  difficulty: "easy",
+                  options: ["Every year", "Once at joining", "Every five years", "Never"],
+                  correctIndex: 0,
+                  explanation: "The refresher is an annual compliance requirement.",
+                },
+              ],
+            },
+          ],
         },
       ] as DraftActivity[]
     ).slice(0, Math.max(2, summary.activityCount)),
