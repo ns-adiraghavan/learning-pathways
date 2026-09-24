@@ -263,8 +263,15 @@ export interface DraftActivity {
   /**
    * Quiz only: the actual questions, editable in the full quiz editor. Loaded
    * from a template or an Excel import, then tweaked question-by-question.
+   * Retained for back-compat / totals; `sections` is the primary structure.
    */
   questions?: BuilderQuestion[];
+  /**
+   * Quiz only: questions grouped into sections. Each section is either part of
+   * the assessment or timed to pop at a point in (or at the end of) the video —
+   * this is where video "sectioning" is authored.
+   */
+  sections?: QuizSection[];
 
   /** Video only: how to render the source. */
   provider?: VideoProvider;
@@ -411,6 +418,24 @@ export interface BuilderQuestion {
   options: string[];
   correctIndex: number;
   explanation: string;
+}
+
+/** How a quiz section is delivered to the learner. */
+export type SectionTiming = "quiz" | "video-point" | "video-end";
+
+/**
+ * A group of questions inside a quiz. A section is either part of the
+ * assessment ("quiz"), pops during the video at `atSeconds` ("video-point"),
+ * or pops when the video finishes ("video-end"). Video sectioning is authored
+ * here, in the quiz interface.
+ */
+export interface QuizSection {
+  id: string;
+  title: string;
+  timing: SectionTiming;
+  /** Seconds into the video, used only when timing === "video-point". */
+  atSeconds: number | null;
+  questions: BuilderQuestion[];
 }
 
 export interface QuizSettings {
