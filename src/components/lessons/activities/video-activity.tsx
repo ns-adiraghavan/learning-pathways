@@ -338,48 +338,65 @@ function CheckpointCard({
   onAnswered: () => void;
 }) {
   const q: BuilderQuestion = checkpoint.question;
-  const [choice, setChoice] = useState<number | null>(null);
+  const kind = q.kind ?? "single";
+  const isMulti = kind === "multi";
+  const [picks, setPicks] = useState<number[]>([]);
   const [submitted, setSubmitted] = useState(answered);
 
-  const correct = choice === q.correctIndex;
+  const correctSet = isMulti ? (q.correctIndices ?? []) : [q.correctIndex];
+  const isCorrect =
+    correctSet.length === picks.length && correctSet.every((c) => picks.includes(c));
+
+  const toggle = (i: number) => {
+    if (submitted) return;
+    if (isMulti) setPicks((p) => (p.includes(i) ? p.filter((x) => x !== i) : [...p, i]));
+    else setPicks([i]);
+  };
 
   return (
     <div className="mx-auto max-w-xl rounded-xl bg-card p-4 sm:p-5">
-      <p className="text-xs font-[590] uppercase tracking-wide text-primary">Quick check</p>
+      <p className="text-xs font-[590] uppercase tracking-wide text-primary">
+        Quick check{isMulti ? " · select all that apply" : ""}
+      </p>
       <h3 className="mt-1 text-base font-[590]">{q.prompt || "Question"}</h3>
       <div className="mt-3 grid gap-2">
         {q.options.map((opt, i) => {
-          const isChoice = choice === i;
-          const showCorrect = submitted && i === q.correctIndex;
-          const showWrong = submitted && isChoice && i !== q.correctIndex;
+          const picked = picks.includes(i);
+          const showCorrect = submitted && correctSet.includes(i);
+          const showWrong = submitted && picked && !correctSet.includes(i);
           return (
             <button
               key={i}
               type="button"
               disabled={submitted}
-              onClick={() => setChoice(i)}
+              onClick={() => toggle(i)}
               className={cn(
                 "flex items-center gap-3 rounded-md border px-3.5 py-2.5 text-left text-sm transition-colors",
                 showCorrect
                   ? "border-status-complete bg-status-complete/10"
                   : showWrong
                     ? "border-status-overdue bg-status-overdue/10"
-                    : isChoice
+                    : picked
                       ? "border-primary bg-primary/5"
                       : "border-border bg-card hover:border-primary/40",
               )}
             >
               <span
                 className={cn(
-                  "flex size-5 shrink-0 items-center justify-center rounded-full border text-[11px] font-[590]",
+                  "flex size-5 shrink-0 items-center justify-center border text-[11px] font-[590]",
+                  isMulti ? "rounded-[5px]" : "rounded-full",
                   showCorrect
                     ? "border-status-complete bg-status-complete text-white"
-                    : isChoice
+                    : picked
                       ? "border-primary bg-primary text-white"
                       : "border-border text-muted-foreground",
                 )}
               >
-                {showCorrect ? <Check className="size-3.5" strokeWidth={2.5} /> : String.fromCharCode(65 + i)}
+                {showCorrect || picked ? (
+                  <Check className="size-3.5" strokeWidth={2.5} />
+                ) : (
+                  String.fromCharCode(65 + i)
+                )}
               </span>
               {opt}
             </button>
@@ -394,11 +411,20 @@ function CheckpointCard({
       )}
 
       <div className="mt-4 flex items-center justify-between gap-3">
-        <span className={cn("text-xs", submitted ? (correct ? "text-status-complete" : "text-status-overdue") : "text-transparent")}>
-          {submitted ? (correct ? "Correct" : "Not quite") : "."}
+        <span
+          className={cn(
+            "text-xs",
+            submitted
+              ? isCorrect
+                ? "text-status-complete"
+                : "text-status-overdue"
+              : "text-transparent",
+          )}
+        >
+          {submitted ? (isCorrect ? "Correct" : "Not quite") : "."}
         </span>
         {!submitted ? (
-          <Button size="sm" disabled={choice === null} onClick={() => setSubmitted(true)}>
+          <Button size="sm" disabled={picks.length === 0} onClick={() => setSubmitted(true)}>
             Check
           </Button>
         ) : (
