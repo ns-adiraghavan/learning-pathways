@@ -1,6 +1,6 @@
 import { Check, Plus, Trash2, X } from "lucide-react";
 
-import type { BuilderQuestion, Difficulty } from "@/data/types";
+import type { BuilderQuestion, Difficulty, QuestionKind } from "@/data/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,16 +22,24 @@ export function makeBlankQuestion(): BuilderQuestion {
     id: `q-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     prompt: "",
     difficulty: "medium",
+    kind: "single",
     options: ["", ""],
     correctIndex: 0,
+    correctIndices: [],
     explanation: "",
   };
 }
 
+const KIND_LABEL: Record<QuestionKind, string> = {
+  single: "Single choice",
+  multi: "Multiple choice",
+  true_false: "True / False",
+};
+
 /**
- * Full editor for a single question — prompt, a variable list of options with
- * the correct one marked, difficulty and an optional explanation. Kept small so
- * it can be reused both in the quiz editor and inside a video checkpoint.
+ * Full editor for a single question. The type selector switches between
+ * single-choice (radio), multiple-choice (checkboxes) and True/False (a fixed
+ * two-option radio). Reused in the quiz editor and video-section questions.
  */
 export function QuestionEditor({
   question: q,
@@ -44,24 +52,54 @@ export function QuestionEditor({
   onChange: (next: BuilderQuestion) => void;
   onDelete?: () => void;
 }) {
+  const kind: QuestionKind = q.kind ?? "single";
+  const multiCorrect = q.correctIndices ?? [];
+  const locked = kind === "true_false"; // options are fixed True/False
+
   const patch = (p: Partial<BuilderQuestion>) => onChange({ ...q, ...p });
+
+  const changeKind = (next: QuestionKind) => {
+    if (next === "true_false") {
+      patch({
+        kind: next,
+        options: ["True", "False"],
+        correctIndex: q.correctIndex === 1 ? 1 : 0,
+      });
+    } else if (next === "multi") {
+      patch({
+        kind: next,
+        correctIndices: multiCorrect.length ? multiCorrect : [q.correctIndex ?? 0],
+      });
+    } else {
+      // single
+      patch({ kind: next, correctIndex: q.correctIndex ?? 0 });
+    }
+  };
 
   const setOption = (i: number, value: string) =>
     patch({ options: q.options.map((o, oi) => (oi === i ? value : o)) });
 
   const addOption = () => {
-    if (q.options.length >= MAX_OPTIONS) return;
+    if (locked || q.options.length >= MAX_OPTIONS) return;
     patch({ options: [...q.options, ""] });
   };
 
   const removeOption = (i: number) => {
-    if (q.options.length <= MIN_OPTIONS) return;
+    if (locked || q.options.length <= MIN_OPTIONS) return;
     const options = q.options.filter((_, oi) => oi !== i);
-    // Keep the correct answer pointing at the same option after removal.
     let correctIndex = q.correctIndex;
     if (i === q.correctIndex) correctIndex = 0;
     else if (i < q.correctIndex) correctIndex -= 1;
-    patch({ options, correctIndex });
+    const correctIndices = multiCorrect
+      .filter((ci) => ci !== i)
+      .map((ci) => (ci > i ? ci - 1 : ci));
+    patch({ options, correctIndex, correctIndices });
+  };
+
+  const toggleMulti = (i: number) => {
+    const has = multiCorrect.includes(i);
+    const next = has ? multiCorrect.filter((ci) => ci !== i) : [...multiCorrect, i];
+    patch({ correctIndices: next.sort((a, b) => a - b) });
   };
 
   return (
@@ -71,11 +109,8 @@ export function QuestionEditor({
           {typeof index === "number" ? `Question ${index + 1}` : "Question"}
         </Label>
         <div className="flex items-center gap-2">
-          <Select
-            value={q.difficulty}
-            onValueChange={(v) => patch({ difficulty: v as Difficulty })}
-          >
-            <SelectTrigger className="h-8 w-[108px]" aria-label="Difficulty">
+          <Select value={q.difficulty} onValueChange={(v) => patch({ difficulty: v as Difficulty })}>
+            <SelectTrigger className="h-8 w-[104px]" aria-label="Difficulty">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -106,19 +141,40 @@ export function QuestionEditor({
         onChange={(e) => patch({ prompt: e.target.value })}
       />
 
+      {/* Question type */}
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <Label className="text-xs text-muted-foreground">Type</Label>
+        <Select value={kind} onValueChange={(v) => changeKind(v as QuestionKind)}>
+          <SelectTrigger className="h-8 w-[168px]" aria-label="Question type">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="single">{KIND_LABEL.single}</SelectItem>
+            <SelectItem value="multi">{KIND_LABEL.multi}</SelectItem>
+            <SelectItem value="true_false">{KIND_LABEL.true_false}</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       <div className="mt-3 grid gap-2">
-        <p className="text-xs text-muted-foreground">Tap the circle to mark the correct answer.</p>
+        <p className="text-xs text-muted-foreground">
+          {kind === "multi"
+            ? "Tick every correct answer."
+            : "Select the correct answer."}
+        </p>
         {q.options.map((opt, i) => {
-          const correct = i === q.correctIndex;
+          const correct = kind === "multi" ? multiCorrect.includes(i) : i === q.correctIndex;
           return (
             <div key={i} className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => patch({ correctIndex: i })}
+                onClick={() => (kind === "multi" ? toggleMulti(i) : patch({ correctIndex: i }))}
                 aria-label={`Mark option ${String.fromCharCode(65 + i)} correct`}
                 aria-pressed={correct}
                 className={cn(
-                  "flex size-6 shrink-0 items-center justify-center rounded-full border text-[11px] font-[590] transition-colors",
+                  "flex size-6 shrink-0 items-center justify-center border text-[11px] font-[590] transition-colors",
+                  // square for multi (checkbox), circle for single/true_false (radio)
+                  kind === "multi" ? "rounded-[5px]" : "rounded-full",
                   correct
                     ? "border-status-complete bg-status-complete text-white"
                     : "border-border text-muted-foreground hover:border-status-complete/50",
@@ -130,13 +186,19 @@ export function QuestionEditor({
                   String.fromCharCode(65 + i)
                 )}
               </button>
-              <Input
-                value={opt}
-                placeholder={`Option ${String.fromCharCode(65 + i)}`}
-                onChange={(e) => setOption(i, e.target.value)}
-                className={cn("h-9", correct && "border-status-complete/50")}
-              />
-              {q.options.length > MIN_OPTIONS && (
+              {locked ? (
+                <div className="flex h-9 flex-1 items-center rounded-md border border-border bg-secondary/40 px-3 text-sm">
+                  {opt}
+                </div>
+              ) : (
+                <Input
+                  value={opt}
+                  placeholder={`Option ${String.fromCharCode(65 + i)}`}
+                  onChange={(e) => setOption(i, e.target.value)}
+                  className={cn("h-9", correct && "border-status-complete/50")}
+                />
+              )}
+              {!locked && q.options.length > MIN_OPTIONS && (
                 <Button
                   variant="ghost"
                   size="icon"
@@ -150,13 +212,8 @@ export function QuestionEditor({
             </div>
           );
         })}
-        {q.options.length < MAX_OPTIONS && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-fit gap-1.5 text-primary"
-            onClick={addOption}
-          >
+        {!locked && q.options.length < MAX_OPTIONS && (
+          <Button variant="ghost" size="sm" className="w-fit gap-1.5 text-primary" onClick={addOption}>
             <Plus className="size-4" strokeWidth={2} />
             Add choice
           </Button>
