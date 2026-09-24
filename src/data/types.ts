@@ -411,12 +411,23 @@ export interface FeedbackSurvey {
   questionCount: number;
 }
 
+/**
+ * Question format: `single` = one correct answer (radio), `multi` = one or more
+ * correct answers (checkboxes), `true_false` = a fixed True/False pair (radio).
+ */
+export type QuestionKind = "single" | "multi" | "true_false";
+
 export interface BuilderQuestion {
   id: string;
   prompt: string;
   difficulty: Difficulty;
+  /** Answer format. Defaults to "single" when unset (back-compat). */
+  kind?: QuestionKind;
   options: string[];
+  /** The correct option for single / true_false. */
   correctIndex: number;
+  /** The correct options for `multi`. Ignored for other kinds. */
+  correctIndices?: number[];
   explanation: string;
 }
 
