@@ -18,8 +18,8 @@ import {
   getPendingActions,
   getProgressSummary,
 } from "@/data/repositories";
-import type { LearningModule, PendingAction } from "@/data/types";
-import { CATEGORY_LABEL, formatDate, formatMinutes, moduleMinutes } from "@/lib/format";
+import type { LearningModule } from "@/data/types";
+import { CATEGORY_LABEL, formatMinutes, moduleMinutes } from "@/lib/format";
 import { DoodlePanel } from "@/components/doodle-field";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { PageFade, ShimmerBlock } from "@/components/motion/motion";
@@ -225,6 +225,8 @@ function HomePage() {
                 ))}
               </div>
             </section>
+
+            <PendingCallout count={actions.length} />
           </div>
 
           {/* RIGHT */}
@@ -249,9 +251,6 @@ function HomePage() {
                   </p>
                 </div>
               </div>
-
-              {/* Pending actions — folded in here; each links straight to where it's cleared */}
-              <PendingActions actions={actions} />
             </section>
 
             {leaderboard.length > 0 && (
@@ -498,58 +497,37 @@ function ContinueCard({ module }: { module: LearningModule }) {
   );
 }
 
-function PendingActions({ actions }: { actions: PendingAction[] }) {
+function PendingCallout({ count }: { count: number }) {
+  const clear = count === 0;
   return (
-    <div className="mt-5 border-t border-border pt-4">
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5">
-          <ClipboardCheck className="size-4 text-primary" strokeWidth={1.75} />
-          <h4 className="text-sm font-[590]">
-            Pending actions
-            {actions.length > 0 && (
-              <span className="tnum ml-1.5 text-muted-foreground">{actions.length}</span>
-            )}
-          </h4>
-        </div>
-        <span
-          className={cn(
-            "rounded-full px-2 py-0.5 text-xs font-[510]",
-            actions.length === 0
-              ? "bg-status-complete/12 text-status-complete"
-              : "bg-cat-bank/15 text-cat-bank",
-          )}
-        >
-          {actions.length === 0 ? "All clear" : "Action needed"}
-        </span>
+    <section
+      className="sky-panel flex items-center gap-4 p-5"
+      style={{ background: "color-mix(in oklab, var(--color-primary) 4%, var(--color-card))" }}
+    >
+      <div className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-card text-primary shadow-sm">
+        <ClipboardCheck className="size-7" strokeWidth={1.5} />
       </div>
-      {actions.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          You're up to date on surveys and declarations.
+      <div>
+        <div className="flex flex-wrap items-center gap-2">
+          <h4 className="text-card-title">
+            {clear ? "No pending actions" : `${count} pending action${count === 1 ? "" : "s"}`}
+          </h4>
+          <span
+            className={cn(
+              "rounded-full px-2 py-0.5 text-xs font-[510]",
+              clear ? "bg-status-complete/12 text-status-complete" : "bg-cat-bank/15 text-cat-bank",
+            )}
+          >
+            {clear ? "All clear" : "Action needed"}
+          </span>
+        </div>
+        <p className="mt-0.5 text-sm text-muted-foreground">
+          {clear
+            ? "You're completely up to date on surveys and declarations. Enjoy self-directed study."
+            : "Surveys and eSignatures are waiting on you — clear them from Certificates."}
         </p>
-      ) : (
-        <ul className="grid gap-1.5">
-          {actions.map((a) => (
-            <li key={a.id}>
-              <Link
-                to="/certificates"
-                className="flex items-center gap-2.5 rounded-lg border border-border bg-card px-3 py-2 transition-colors hover:bg-accent/40"
-              >
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-[510]">{a.title}</span>
-                  <span className="block text-xs text-muted-foreground">
-                    {a.kind === "survey" ? "Survey" : "eSignature"} · due {formatDate(a.dueDate)}
-                  </span>
-                </span>
-                <ChevronRight
-                  className="size-4 shrink-0 text-muted-foreground"
-                  strokeWidth={1.75}
-                />
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+      </div>
+    </section>
   );
 }
 
