@@ -38,14 +38,33 @@ export interface QuizQuestion {
   correctOptionId: string;
 }
 
+/** Where a video comes from: a direct upload, a YouTube link or a Drive link. */
+export type VideoProvider = "upload" | "youtube" | "gdrive";
+
+/**
+ * An in-video quiz checkpoint. Questions "pop" while the learner watches —
+ * either at a specific second offset, or at the very end of the video. This is
+ * how a trainer sections a video into checked segments.
+ */
+export interface VideoCheckpoint {
+  id: string;
+  /** Seconds into the video, or null to fire at the end. */
+  atSeconds: number | null;
+  question: BuilderQuestion;
+}
+
 export interface VideoActivity {
   id: string;
   name: string;
   type: "video";
   src: string;
+  /** How to render `src`. Defaults to "upload" (inferred from the URL if unset). */
+  provider?: VideoProvider;
   durationMins: number;
   required: boolean;
   enforceFocus: boolean;
+  /** Questions that pop at points in the video, or at its end. */
+  checkpoints?: VideoCheckpoint[];
 }
 
 export interface DeckActivity {
@@ -241,6 +260,32 @@ export interface DraftActivity {
   maxReattempts?: number;
   /** Quiz only: shuffle the question order per attempt. */
   shuffle?: boolean;
+  /**
+   * Quiz only: the actual questions, editable in the full quiz editor. Loaded
+   * from a template or an Excel import, then tweaked question-by-question.
+   */
+  questions?: BuilderQuestion[];
+
+  /** Video only: how to render the source. */
+  provider?: VideoProvider;
+  /** Video only: pasted YouTube / Drive URL (when provider isn't "upload"). */
+  sourceUrl?: string;
+  /** Video only: the uploaded file's name (when provider is "upload"). */
+  uploadName?: string;
+  /** Video only: runtime in minutes. */
+  durationMins?: number;
+  /** Video only: pause on tab-switch / idle for the learner. */
+  enforceFocus?: boolean;
+  /** Video only: questions that pop at points in the video, or at its end. */
+  checkpoints?: VideoCheckpoint[];
+
+  /** Deck only: the uploaded file's name (PDF / slides / doc). */
+  docName?: string;
+  /** Deck only: page count. */
+  pages?: number;
+
+  /** Web link only: the external URL. */
+  url?: string;
 }
 
 export type PushEnrollment = "all-skill" | "audience" | "manual";
