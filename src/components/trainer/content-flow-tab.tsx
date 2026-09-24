@@ -1,18 +1,20 @@
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Check,
   ChevronRight,
+  Clock,
   Download,
-  Eye,
   FileText,
   GripVertical,
+  HardDrive,
   Link2,
   ListChecks,
+  Pencil,
   Plus,
   Trash2,
   Upload,
   Video,
+  Youtube,
 } from "lucide-react";
 
 import { toast } from "sonner";
@@ -23,6 +25,8 @@ import type {
   DraftActivity,
   ModuleDraft,
   QuizTemplate,
+  VideoCheckpoint,
+  VideoProvider,
 } from "@/data/types";
 import {
   getCertificateTemplates,
@@ -39,7 +43,10 @@ import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { EmptyState } from "@/components/lessons/empty-state";
 import { CoverPicker } from "@/components/trainer/cover-picker";
-import { downloadQuizTemplate, QUIZ_TEMPLATE_COLUMNS } from "@/lib/quiz-template";
+import { QuizEditorDialog } from "@/components/trainer/quiz-editor-dialog";
+import { QuestionEditor, makeBlankQuestion } from "@/components/trainer/question-editor";
+import { downloadQuizTemplate, parseQuizTemplateCsv } from "@/lib/quiz-template";
+import { isValidVideoLink, parseClock, toClock } from "@/lib/video-source";
 import {
   Select,
   SelectContent,
@@ -64,10 +71,10 @@ const ACTIVITY_ICON: Record<ActivityType, typeof Video> = {
 };
 
 const NEW_ACTIVITY_META: Record<ActivityType, string> = {
-  video: "0 min",
-  deck: "0 pages",
+  video: "No source yet",
+  deck: "No file yet",
   weblink: "External link",
-  quiz: "From template",
+  quiz: "0 questions",
 };
 
 export function ContentFlowTab({
@@ -128,6 +135,18 @@ export function ContentFlowTab({
         required: true,
         draft: true,
         mandatory: false,
+        ...(type === "video"
+          ? {
+              provider: "upload" as const,
+              sourceUrl: "",
+              uploadName: "",
+              durationMins: 0,
+              enforceFocus: true,
+              checkpoints: [],
+            }
+          : {}),
+        ...(type === "deck" ? { docName: "", pages: 0 } : {}),
+        ...(type === "weblink" ? { url: "" } : {}),
         ...(type === "quiz"
           ? {
               completionCriteria: "pass" as const,
@@ -135,6 +154,7 @@ export function ContentFlowTab({
               timeLimitMins: 15,
               maxReattempts: 2,
               shuffle: true,
+              questions: [],
             }
           : {}),
       },
@@ -203,7 +223,7 @@ export function ContentFlowTab({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="video">Video</SelectItem>
-                <SelectItem value="deck">Deck</SelectItem>
+                <SelectItem value="deck">Document / slides</SelectItem>
                 <SelectItem value="weblink">Web link</SelectItem>
                 <SelectItem value="quiz">Quiz</SelectItem>
               </SelectContent>
@@ -219,7 +239,7 @@ export function ContentFlowTab({
             <EmptyState
               icon={ListChecks}
               title="No activities yet"
-              description="Add a video, deck, link or quiz to build this module's flow."
+              description="Add a video, document, link or quiz to build this module's flow."
             />
           ) : (
             <ul className="grid gap-2">
@@ -267,7 +287,8 @@ export function ContentFlowTab({
                           )}
                         </span>
                         <span className="block truncate text-xs text-muted-foreground">
-                          <span className="capitalize">{a.type}</span> · {a.meta}
+                          <span className="capitalize">{a.type === "deck" ? "document" : a.type}</span>{" "}
+                          · {a.meta}
                           {a.type === "quiz" &&
                             ` · ${
                               (a.completionCriteria ?? "pass") === "pass"
@@ -483,7 +504,7 @@ export function ContentFlowTab({
   );
 }
 
-/** Inline editor for a single activity — rich quiz setup, light for other types. */
+/** Inline editor for a single activity — type-specific setup. */
 function ActivityPanel({
   activity: a,
   quizTemplates,
@@ -495,9 +516,6 @@ function ActivityPanel({
   onPatch: (patch: Partial<DraftActivity>) => void;
   onToggleMandatory: (value: boolean) => void;
 }) {
-  const template = quizTemplates.find((t) => t.id === a.templateId);
-  const criteria = a.completionCriteria ?? "pass";
-  const templateInputRef = useRef<HTMLInputElement>(null);
   return (
     <div className="grid gap-4 border-t border-border bg-secondary/30 p-3 sm:p-4">
       <div className="grid gap-1.5">
@@ -509,184 +527,12 @@ function ActivityPanel({
         />
       </div>
 
-      {a.type === "quiz" ? (
-        <>
-          {/* Question source — built here, under the module, not in a separate builder */}
-          <div className="grid gap-1.5">
-            <Label>Questions</Label>
-            <div className="flex flex-wrap items-center gap-2">
-              <Select
-                value={a.templateId || "none"}
-                onValueChange={(v) =>
-                  onPatch({
-                    templateId: v === "none" ? "" : v,
-                    meta:
-                      v === "none"
-                        ? a.meta
-                        : `${quizTemplates.find((t) => t.id === v)?.questionCount ?? 10} questions · ${
-                            a.timeLimitMins ?? 15
-                          } min`,
-                  })
-                }
-              >
-                <SelectTrigger className="h-9 w-full sm:w-64" aria-label="Question template">
-                  <SelectValue placeholder="Pick a question template" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No template yet</SelectItem>
-                  {quizTemplates.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.name} · {t.questionCount} Qs
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => templateInputRef.current?.click()}
-              >
-                <Upload className="size-4" strokeWidth={1.75} />
-                Upload Excel
-              </Button>
-              <input
-                ref={templateInputRef}
-                type="file"
-                accept=".xlsx,.xls,.csv"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    onPatch({ meta: `Imported from ${file.name}` });
-                    toast.success(`Imported “${file.name}” — questions loaded`);
-                  }
-                  e.target.value = "";
-                }}
-              />
-            </div>
-            {/* The template a trainer fills in and uploads — always one click away. */}
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-dashed border-border bg-secondary/40 px-3 py-2">
-              <span className="text-xs text-muted-foreground">
-                Need the format? Columns:{" "}
-                <span className="font-[510] text-foreground">
-                  {QUIZ_TEMPLATE_COLUMNS.slice(0, 2).join(", ")}, …
-                </span>
-              </span>
-              <button
-                type="button"
-                onClick={downloadQuizTemplate}
-                className="inline-flex items-center gap-1 text-xs font-[510] text-primary hover:underline"
-              >
-                <Download className="size-3.5" strokeWidth={1.75} />
-                Download Excel template
-              </button>
-            </div>
-            {template && (
-              <p className="tnum text-xs text-muted-foreground">
-                {template.questionCount} questions · {template.mix.easy}E / {template.mix.medium}M /{" "}
-                {template.mix.hard}H
-              </p>
-            )}
-            {/* Preview the actual questions in-line so a trainer can see/verify them here */}
-            <QuestionsPreview templateId={a.templateId} />
-          </div>
-
-          {/* Completion criteria — either finishing or passing */}
-          <div className="grid gap-2">
-            <Label>Completion criteria</Label>
-            <RadioGroup
-              className="grid gap-2 sm:grid-cols-2"
-              value={criteria}
-              onValueChange={(v) => onPatch({ completionCriteria: v as "completion" | "pass" })}
-            >
-              <label
-                htmlFor={`cc-completion-${a.id}`}
-                className={cn(
-                  "flex cursor-pointer items-start gap-2.5 rounded-lg border p-3 text-sm",
-                  criteria === "completion" ? "border-primary bg-primary/5" : "border-border",
-                )}
-              >
-                <RadioGroupItem
-                  value="completion"
-                  id={`cc-completion-${a.id}`}
-                  className="mt-0.5"
-                />
-                <span>
-                  <span className="block font-[510]">Completion only</span>
-                  <span className="block text-xs text-muted-foreground">
-                    Counts as done once attempted — no score gate.
-                  </span>
-                </span>
-              </label>
-              <label
-                htmlFor={`cc-pass-${a.id}`}
-                className={cn(
-                  "flex cursor-pointer items-start gap-2.5 rounded-lg border p-3 text-sm",
-                  criteria === "pass" ? "border-primary bg-primary/5" : "border-border",
-                )}
-              >
-                <RadioGroupItem value="pass" id={`cc-pass-${a.id}`} className="mt-0.5" />
-                <span>
-                  <span className="block font-[510]">Must pass</span>
-                  <span className="block text-xs text-muted-foreground">
-                    Learner has to score at or above the pass mark.
-                  </span>
-                </span>
-              </label>
-            </RadioGroup>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-4">
-            {criteria === "pass" && (
-              <div className="grid gap-1.5">
-                <Label htmlFor={`pass-${a.id}`}>Pass mark %</Label>
-                <Input
-                  id={`pass-${a.id}`}
-                  type="number"
-                  min={0}
-                  max={100}
-                  className="tnum"
-                  value={a.passingPct ?? 70}
-                  onChange={(e) => onPatch({ passingPct: Number(e.target.value) })}
-                />
-              </div>
-            )}
-            <div className="grid gap-1.5">
-              <Label htmlFor={`time-${a.id}`}>Time limit (min)</Label>
-              <Input
-                id={`time-${a.id}`}
-                type="number"
-                min={1}
-                className="tnum"
-                value={a.timeLimitMins ?? 15}
-                onChange={(e) => onPatch({ timeLimitMins: Number(e.target.value) })}
-              />
-            </div>
-            <div className="grid gap-1.5">
-              <Label htmlFor={`retry-${a.id}`}>Max reattempts</Label>
-              <Input
-                id={`retry-${a.id}`}
-                type="number"
-                min={0}
-                className="tnum"
-                value={a.maxReattempts ?? 2}
-                onChange={(e) => onPatch({ maxReattempts: Number(e.target.value) })}
-              />
-            </div>
-            <div className="flex items-end justify-between gap-2 rounded-lg border border-border px-3 py-2 sm:flex-col sm:items-start sm:justify-center">
-              <Label htmlFor={`shuffle-${a.id}`} className="text-xs text-muted-foreground">
-                Shuffle
-              </Label>
-              <Switch
-                id={`shuffle-${a.id}`}
-                checked={a.shuffle ?? true}
-                onCheckedChange={(v) => onPatch({ shuffle: v })}
-              />
-            </div>
-          </div>
-        </>
-      ) : null}
+      {a.type === "video" && <VideoPanel activity={a} onPatch={onPatch} />}
+      {a.type === "deck" && <DeckPanel activity={a} onPatch={onPatch} />}
+      {a.type === "weblink" && <WeblinkPanel activity={a} onPatch={onPatch} />}
+      {a.type === "quiz" && (
+        <QuizPanel activity={a} quizTemplates={quizTemplates} onPatch={onPatch} />
+      )}
 
       {/* Shared toggles */}
       <div className="grid gap-2 sm:grid-cols-3">
@@ -711,122 +557,537 @@ function ActivityPanel({
   );
 }
 
-const DIFF_BADGE: Record<BuilderQuestion["difficulty"], string> = {
-  easy: "bg-status-complete/12 text-status-complete",
-  medium: "bg-cat-bank/15 text-cat-bank",
-  hard: "bg-status-overdue/12 text-status-overdue",
-};
+/* --------------------------------- VIDEO --------------------------------- */
 
-/**
- * In-line question preview for the trainer. Shows the actual questions loaded for
- * this quiz — prompt, options (correct one marked) and explanation — so a trainer
- * can see and verify the assessment right in the module editor.
- */
-function QuestionsPreview({ templateId }: { templateId?: string | undefined }) {
-  const [open, setOpen] = useState(false);
-  const { data: questions = [], isPending } = useQuery({
-    queryKey: ["template-questions", templateId],
-    queryFn: () => getTemplateQuestions(templateId!),
-    enabled: open && !!templateId,
-  });
+const VIDEO_SOURCES: { value: VideoProvider; label: string; icon: typeof Video }[] = [
+  { value: "upload", label: "Upload", icon: Upload },
+  { value: "youtube", label: "YouTube", icon: Youtube },
+  { value: "gdrive", label: "Drive", icon: HardDrive },
+];
 
-  if (!templateId) {
-    return (
-      <p className="text-xs text-muted-foreground">
-        Pick a template or upload a sheet to preview its questions here.
-      </p>
-    );
-  }
+function VideoPanel({
+  activity: a,
+  onPatch,
+}: {
+  activity: DraftActivity;
+  onPatch: (patch: Partial<DraftActivity>) => void;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const provider = a.provider ?? "upload";
+  const checkpoints = a.checkpoints ?? [];
+
+  const linkOk =
+    provider === "upload" || !a.sourceUrl || isValidVideoLink(provider, a.sourceUrl);
+
+  const addCheckpoint = () => {
+    const cp: VideoCheckpoint = {
+      id: `cp-${Date.now()}`,
+      atSeconds: checkpoints.length === 0 ? 60 : null,
+      question: makeBlankQuestion(),
+    };
+    onPatch({ checkpoints: [...checkpoints, cp] });
+  };
+
+  const patchCheckpoint = (id: string, patch: Partial<VideoCheckpoint>) =>
+    onPatch({
+      checkpoints: checkpoints.map((c) => (c.id === id ? { ...c, ...patch } : c)),
+    });
+
+  const removeCheckpoint = (id: string) =>
+    onPatch({ checkpoints: checkpoints.filter((c) => c.id !== id) });
 
   return (
-    <div className="rounded-lg border border-border">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm"
-      >
-        <Eye className="size-4 text-muted-foreground" strokeWidth={1.75} />
-        <span className="font-[510]">Preview questions</span>
-        <ChevronRight
-          className={cn(
-            "ml-auto size-4 text-muted-foreground transition-transform",
-            open && "rotate-90",
-          )}
-          strokeWidth={1.75}
-        />
-      </button>
-      {open && (
-        <div className="border-t border-border p-3">
-          {isPending ? (
-            <p className="text-xs text-muted-foreground">Loading questions…</p>
-          ) : questions.length === 0 ? (
-            <p className="text-xs text-muted-foreground">No questions found for this template.</p>
-          ) : (
-            <ol className="grid gap-3">
-              {questions.map((q, i) => (
-                <li key={q.id} className="rounded-lg bg-secondary/40 p-3">
-                  <div className="flex items-start gap-2">
-                    <span className="tnum mt-0.5 text-xs font-[590] text-muted-foreground">
-                      {i + 1}.
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="text-sm font-[510]">{q.prompt}</p>
-                        <span
-                          className={cn(
-                            "shrink-0 rounded-[4px] px-1.5 py-0.5 text-[10px] font-[590] capitalize",
-                            DIFF_BADGE[q.difficulty],
-                          )}
-                        >
-                          {q.difficulty}
-                        </span>
-                      </div>
-                      <ul className="mt-2 grid gap-1">
-                        {q.options.map((opt, oi) => {
-                          const correct = oi === q.correctIndex;
-                          return (
-                            <li
-                              key={oi}
-                              className={cn(
-                                "flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-sm",
-                                correct
-                                  ? "border-status-complete/40 bg-status-complete/8 text-foreground"
-                                  : "border-border text-muted-foreground",
-                              )}
-                            >
-                              <span
-                                className={cn(
-                                  "flex size-4 shrink-0 items-center justify-center rounded-full text-[10px] font-[590]",
-                                  correct
-                                    ? "bg-status-complete text-white"
-                                    : "bg-secondary text-muted-foreground",
-                                )}
-                              >
-                                {correct ? (
-                                  <Check className="size-3" strokeWidth={2.5} />
-                                ) : (
-                                  String.fromCharCode(65 + oi)
-                                )}
-                              </span>
-                              {opt}
-                            </li>
-                          );
-                        })}
-                      </ul>
-                      {q.explanation && (
-                        <p className="mt-2 text-xs text-muted-foreground">
-                          <span className="font-[510] text-foreground">Why:</span> {q.explanation}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          )}
+    <>
+      <div className="grid gap-2">
+        <Label>Video source</Label>
+        <div className="flex flex-wrap gap-2">
+          {VIDEO_SOURCES.map((s) => {
+            const active = provider === s.value;
+            return (
+              <button
+                key={s.value}
+                type="button"
+                onClick={() => onPatch({ provider: s.value })}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm transition-colors",
+                  active
+                    ? "border-primary bg-primary/5 text-foreground"
+                    : "border-border text-muted-foreground hover:border-primary/40",
+                )}
+              >
+                <s.icon className="size-4" strokeWidth={1.75} />
+                {s.label}
+              </button>
+            );
+          })}
         </div>
-      )}
+
+        {provider === "upload" ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => fileRef.current?.click()}
+            >
+              <Upload className="size-4" strokeWidth={1.75} />
+              Upload video
+            </Button>
+            <span className="truncate text-xs text-muted-foreground">
+              {a.uploadName ? a.uploadName : "MP4 / MOV / WebM"}
+            </span>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="video/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  onPatch({ uploadName: file.name, meta: file.name });
+                  toast.success(`Selected “${file.name}”`);
+                }
+                e.target.value = "";
+              }}
+            />
+          </div>
+        ) : (
+          <div className="grid gap-1">
+            <Input
+              value={a.sourceUrl ?? ""}
+              placeholder={
+                provider === "youtube"
+                  ? "https://www.youtube.com/watch?v=…"
+                  : "https://drive.google.com/file/d/…/view"
+              }
+              onChange={(e) =>
+                onPatch({
+                  sourceUrl: e.target.value,
+                  meta: e.target.value ? `${provider === "youtube" ? "YouTube" : "Drive"} link` : a.meta,
+                })
+              }
+              className={cn(!linkOk && "border-status-overdue")}
+            />
+            {!linkOk && (
+              <p className="text-xs text-status-overdue">
+                That doesn’t look like a {provider === "youtube" ? "YouTube" : "Google Drive"} link.
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-1.5">
+          <Label htmlFor={`dur-${a.id}`}>Duration (min)</Label>
+          <Input
+            id={`dur-${a.id}`}
+            type="number"
+            min={0}
+            className="tnum"
+            value={a.durationMins ?? 0}
+            onChange={(e) => onPatch({ durationMins: Number(e.target.value) })}
+          />
+        </div>
+        <label className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2 text-sm sm:mt-6">
+          <span className="text-muted-foreground">Pause if the learner switches away</span>
+          <Switch
+            checked={a.enforceFocus ?? true}
+            onCheckedChange={(v) => onPatch({ enforceFocus: v })}
+          />
+        </label>
+      </div>
+
+      {/* In-video question checkpoints — section the video */}
+      <div className="grid gap-2 rounded-lg border border-dashed border-border bg-secondary/40 p-3">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <p className="text-sm font-[510]">In-video questions</p>
+            <p className="text-xs text-muted-foreground">
+              Pop a question at a point in the video, or at the end.
+            </p>
+          </div>
+          <Button type="button" variant="outline" size="sm" onClick={addCheckpoint}>
+            <Plus className="size-4" strokeWidth={2} />
+            Add
+          </Button>
+        </div>
+
+        {checkpoints.length > 0 && (
+          <div className="grid gap-3">
+            {checkpoints.map((cp) => (
+              <CheckpointRow
+                key={cp.id}
+                checkpoint={cp}
+                onChange={(patch) => patchCheckpoint(cp.id, patch)}
+                onDelete={() => removeCheckpoint(cp.id)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+function CheckpointRow({
+  checkpoint: cp,
+  onChange,
+  onDelete,
+}: {
+  checkpoint: VideoCheckpoint;
+  onChange: (patch: Partial<VideoCheckpoint>) => void;
+  onDelete: () => void;
+}) {
+  const atEnd = cp.atSeconds === null;
+  return (
+    <div className="rounded-lg border border-border bg-card p-3">
+      <div className="mb-3 flex flex-wrap items-center gap-3">
+        <Clock className="size-4 text-muted-foreground" strokeWidth={1.75} />
+        <label className="flex items-center gap-2 text-sm">
+          <Switch
+            checked={atEnd}
+            onCheckedChange={(v) => onChange({ atSeconds: v ? null : 60 })}
+            aria-label="Ask at the end of the video"
+          />
+          <span className="text-muted-foreground">At the end</span>
+        </label>
+        {!atEnd && (
+          <div className="flex items-center gap-1.5">
+            <span className="text-sm text-muted-foreground">at</span>
+            <Input
+              className="tnum h-8 w-20"
+              placeholder="mm:ss"
+              defaultValue={toClock(cp.atSeconds ?? 0)}
+              onBlur={(e) => {
+                const secs = parseClock(e.target.value);
+                if (secs !== null) onChange({ atSeconds: secs });
+              }}
+            />
+          </div>
+        )}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="ml-auto size-8 text-muted-foreground"
+          onClick={onDelete}
+          aria-label="Remove checkpoint"
+        >
+          <Trash2 className="size-4" strokeWidth={1.75} />
+        </Button>
+      </div>
+      <QuestionEditor question={cp.question} onChange={(q) => onChange({ question: q })} />
     </div>
+  );
+}
+
+/* --------------------------- DOCUMENT / SLIDES --------------------------- */
+
+function DeckPanel({
+  activity: a,
+  onPatch,
+}: {
+  activity: DraftActivity;
+  onPatch: (patch: Partial<DraftActivity>) => void;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  return (
+    <div className="grid gap-3">
+      <div className="grid gap-2">
+        <Label>Document or slides</Label>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => fileRef.current?.click()}
+          >
+            <Upload className="size-4" strokeWidth={1.75} />
+            Upload file
+          </Button>
+          <span className="truncate text-xs text-muted-foreground">
+            {a.docName ? a.docName : "PDF · PPT / PPTX · DOC / DOCX"}
+          </span>
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".pdf,.ppt,.pptx,.doc,.docx"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                onPatch({ docName: file.name, meta: file.name });
+                toast.success(`Selected “${file.name}”`);
+              }
+              e.target.value = "";
+            }}
+          />
+        </div>
+      </div>
+      <div className="grid gap-1.5 sm:w-40">
+        <Label htmlFor={`pages-${a.id}`}>Pages / slides</Label>
+        <Input
+          id={`pages-${a.id}`}
+          type="number"
+          min={0}
+          className="tnum"
+          value={a.pages ?? 0}
+          onChange={(e) => onPatch({ pages: Number(e.target.value) })}
+        />
+      </div>
+    </div>
+  );
+}
+
+/* -------------------------------- WEB LINK ------------------------------- */
+
+function WeblinkPanel({
+  activity: a,
+  onPatch,
+}: {
+  activity: DraftActivity;
+  onPatch: (patch: Partial<DraftActivity>) => void;
+}) {
+  return (
+    <div className="grid gap-1.5">
+      <Label htmlFor={`url-${a.id}`}>Link URL</Label>
+      <Input
+        id={`url-${a.id}`}
+        type="url"
+        placeholder="https://…"
+        value={a.url ?? ""}
+        onChange={(e) => onPatch({ url: e.target.value, meta: e.target.value || a.meta })}
+      />
+    </div>
+  );
+}
+
+/* ---------------------------------- QUIZ --------------------------------- */
+
+function QuizPanel({
+  activity: a,
+  quizTemplates,
+  onPatch,
+}: {
+  activity: DraftActivity;
+  quizTemplates: QuizTemplate[];
+  onPatch: (patch: Partial<DraftActivity>) => void;
+}) {
+  const [editorOpen, setEditorOpen] = useState(false);
+  const uploadRef = useRef<HTMLInputElement>(null);
+  const questions = a.questions ?? [];
+  const criteria = a.completionCriteria ?? "pass";
+
+  const applyQuestions = (next: BuilderQuestion[]) => {
+    const mins = a.timeLimitMins ?? 15;
+    onPatch({
+      questions: next,
+      meta: `${next.length} question${next.length === 1 ? "" : "s"} · ${mins} min`,
+    });
+  };
+
+  const loadTemplate = async (id: string) => {
+    if (id === "none") {
+      onPatch({ templateId: "" });
+      return;
+    }
+    const loaded = await getTemplateQuestions(id);
+    onPatch({
+      templateId: id,
+      questions: loaded,
+      meta: `${loaded.length} question${loaded.length === 1 ? "" : "s"} · ${a.timeLimitMins ?? 15} min`,
+    });
+    toast.success(`Loaded ${loaded.length} questions — edit them any time`);
+  };
+
+  const importCsv = async (file: File) => {
+    if (!/\.csv$/i.test(file.name)) {
+      toast.info("Save the sheet as .csv to import — .xlsx parsing runs on the backend.");
+      return;
+    }
+    const parsed = parseQuizTemplateCsv(await file.text());
+    if (parsed.length === 0) {
+      toast.error("No questions found — check the sheet matches the template columns.");
+      return;
+    }
+    applyQuestions([...questions, ...parsed]);
+    setEditorOpen(true); // land the trainer straight in the editable view
+    toast.success(`Imported ${parsed.length} — opening the editor`);
+  };
+
+  const diffMix = questions.reduce(
+    (m, q) => ({ ...m, [q.difficulty]: (m[q.difficulty] ?? 0) + 1 }),
+    {} as Record<string, number>,
+  );
+
+  return (
+    <>
+      {/* Questions — build here, edit each one in the full editor */}
+      <div className="grid gap-2">
+        <Label>Questions</Label>
+        <div className="rounded-lg border border-border bg-card p-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-sm font-[510]">
+                {questions.length === 0
+                  ? "No questions yet"
+                  : `${questions.length} question${questions.length === 1 ? "" : "s"}`}
+              </p>
+              {questions.length > 0 && (
+                <p className="tnum text-xs text-muted-foreground">
+                  {diffMix["easy"] ?? 0}E / {diffMix["medium"] ?? 0}M / {diffMix["hard"] ?? 0}H
+                </p>
+              )}
+            </div>
+            <Button type="button" size="sm" onClick={() => setEditorOpen(true)}>
+              <Pencil className="size-4" strokeWidth={1.75} />
+              {questions.length === 0 ? "Build questions" : "Edit questions"}
+            </Button>
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3">
+            <Select value={a.templateId || "none"} onValueChange={(v) => void loadTemplate(v)}>
+              <SelectTrigger className="h-9 w-full sm:w-56" aria-label="Question template">
+                <SelectValue placeholder="Start from a template" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No template</SelectItem>
+                {quizTemplates.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.name} · {t.questionCount} Qs
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => uploadRef.current?.click()}
+            >
+              <Upload className="size-4" strokeWidth={1.75} />
+              Import (CSV)
+            </Button>
+            <button
+              type="button"
+              onClick={downloadQuizTemplate}
+              className="inline-flex items-center gap-1 text-xs font-[510] text-primary hover:underline"
+            >
+              <Download className="size-3.5" strokeWidth={1.75} />
+              Template
+            </button>
+            <input
+              ref={uploadRef}
+              type="file"
+              accept=".csv,.xlsx,.xls"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) void importCsv(file);
+                e.target.value = "";
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Completion criteria — either finishing or passing */}
+      <div className="grid gap-2">
+        <Label>Completion criteria</Label>
+        <RadioGroup
+          className="grid gap-2 sm:grid-cols-2"
+          value={criteria}
+          onValueChange={(v) => onPatch({ completionCriteria: v as "completion" | "pass" })}
+        >
+          <label
+            htmlFor={`cc-completion-${a.id}`}
+            className={cn(
+              "flex cursor-pointer items-start gap-2.5 rounded-lg border p-3 text-sm",
+              criteria === "completion" ? "border-primary bg-primary/5" : "border-border",
+            )}
+          >
+            <RadioGroupItem value="completion" id={`cc-completion-${a.id}`} className="mt-0.5" />
+            <span>
+              <span className="block font-[510]">Completion only</span>
+              <span className="block text-xs text-muted-foreground">
+                Counts as done once attempted — no score gate.
+              </span>
+            </span>
+          </label>
+          <label
+            htmlFor={`cc-pass-${a.id}`}
+            className={cn(
+              "flex cursor-pointer items-start gap-2.5 rounded-lg border p-3 text-sm",
+              criteria === "pass" ? "border-primary bg-primary/5" : "border-border",
+            )}
+          >
+            <RadioGroupItem value="pass" id={`cc-pass-${a.id}`} className="mt-0.5" />
+            <span>
+              <span className="block font-[510]">Must pass</span>
+              <span className="block text-xs text-muted-foreground">
+                Learner has to score at or above the pass mark.
+              </span>
+            </span>
+          </label>
+        </RadioGroup>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-4">
+        {criteria === "pass" && (
+          <div className="grid gap-1.5">
+            <Label htmlFor={`pass-${a.id}`}>Pass mark %</Label>
+            <Input
+              id={`pass-${a.id}`}
+              type="number"
+              min={0}
+              max={100}
+              className="tnum"
+              value={a.passingPct ?? 70}
+              onChange={(e) => onPatch({ passingPct: Number(e.target.value) })}
+            />
+          </div>
+        )}
+        <div className="grid gap-1.5">
+          <Label htmlFor={`time-${a.id}`}>Time limit (min)</Label>
+          <Input
+            id={`time-${a.id}`}
+            type="number"
+            min={1}
+            className="tnum"
+            value={a.timeLimitMins ?? 15}
+            onChange={(e) => onPatch({ timeLimitMins: Number(e.target.value) })}
+          />
+        </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor={`retry-${a.id}`}>Max reattempts</Label>
+          <Input
+            id={`retry-${a.id}`}
+            type="number"
+            min={0}
+            className="tnum"
+            value={a.maxReattempts ?? 2}
+            onChange={(e) => onPatch({ maxReattempts: Number(e.target.value) })}
+          />
+        </div>
+        <div className="flex items-end justify-between gap-2 rounded-lg border border-border px-3 py-2 sm:flex-col sm:items-start sm:justify-center">
+          <Label htmlFor={`shuffle-${a.id}`} className="text-xs text-muted-foreground">
+            Shuffle
+          </Label>
+          <Switch
+            id={`shuffle-${a.id}`}
+            checked={a.shuffle ?? true}
+            onCheckedChange={(v) => onPatch({ shuffle: v })}
+          />
+        </div>
+      </div>
+
+      <QuizEditorDialog
+        open={editorOpen}
+        onOpenChange={setEditorOpen}
+        quizName={a.name}
+        initialQuestions={questions}
+        onSave={applyQuestions}
+      />
+    </>
   );
 }
