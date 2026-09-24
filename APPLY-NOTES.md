@@ -17,9 +17,18 @@ section's timing + questions on the right. Import/template land into the selecte
 (or a new) section, and every question stays individually editable. The video
 activity panel no longer has its own checkpoint UI — it just points to the quiz.
 
+## Question types (new)
+Each question has a **type** selector under the prompt:
+- **Single choice** — radio buttons, one correct answer.
+- **Multiple choice** — checkboxes, one or more correct answers (`correctIndices`).
+- **True / False** — a fixed two-option radio (options locked to True/False; add/remove/edit disabled).
+The learner-side card renders radios vs checkboxes to match, and grades multi as
+"all correct options and no wrong ones." Model: `BuilderQuestion.kind` +
+`correctIndices` (both optional; unset = single).
+
 ## Files
 - **NEW** `src/lib/video-source.ts` — provider detection (upload/YouTube/Drive), URL parsing, embed URLs, mm:ss helpers.
-- **NEW** `src/components/trainer/question-editor.tsx` — full editor for a single question (prompt, variable options, correct-answer picker, difficulty, explanation).
+- **NEW** `src/components/trainer/question-editor.tsx` — full editor for a single question: type selector (single/multi/true-false), variable options, correct-answer picker, difficulty, explanation.
 - **NEW** `src/components/trainer/quiz-editor-dialog.tsx` — the two-pane, section-based quiz editor with per-section timing.
 - `src/data/types.ts` — added `VideoProvider`, `SectionTiming`, `QuizSection`, `VideoCheckpoint`; `provider`/`checkpoints` on `VideoActivity`; and `sections`/video/deck/link fields on `DraftActivity` (all optional).
 - `src/lib/quiz-template.ts` — added `parseQuizTemplateCsv()` so a CSV import lands as editable questions.
